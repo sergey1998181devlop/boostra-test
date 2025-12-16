@@ -75,18 +75,22 @@ class DocumentView extends View
         $hide_user_data = $params['hide_user_data'] ?? false;
 
         if ($user_id && $user = $this->users->get_user($user_id)) {
+            $user = (array)$user;
+            foreach ($user as $item_name => $item_value) {
+                $user_field = $hide_user_data ? str_replace(str_split((string)$item_value), '_', $item_value) : $item_value;
+                $this->design->assign($item_name, $user_field);
+            }
+        }
 
-            if ($type == 'agreement_disagreement_to_receive_ko') {
-                $params = $this->request->get('params');
-                $sms = !empty($params['asp']) ? $params['asp'] : null;
-                $sign_date = !empty($params['sign_date']) ? $params['sign_date'] : null;
+        if ($type === 'agreement_disagreement_to_receive_ko') {
+            if ($user_id && $user = $this->users->get_user($user_id)) {
+                $last_order = $this->orders->get_last_order($user->id);
 
-                if ($order = $this->orders->get_last_order($user->id)) {
-                    $doc_params = $this->docs->getOfferAgreementParams($user, $order->id, $sms, $sign_date);
+                if ($last_order) {
+                    $agreementParams = $this->docs->getOfferAgreementParams((object)$user, $last_order['order_id']);
                 } else {
-                    $organisation = $this->organizations->get_organization($this->organizations->get_base_organization_id());
+                    $organisation = $this->organizations->get_base_organization();
                     $user_passport_split = $this->helpers->splitPassportSerial($user->passport_serial);
-
                     $addressReg = trim(sprintf(
                         '%s %s, %s, ул. %s, д. %s, кв. %s',
                         $user->Regindex,
@@ -97,8 +101,8 @@ class DocumentView extends View
                         $user->Regroom
                     ));
 
-                    $doc_params = [
-                        'full_name' => $this->helpers->getFIO($user),
+                    $agreementParams = [
+                        'full_name' => $this->helpers->getFIO((object)$user),
                         'email' => $user->email,
                         'phone' => $user->phone_mobile,
                         'passport_serial' => $user_passport_split['serial'],
@@ -109,8 +113,8 @@ class DocumentView extends View
                         'registration_address' => $addressReg,
                         'organization_name' => $organisation->name,
                         'organization_ogrn' => $organisation->ogrn,
-                        'zaim_number' => null,
-                        'zaim_date' => null,
+                        'zaim_number' => 'б/н',
+                        'zaim_date' => date('d.m.Y'),
                         'organization_site' => $organisation->site,
                         'organization_address_post' => $organisation->address,
                         'organization_director' => $organisation->director ?? 'Поздняковa С.В.',
@@ -118,24 +122,21 @@ class DocumentView extends View
                         'organization_email' => $organisation->email,
                         'plaintiff_name' => 'ООО ПКО "ПРАВОВАЯ ЗАЩИТА"',
                         'plaintiff_site' => 'https://pravza.com/',
-                        'accept_sms' => $sms,
+                        'accept_sms' => ' ',
                         'order_signed' => false,
                         'organization_id' => $organisation->id,
-                        'sign_date' => $sign_date,
+                        'sign_date' => date('d.m.Y H:i:s'),
                     ];
                 }
-                $this->design->assignBulk($doc_params);
-            }
 
-            $user = (array)$user;
-            foreach ($user as $item_name => $item_value) {
-                $user_field = $hide_user_data ? str_replace(str_split((string)$item_value), '_', $item_value) : $item_value;
-                $this->design->assign($item_name, $user_field);
+                foreach ($agreementParams as $param_name => $param_value) {
+                    $this->design->assign($param_name, $param_value);
+                }
             }
-        }
-
-        if (in_array(strtoupper($type), ['agreement_disagreement_to_receive_ko'])) {
-            $organization_id = $this->organizations->get_base_organization_id();
+        } else {
+            if (in_array(strtoupper($type), ['agreement_disagreement_to_receive_ko'])) {
+                $organization_id = $this->organizations->get_base_organization_id();
+            }
         }
 
         if (empty($organization_id) && !empty($params['contract_number'])) {
