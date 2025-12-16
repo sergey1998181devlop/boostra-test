@@ -75,6 +75,58 @@ class DocumentView extends View
         $hide_user_data = $params['hide_user_data'] ?? false;
 
         if ($user_id && $user = $this->users->get_user($user_id)) {
+
+            if ($type == 'agreement_disagreement_to_receive_ko') {
+                $params = $this->request->get('params');
+                $sms = !empty($params['asp']) ? $params['asp'] : null;
+                $sign_date = !empty($params['sign_date']) ? $params['sign_date'] : null;
+
+                if ($order = $this->orders->get_last_order($user->id)) {
+                    $doc_params = $this->docs->getOfferAgreementParams($user, $order->id, $sms, $sign_date);
+                } else {
+                    $organisation = $this->organizations->get_organization($this->organizations->get_base_organization_id());
+                    $user_passport_split = $this->helpers->splitPassportSerial($user->passport_serial);
+
+                    $addressReg = trim(sprintf(
+                        '%s %s, %s, ул. %s, д. %s, кв. %s',
+                        $user->Regindex,
+                        $user->Regregion,
+                        $user->Regcity,
+                        $user->Regstreet,
+                        $user->Reghousing,
+                        $user->Regroom
+                    ));
+
+                    $doc_params = [
+                        'full_name' => $this->helpers->getFIO($user),
+                        'email' => $user->email,
+                        'phone' => $user->phone_mobile,
+                        'passport_serial' => $user_passport_split['serial'],
+                        'passport_number' => $user_passport_split['number'],
+                        'passport_date' => $user->passport_date,
+                        'passport_issued' => $user->passport_issued,
+                        'subdivision_code' => $user->subdivision_code,
+                        'registration_address' => $addressReg,
+                        'organization_name' => $organisation->name,
+                        'organization_ogrn' => $organisation->ogrn,
+                        'zaim_number' => null,
+                        'zaim_date' => null,
+                        'organization_site' => $organisation->site,
+                        'organization_address_post' => $organisation->address,
+                        'organization_director' => $organisation->director ?? 'Поздняковa С.В.',
+                        'organization_address_req' => $organisation->address,
+                        'organization_email' => $organisation->email,
+                        'plaintiff_name' => 'ООО ПКО "ПРАВОВАЯ ЗАЩИТА"',
+                        'plaintiff_site' => 'https://pravza.com/',
+                        'accept_sms' => $sms,
+                        'order_signed' => false,
+                        'organization_id' => $organisation->id,
+                        'sign_date' => $sign_date,
+                    ];
+                }
+                $this->design->assignBulk($doc_params);
+            }
+
             $user = (array)$user;
             foreach ($user as $item_name => $item_value) {
                 $user_field = $hide_user_data ? str_replace(str_split((string)$item_value), '_', $item_value) : $item_value;

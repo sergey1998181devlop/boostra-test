@@ -176,6 +176,16 @@ return false;
             ]
         );
         break;
+    case 'bki_consent':
+        $user_id = (int)$_SESSION['user_id'];
+        $consent = $simpla->request->post('consent', 'integer');
+        if ($simpla->user_data->set($user_id, 'bki_consent', $consent)) {
+            $response['success'] = true;
+        } else {
+            $response['success'] = false;
+            $response['error'] = 'Failed to update user consent.';
+        }
+        break;
 }
 
 header("Content-type: application/json; charset=UTF-8");

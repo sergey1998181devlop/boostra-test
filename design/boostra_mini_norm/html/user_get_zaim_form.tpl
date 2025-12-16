@@ -190,7 +190,7 @@
                                             Нажимая "Получить заём", я соглашаюсь со <a href="#" data-btn-toggle="collapse">следующими условиями</a>
                                         </p>
                                     </div>
-
+                                    {include file='partials/bki_consent_checkbox.tpl'}
                                     <div class="collapse" data-target="collapse">
                                         <p>
                                             С <a href="{$config->root_url}/files/docs/asp_usage_policy.pdf" target="_blank">
@@ -207,11 +207,6 @@
                                         </p>
 
                                         {if $autoconfirm_enabled || $is_old_client_or_old_register}
-                                            <p>
-                                                Я согласен на <a href="{$config->root_url}/preview/agreement_disagreement_to_receive_ko" target="_blank">
-                                                    направление запросов в БКИ
-                                                </a>
-                                            </p>
                                             <p>
                                                 {if $is_old_client_or_old_register}
                                                     <a href="{$individual_max_amount_doc_url}" target="_blank">Индивидуальные условия договора займа</a>

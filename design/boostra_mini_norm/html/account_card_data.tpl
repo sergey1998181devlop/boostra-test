@@ -107,6 +107,7 @@
                     {/if}
                     <br/>
                     <p class="security-text">Данные защищены сквозным шифрованием и передаются по безопасному соединению</p>
+                    {include file='partials/bki_consent_checkbox.tpl'}
 				{elseif $show_sbp_attach}
 					<div class="add-sbp">
 						<h1>Регистрация банковской карты</h1>

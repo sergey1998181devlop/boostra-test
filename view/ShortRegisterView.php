@@ -639,6 +639,10 @@ class ShortRegisterView extends View
 
         // Отображаем стандартную привязку, но с изменениями под короткое флоу
         $this->design->assign('is_short_flow', true);
+
+        $bki_consent = $this->user_data->read($this->user->id, 'bki_consent');
+        $this->design->assign('bki_consent', $bki_consent);
+
         return $this->design->fetch('account_card_data.tpl');
     }
 

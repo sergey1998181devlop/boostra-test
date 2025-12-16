@@ -91,6 +91,9 @@ class AccountView extends View
             $this->design->assign('user_order', $user_order);
         }
 
+        $bki_consent = $this->user_data->read($this->user->id, 'bki_consent');
+        $this->design->assign('bki_consent', $bki_consent);
+
         return $this->registrationProcess();
     }
 

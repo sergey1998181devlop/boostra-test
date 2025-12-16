@@ -97,6 +97,9 @@ class UserView extends View
             exit();
         }
 
+        $bki_consent = $this->user_data->read($this->user->id, 'bki_consent');
+        $this->design->assign('bki_consent', $bki_consent);
+
         if ($this->request->get('delete_account')) {
             $this->soap->delete_user($this->user->uid);
             $this->users->update_user($this->user->id, array('enabled' => 0));
