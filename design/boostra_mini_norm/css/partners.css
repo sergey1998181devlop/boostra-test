@@ -1,0 +1,357 @@
+section {
+    display: block !important;
+}
+
+/* Общий контейнер */
+.unq-company-page {
+    width: 100%;
+    margin: 0;
+    padding: 20px;
+    background: #f0f7ff;
+    box-sizing: border-box;
+}
+
+/* Карточки */
+.unq-card {
+    background: #fff;
+    border-radius: 20px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+    box-sizing: border-box;
+    max-width: 1400px;
+    margin: 0 auto 40px auto;
+}
+
+.unq-card:first-child {
+    padding: 5% 12% 5% 12%;
+}
+/* Убираем лишний отступ у последней карточки */
+.unq-card:last-child {
+    padding: 1% 2% 1% 2%;
+    margin-bottom: 0;
+}
+
+/* Заголовки секций */
+.unq-section-title {
+    font-size: 2rem;
+    color: #1a73e8;
+    text-align: center;
+    margin-bottom: 20px;
+}
+
+/* Заголовки внутри */
+.blue-title {
+    color: #1a73e8;
+    margin-top: 20px;
+    text-align: center;
+    margin-bottom: 20px;
+}
+
+/* Текст */
+p {
+    font-size: 1rem;
+    margin-bottom: 15px;
+}
+
+/* Выделенные абзацы */
+.unq-highlight {
+    font-weight: bold;
+    color: #333;
+}
+
+/* Маркированные списки */
+.unq-list-bullets {
+    list-style: none;
+    padding-left: 0;
+    margin-bottom: 20px;
+}
+
+.unq-list-bullets li {
+    margin-bottom: 10px;
+    line-height: 1.4;
+}
+
+.unq-list-bullets li::before {
+    content: "•";
+    color: #1a73e8;
+    margin-right: 8px;
+}
+
+/* Сетка технологий */
+.unq-tech-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+    gap: 10px;
+    list-style: none;
+    padding: 0;
+    margin-bottom: 20px;
+}
+
+.unq-tech-grid li {
+    background: #e8f4ff;
+    padding: 10px;
+    border-radius: 10px;
+    text-align: center;
+}
+
+/* Контейнер для продуктов */
+.unq-products-wrapper {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 20px;
+    align-items: flex-start;
+}
+
+/* Стрелочка-индикатор */
+.unq-product-card h2.blue-title {
+    position: relative;
+    padding-right: 34px;           /* место под стрелку */
+    user-select: none;             /* чтобы не выделялось при клике */
+}
+
+.unq-product-card .toggle-arrow {
+    position: absolute;
+    right: 20px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 1.4rem;
+    color: #1a73e8;
+    transition: all 0.3s ease;
+    pointer-events: none;          /* чтобы клик проходил сквозь стрелку */
+}
+
+/* Немного подсвечиваем активную карточку */
+.unq-product-card.active {
+    background: #e8f4ff;
+    box-shadow: 0 4px 20px rgba(26, 115, 232, 0.2);
+}
+
+/* Опционально: делаем заголовок чуть жирнее когда открыт */
+.unq-product-card.active h2.blue-title {
+    font-weight: 600;
+}
+
+/* Продукты */
+.unq-product-card {
+    background: #f9fcff;
+    border-radius: 15px;
+    padding: 20px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+    box-sizing: border-box;
+    flex: 1 1 calc(50% - 20px); /* две колонки */
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    cursor: pointer;
+}
+
+/* Ссылки в списках документов */
+.unq-docs-list {
+    list-style: none;
+    padding-left: 20px;
+    margin: 0;
+    color: #333;
+    text-align: left;
+}
+
+.unq-docs-list li {
+    margin-bottom: 16px;
+}
+
+.unq-docs-list a {
+    color: #1a73e8;
+    text-decoration: none;
+    transition: color 0.3s ease;
+}
+
+.unq-docs-list a:hover {
+    color: #0c56c1;
+}
+
+/* Адаптивность */
+@media (max-width: 768px) {
+    .unq-section-title {
+        font-size: 3rem;
+    }
+    p {
+        font-size: 0.95rem;
+    }
+    .unq-card {
+        padding: 20px;
+    }
+    .unq-product-card {
+        padding: 15px;
+        flex: 1 1 100%; /* одна колонка на мобильных */
+    }
+}
+
+/*! CSS Used from: http://localhost/design/orange_theme/css/landing/index-BWCMBxJe.css?v=1.1008 */
+*,
+*:before,
+*:after {
+    box-sizing: border-box;
+}
+img {
+    max-width: 100%;
+}
+.container {
+    font-size: 16px;
+    max-width: none;
+    margin: 0 auto;
+    padding: 0 10px;
+}
+@media screen and (min-width: 991px) {
+    .container {
+        width: 100vw !important;
+        max-width: 1344px;
+        padding: 0 32px;
+    }
+}
+a {
+    color: inherit;
+    transition: color 0.3s ease;
+}
+a:hover {
+    color: #038aee;
+}
+.section {
+    margin-bottom: 50px;
+}
+@media screen and (min-width: 991px) {
+    .section {
+        margin-bottom: 125px;
+    }
+}
+.partners {
+    display: grid;
+    grid-template-columns: auto;
+    grid-gap: 26px;
+}
+@media screen and (min-width: 991px) {
+    .partners {
+        grid-template-columns: auto auto auto;
+        grid-template-rows: auto auto auto;
+    }
+}
+.partners .partner-item {
+    background-color: #ffffff;
+    box-shadow: 0px 4px 20px 0px #edeff3;
+    max-width: 306px;
+    height: 430px;
+    padding: 24px 32px 24px 32px;
+    border-radius: 32px;
+    margin: auto;
+}
+.partner-item .item-header {
+    display: flex;
+    justify-content: space-between;
+    gap: 5px;
+    justify-items: center;
+    align-items: center;
+    align-content: center;
+}
+.item-header .item-header__image {
+    max-width: 78px;
+}
+.item-header .item-header__name {
+    color: #02113b;
+    display: flex;
+    flex-direction: column;
+}
+.item-header__name b {
+    font-size: 20px;
+    line-height: 18px;
+}
+.item-header__name span {
+    margin-top: 6px;
+    font-size: 12px;
+    color: #818c99;
+    line-height: 18px;
+}
+.item-header .item-header__about {
+    padding: 26px 0 26px 0;
+}
+.item-body {
+    margin-top: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    justify-content: space-between;
+}
+.item-body .content {
+    display: flex;
+    justify-content: space-between;
+}
+.item-body .content .ireccommend {
+    background-color: #f0f8ff;
+    color: #0a91ed;
+    border-radius: 120px;
+    padding-top: 8px;
+    padding-right: 24px;
+    padding-bottom: 8px;
+    padding-left: 24px;
+}
+.item-body .content .docs {
+    background-color: #f0f8ff;
+    color: #0a91ed;
+    border-radius: 120px;
+    padding-top: 6px;
+    padding-right: 22px;
+    padding-bottom: 6px;
+    padding-left: 22px;
+}
+.item-body .content .docs-link {
+    text-decoration: none;
+}
+.item-body .content .partner-rating {
+    display: flex;
+    gap: 2px;
+    justify-content: center;
+    align-items: center;
+    font-weight: 600;
+}
+.item-body .content .group {
+    display: flex;
+    justify-content: space-between;
+    flex-direction: column;
+    gap: 6px;
+}
+.item-body .content .group span {
+    font-weight: 500;
+    font-size: 14px;
+    line-height: 24px;
+    color: #818c99;
+}
+.item-body .content .group b {
+    font-weight: 600;
+    font-size: 16px;
+    line-height: 24px;
+    color: #02113b;
+}
+.item-body .content .group b.green {
+    color: #2cb82c;
+}
+.item-body .content .group b.yellow {
+    color: #bec62d;
+}
+.item-body .content .group b.red {
+    color: #dd2124;
+}
+.item-bottom {
+    width: 100%;
+    text-decoration: none;
+    white-space: nowrap;
+}
+
+.item-bottom .submit-offer {
+    width: 100%;
+    margin-top: 24px;
+    background-color: #0a91ed;
+    border-radius: 232px;
+    padding-top: 14px;
+    padding-right: 48px;
+    padding-bottom: 14px;
+    padding-left: 48px;
+    text-align: center;
+    color: #f5f7fa;
+    cursor: pointer;
+}

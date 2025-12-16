@@ -1,0 +1,45 @@
+#contact-me-notice {
+    display: none;
+    position: fixed;
+    bottom: 90px;
+    right: 20px;
+    background: #fff;
+    border: 1px solid #ccc;
+    padding: 10px;
+    z-index: 1000;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    border-radius: 5px;
+    font-family: Arial, sans-serif;
+}
+
+#contact-me-notice p {
+    margin: 0 33px 10px 0 !important;
+    font-size: 14px;
+    color: #333;
+}
+
+#contact-me-notice button {
+    background: #007bff;
+    color: #fff;
+    border: none;
+    padding: 5px 10px;
+    margin-right: 5px;
+    cursor: pointer;
+    border-radius: 3px;
+    font-size: 14px;
+}
+
+#contact-me-notice button:hover {
+    background: #0056b3;
+}
+
+#contact-me-notice #close-notice-button {
+    background: #6c757d;
+    position: absolute;
+    top: 7px;
+    right: 2px;
+}
+
+#contact-me-notice #close-notice-button:hover {
+    background: #5a6268;
+}

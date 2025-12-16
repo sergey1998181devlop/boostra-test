@@ -1,0 +1,25 @@
+---
+# tasks file for boostra
+
+- name: Predeploy stage check permissions
+  shell: bash "{{ repo_path }}"/deploy/fix-permissions-boostra.sh "{{ repo_path }}"
+  tags: deploy
+
+- name: Clone repo into path for prepare deploy
+  ansible.builtin.git:
+    repo: git@gcib0d3c8bstra.boostra.ru:boostra/boostra.git
+    dest: "{{ temp_repo_path }}"
+    version: "{{ branch }}"
+  register: code_upload
+  tags: deploy
+
+- name: Synchronize file from deploy folder to floder deployed
+  shell: chown "{{ lookup('env', 'USER') }}":www-data "{{ temp_repo_path }}" && rsync -zvarc --exclude 'logs' --exclude 'files' --exclude 'compiled' "{{ temp_repo_path }}"/* "{{ repo_path }}"/ && rsync -zvarc --exclude 'logs' --exclude 'compiled' --exclude 'files' "{{ temp_repo_path }}"/.git* "{{ repo_path }}"/ && rsync -zvarc --exclude 'logs' --exclude 'compiled' --exclude 'files' "{{ temp_repo_path }}"/.htaccess "{{ repo_path }}"/ 
+  when: code_upload.changed
+  tags: deploy
+
+- name: Install permissions on file user boostra-crm and group www-data
+  shell: cd "{{ repo_path }}"; chown "{{ lookup('env', 'USER') }}":www-data $(ls | grep -v files | grep -v logs | grep -v compiled )
+  when: code_upload.changed
+  ignore_errors: yes
+  tags: deploy

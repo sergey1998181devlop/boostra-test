@@ -1,0 +1,1134 @@
+/* WORKSHEET */
+#worksheet {}
+
+#worksheet > div {
+    vertical-align: top;
+}
+
+#worksheet .progress {
+    width: 50%;
+    display: inline-block;
+    margin: 2rem 0 3.7rem;
+}
+
+#worksheet .progress .irs-bar,
+#worksheet .progress .irs-single,
+#worksheet .progress .irs-slider.single {
+    transition: all .3s;
+}
+
+#worksheet .progress .irs-min,
+#worksheet .progress .irs-max {
+    width: 7.2rem;
+}
+
+#worksheet .progress .irs-min {
+    left: -8rem;
+}
+
+#worksheet .progress .irs-max {
+    right: -8rem;
+}
+
+#worksheet .progress .irs-single {
+    top: auto;
+    bottom: -2.5rem;
+    font-size: 1.25rem;
+}
+#worksheet .progress .irs-slider.single {
+    width: 1.25rem;
+    height: 1.25rem;
+    top: 2.85rem;
+}
+
+#worksheet #steps {}
+
+#worksheet #steps fieldset {
+ display: none;
+ overflow: hidden;
+ border: none;
+}
+
+#worksheet #steps fieldset.current {
+ display: block;
+}
+
+#worksheet #steps fieldset span.title {
+    display: block;
+    float: left;
+    width: 100%;
+    box-sizing: border-box;
+    font-size: .9rem;
+    font-weight: bold;
+    text-align: left;
+}
+
+#worksheet #steps fieldset label {
+    width: 100%;
+    box-sizing: border-box;
+    text-align: center;
+    float: left;
+    position: relative;
+    margin: 1.5rem 0;
+}
+
+#login label div{
+    position: relative;
+    display: inline-block;
+}
+
+#worksheet #steps fieldset label.big {
+    width: 100%;
+}
+
+#worksheet #steps fieldset label.big.left {
+    text-align: left;
+    margin-top: 1rem;
+}
+
+#worksheet #steps fieldset label > input,
+#worksheet #steps fieldset label > select {
+    width: 100%;
+}
+
+#worksheet #steps fieldset label input:focus ~ .floating-label,
+#worksheet #steps fieldset label input:not(:focus):valid ~ .floating-label,
+#login label input:focus ~ .floating-label,
+#login label input:not(:focus):valid ~ .floating-label{
+    top: -1.6rem;
+    opacity: 1;
+    font-size: .85rem;
+}
+
+#worksheet #steps fieldset label .floating-label,
+#worksheet #steps fieldset label input.sup:not(:focus):valid ~ .floating-label,
+#login label .floating-label,
+#login label input.sup:not(:focus):valid ~ .floating-label{
+    position: absolute;
+    pointer-events: none;
+    top: .2rem;
+    left: 0;
+    transition: 0.2s ease all;
+}
+
+#worksheet #steps fieldset label input:focus ~ .floating-label, 
+#loginlabel input:focus ~ .floating-label {
+    opacity: 1;
+}
+
+#worksheet #steps fieldset label input.sup:not(:focus):valid ~ .floating-label,
+#login label input.sup:not(:focus):valid ~ .floating-label {
+    opacity: .6;
+}
+
+#worksheet #steps fieldset .living {
+    padding-bottom: 1.3rem;
+}
+
+#worksheet #steps fieldset .next {
+    clear: left;
+    padding-top: 1.5rem;
+    position: relative;
+}
+
+#worksheet #steps fieldset .next .button {
+    padding: 1.2rem 3rem;
+    font-size: 1.04rem;
+}
+
+#worksheet #steps fieldset .next .button[disabled] {
+    opacity: 0.6;
+}
+
+#worksheet #steps fieldset .next p {
+    margin-top: 1.4rem;
+}
+
+#worksheet #steps fieldset .next a.prev {
+    display: block;
+    padding: 1.2rem 0;
+    cursor: pointer;
+}
+
+#worksheet #steps fieldset .result {} 
+
+#worksheet #steps fieldset .result h3 {
+    font-weight: bold;
+    font-size: 1.35rem;
+}
+
+#worksheet #steps fieldset .result p {
+    font-size: 1.07rem;
+    margin: 4rem 0;
+}
+
+#worksheet #steps fieldset .result .button {
+    margin-bottom: 1rem;
+}
+
+/* INFO */
+#info {}
+
+#info .box {
+    width: 100%;
+    text-align: left;
+    font-size: 1.16rem;
+    line-height: 1.4;
+}
+
+#info h1 {
+    font-size: 2.5rem;
+    margin-bottom: 4rem;
+}
+
+#info p {
+    margin: 2rem 0;
+}
+
+#info h4 {
+    font-size: 2.5rem;
+    margin-bottom: 4rem;
+}
+
+#info .box > div {
+    margin: 4rem 0 6rem;
+}
+
+#info ul {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+
+/* DEMANDS */
+#demands {}
+
+#demands ul {
+    display: block;
+    text-align: center;
+}
+
+#demands ul li {
+    min-width: 8.9rem;
+    margin: 0 1.2rem 2.2rem 0;
+    display: inline-block;
+    text-align: center;
+    line-height: 1.28;
+}
+
+#demands ul li .icon {
+    width: 3.875rem;
+    height: 3.875rem;
+    display: inline-block;
+    background-repeat: no-repeat;
+    background-position: bottom center;
+    background-size: contain;
+    margin-bottom: 1.5rem;
+}
+
+#demands ul li .icon.passport {
+    background-image: url(../img/passport.svg);
+}
+
+#demands ul li .icon.bcard {
+    background-image: url(../img/card.svg);
+}
+
+#demands ul li .icon.bill {
+    background-image: url(../img/bill.svg);
+}
+
+#demands ul li .icon.age {
+    background-image: url(../img/person.svg);
+}
+
+#demands ul li .icon.number {
+    background-image: url(../img/phone.svg);
+}
+/* QUESTIONS */
+#questions {}
+
+#questions ul {
+    vertical-align: top;
+    display: inline-block;
+    width: 100%
+}
+
+#questions ul li {
+    display: inline-block;
+    width: 100%;
+    margin: 1.6rem 0;
+    border-bottom: 1px solid #2c2b39;
+}
+
+#questions ul li .title{
+    padding: .4rem .7rem .4rem 0;
+    cursor: pointer;
+    box-sizing: border-box;
+    background: transparent url(../img/drop-down.svg) no-repeat center right .2rem / .5rem;
+}
+
+#questions ul li .answer {
+    height: 0;
+    box-sizing: border-box;
+    overflow: hidden;
+    font-size: 1rem;
+}
+
+#questions ul li.active .answer{
+    padding: .5rem .5rem .5rem 0;
+}
+
+#questions a.more {
+    display: inline-block;
+    margin-top: 1.5rem;
+    border-bottom: 1px dashed #2c2b39;
+}
+
+#questions a.more:hover {
+    opacity: .8;
+    text-decoration: none;
+}
+/* DOCS */
+#docs {}
+
+#docs ul {
+    display: block;
+}
+
+#docs ul li {
+    display: block;
+    width: 100%;
+    box-sizing: border-box;
+    padding: 1rem 0;
+}
+
+#docs ul li a {
+    padding-left: 3.12rem;
+    text-decoration: underline;
+    background: url(../img/doc.png) no-repeat 0 center / 2.2rem;
+}
+
+#docs ul li a:hover {
+    text-decoration: none;
+}
+
+/* CONTACTS */
+#contacts {
+    padding-bottom: 5rem;
+}
+
+/* LOGIN */
+
+#login {}
+
+#login > div {
+    vertical-align: middle;
+}
+
+#login .wrapper {
+    display: inline-block;
+    width: 100%;
+    box-sizing: border-box;
+    padding: 3rem;
+    background: #FFF;
+    text-align: center;
+}
+
+#login .wrapper h3 {
+    margin: 0;
+}
+
+#login .wrapper label {
+    display: block;
+}
+
+#login .wrapper label span {
+    display: block;
+    margin: 3.75rem 0;
+}
+
+#login .wrapper label div span {
+    margin: 0;
+}
+
+#login .wrapper label input {
+    margin: 0 0 2.15rem;
+    padding: 0 0 .66rem;
+    font-size: 1.25rem;
+} 
+
+#login .wrapper label input,
+#login .wrapper button {
+    width: 13.3rem;
+}
+
+#login #check {
+    display: none;
+}
+
+/* PRIVATE */
+
+#private {}
+
+#private .tabs {
+    display: inline-block;
+    width: 100%;
+    box-sizing: border-box;
+    padding: 3rem 2.3rem;
+    margin-top: 3.75rem;
+    position: relative;
+    background: #FFF;
+    background-repeat: no-repeat;
+    background-position: right 15% center;
+    background-size: 47vh;
+}
+
+.girl #private .tabs {
+    background-size: 67vh;
+}
+#private .tabs .nav {
+    position: absolute;
+    left: 0;
+    top: -3.75rem;
+}
+
+#private .tabs .nav ul {
+    list-style: none;
+    height: 3.754rem;
+    overflow: hidden;
+    margin: 0;
+    padding: 0;
+}
+
+#private .tabs .nav ul li {
+    display: block;
+    float: left;
+}
+
+#private .tabs .nav ul li a {
+    display: block;
+    padding: 1.3rem 1rem;
+}
+
+#private .tabs .nav ul li a.current {
+    background-color: #FFF;
+}
+
+#private .tabs .nav ul li a.current:hover {
+    text-decoration: none;
+}
+
+#private .tabs .content {
+    display: table;
+    height: calc(100vh - 21rem);
+}
+
+#private .tabs .content > * {
+    display: table-cell;
+    vertical-align: middle;
+}
+
+#private .tabs .content p {
+    margin: 3.4rem 0;
+    font-size: 1.3rem;
+    line-height: 1.7;
+}
+
+/* WAIT */
+.wait .content {
+    width: 100%;
+}
+
+body.wait {
+    background-repeat: no-repeat;
+    background-position: right 7% bottom 5%;
+    background-size: 25%;
+}
+
+.girl .wait .waiting {
+    background: url(../img/wait.girl.svg) no-repeat center center /contain;
+}
+
+/* APPROVED */
+.girl #private .tabs.approved {
+    background-position: 75% center;
+    background-size: 50vh;
+}
+
+.boy #private .tabs.approved {
+    background-position: 70% center;
+    background-size: 20%;
+}
+
+.approved .content {
+    width: 100%;
+}
+
+.approved .cancel {
+    margin-left: 2rem;
+}
+/* CALC */
+#private .tabs.calc {
+    background-position: 80% center;
+    background-size: 23%;
+}
+
+.girl #private .tabs.calc {
+    background-size: 20%;
+}
+
+.calc .content {
+    width: 100%;
+}
+
+/* CARDS */
+.card {
+    display: inline-block;
+    background-position: center center;
+    background-repeat: no-repeat;
+    background-size: 1.4rem;
+    width: 1.8rem;
+    height: 1.1rem;
+    vertical-align: initial;
+}
+
+.card.visa {
+    background-image: url(../img/visa.svg);
+}
+
+.card.master {
+    background-image: url(../img/master-card.svg);
+}
+
+.card.maestro {
+    background-image: url(../img/maestro.svg);
+}
+
+/* LK */
+#private .tabs.lk {}
+
+#private .tabs.lk .content {
+    width: 100%;
+    text-align: left;
+}
+
+#private .tabs.lk .content > * {
+    vertical-align: top;   
+}
+
+#private .tabs.lk .about {
+    overflow: hidden;
+}
+
+#private .tabs.lk .about > * {
+    display: block;
+    float: left;
+    font-size: 1.45rem;
+}
+
+#private .tabs.lk .split {
+    overflow: hidden;
+    margin: 4.5rem 0;
+}
+
+#private .tabs.lk .split ul {
+    display: table;
+    float: left;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    width: 100%;
+}
+
+
+#private .tabs.lk .split ul li {
+    display: table-row;
+    font-size: 1.16rem;
+}
+
+#private .tabs.lk .split ul li > div {
+    display: table-cell;
+    width: 12rem;
+    border-bottom: 1px solid rgba(0, 0, 0, .1);
+    padding: .8rem 0 .6rem;
+}
+
+#private .tabs.lk .split ul li > div:last-child {
+    font-size: 1.29rem;
+    font-weight: 700;
+    width: auto;
+}
+
+#private .tabs.lk .action {
+    text-align: center;
+}
+
+#private .tabs.lk .action a {
+    margin: 0 2rem 1rem 2rem;
+    padding-left: 2rem;
+    padding-right: 2rem;
+}
+
+/* CONTRACT */
+#private .tabs.contract {}
+
+#private .tabs.contract .content {
+    width: 100%;
+}
+
+#private .tabs.contract .content > * {
+    vertical-align: top;
+}
+
+#private .tabs.contract p {
+    font-size: 1.16rem;
+    margin: 0;
+}
+
+#private .tabs.contract .scrollbar {
+    width: 100%;
+    margin: 2rem auto;
+    position: relative;
+}
+
+#private .tabs.contract .scrollbar p {
+    font-size: 1rem;
+    margin: .4rem 0;
+}
+
+#private .tabs.contract .scrollbar .shadow {
+    box-shadow: 0 0 2.8rem rgba(0, 0, 0, 0.05);
+    box-sizing: border-box;
+    width: 95%;
+    margin: 0 auto;
+    padding: 1rem;
+}
+
+#private .tabs.contract .scrollbar-inner {
+    height: 30.5rem;
+    text-align: left;
+}
+
+#private .tabs.contract .scrollbar > .scroll-element div {
+    display: none;
+}
+
+#private .tabs.contract form {}
+
+#private .tabs.contract form label {
+    margin: 1rem 1.5rem;
+    display: inline-block;
+}
+
+#private .tabs.contract form label .checkbox {
+    vertical-align: top;
+}
+
+#private .tabs.contract form label button {
+    padding-left: 1.3rem;
+    padding-right: 1.3rem;
+} 
+
+
+/* CARD */
+#private .tabs.select-card {}
+
+#private .tabs.select-card .content {
+    width: 100%;
+}
+
+#private .tabs.select-card .content > * {
+    vertical-align: top;
+}
+
+#private .tabs.select-card p {
+    font-size: 1.16rem;
+    margin: 0;
+}
+
+#private .tabs.select-card label.select {
+    margin: 2.9rem 0;
+    display: block;
+}
+
+#private .tabs.select-card label.select > * {
+    margin: 0 1.5rem;
+}
+
+#private .tabs.select-card label.select span {
+    font-size: 1.25rem;
+}
+
+#private .tabs.select-card select {
+    width: 9.7rem;
+    padding: .4rem 0;
+    cursor: pointer;
+    border: none;
+    border-bottom: 1px solid #2c2b39;
+    box-sizing: border-box;
+    background: transparent url(../img/drop-down.svg) no-repeat center right .2rem / .5rem;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+    -webkit-border-radius: 0;
+    -moz-border-radius: 0;
+    border-radius: 0;
+    font-size: 1.04rem;
+    font-family: "Circle", OpenSans, Arial, sans-serif;
+}
+
+#private .tabs.select-card fieldset {
+    width: 100%;
+    margin: 0 auto;
+    border: none;
+    padding: 1.45rem 1.95rem;
+    box-sizing: border-box;
+    box-shadow:  -1rem .79rem 2.83rem rgba(0, 0, 0, 0.05);
+    border-radius: 1.6rem;
+    background-color: #ffffff;
+}
+
+#private .tabs.select-card fieldset .logos {
+    text-align: right;
+}
+
+#private .tabs.select-card fieldset .logos .card {
+    opacity: .5;
+    width: 2.2rem;
+    background-size: 1.8rem;
+}
+
+#private .tabs.select-card fieldset .logos .card.active {
+    opacity: 1;
+}
+
+#private .tabs.select-card fieldset input {
+    width: 100%;
+    padding-bottom: .2rem;
+    border-color: rgba(44, 43, 57, .1);
+}
+
+#private .tabs.select-card fieldset > label {
+    display: block;
+    overflow: hidden;
+    padding: 1.2rem .3rem;
+}
+
+#private .tabs.select-card fieldset .split {
+    overflow: hidden;
+    padding: 1.2rem .3rem 0;
+}
+
+#private .tabs.select-card fieldset .split label,
+#private .tabs.select-card fieldset .split .date {
+    display: block;
+    overflow: hidden;
+    padding: .2rem 0;
+}
+
+#private .tabs.select-card fieldset .split label span,
+#private .tabs.select-card fieldset .split label div, 
+#private .tabs.select-card fieldset .split .date span,
+#private .tabs.select-card fieldset .split .date div {
+    display: block;
+    float: left;
+    width: 50%;
+    text-align: left;
+    box-sizing: border-box;
+    padding: .2rem;
+}
+
+#private .tabs.select-card fieldset .split label span,
+#private .tabs.select-card fieldset .split .date span {
+    font-size: .85rem;
+    line-height: 1.3;
+}
+
+#private .tabs.select-card fieldset .split .date div {
+    color: rgba(44, 43, 57, .1);
+}
+
+#private .tabs.select-card fieldset .split label input, 
+#private .tabs.select-card fieldset .split .date input {
+    padding: 0 .35rem;
+}
+
+#private .tabs.select-card fieldset .split .date input {
+    width: 2.35rem;
+}
+
+#private .tabs.select-card fieldset .split label.code div input {
+    width: 3.5rem;
+}
+
+#private .tabs.select-card .next {
+    margin-top: 3.6rem;
+}
+
+#private .tabs.select-card .next p {
+    margin-top: 1.5rem;
+}
+
+
+/* PAY */
+#private .tabs.pay {}
+
+#private .tabs.pay .content {
+    width: 100%;
+}
+
+#private .tabs.pay .content > * {
+    vertical-align: top;
+}
+
+#private .tabs.pay .about {
+    margin: 0;
+    padding: 0 0 1.5rem;
+    list-style: none;
+    display: block;
+    width: 100%;
+    border-bottom: 1px solid rgba(0, 0, 0, .1);
+    text-align: left;
+}
+
+#private .tabs.pay .about li {
+    display: block;
+    font-size: 1.16rem;
+    padding: .5rem 1rem .5rem 0;
+}
+
+#private .tabs.pay .about li > * {
+    font-size: 1.33rem;
+    display: block;
+}
+
+#private .tabs.pay .method {
+    margin-top: 4rem;
+}
+
+#private .tabs.pay .method ul {
+    margin: 0;
+    padding: 3rem 0 0;
+    display: block;
+    text-align: center;
+    list-style: none;
+}
+
+#private .tabs.pay .method ul li {
+    display: block;
+    max-width: 14.5rem;
+    padding: 2rem 1.25rem;
+    height: 7.16rem;
+    margin: 1rem auto;
+    box-shadow: -1rem .8rem 2.8rem rgba(0, 0, 0, .05);
+    border-radius: 1.625rem;
+    background-color: #FFF;
+    overflow: hidden;
+}
+
+#private .tabs.pay .method ul li .heading {
+    display: inline-block;
+    font-size: 1.1rem;
+    line-height: 2;
+    margin-bottom: 1.66rem;
+    background-position: 0 center;
+    background-repeat: no-repeat;
+}
+
+#private .tabs.pay .method ul li .heading.bank-card {
+    padding-left: 2.7rem;
+    background-image: url(../img/card.svg);
+    background-size: 2rem;
+}
+
+#private .tabs.pay .method ul li .heading.bill {
+    padding-left: 3.2rem;
+    background-image: url(../img/bill.svg);
+    background-size: 1.9rem;
+}
+
+#private .tabs.pay .method ul li .heading.mandarin {
+    padding-left: 2.75rem;
+    background-image: url(../img/mandarin.svg);
+    background-size: 1.55rem;
+}
+
+#private .tabs.pay .method ul li button {
+    padding-left: 2rem;
+    padding-right: 2rem;
+}
+
+/* HISTORY */
+#private .tabs.history {}
+
+#private .tabs.history .content {
+    width: 100%;
+}
+
+#private .tabs.history .list {
+    text-align: left;
+}
+
+#private .tabs.history .list h4 {
+    font-size: 1.4rem;
+    font-weight: 700;
+    margin: 0;
+}
+
+#private .tabs.history .list h4 span {
+    font-weight: 400;
+    font-size: 1rem;
+}
+
+#private .tabs.history .list ul {
+    margin: 0 0 1.2rem;
+    padding: 0;
+    list-style: none;
+    display: block;
+    width: 100%;
+    opacity: .7;
+}
+
+#private .tabs.history .list.current ul {
+    margin: 0 0 4.3rem;
+    opacity: 1;
+}
+
+#private .tabs.history .list ul li {
+    display: block;
+    padding-bottom: 1.2rem;
+    border-bottom: 1px solid rgba(0, 0, 0, .1);
+}
+
+#private .tabs.history .list ul li > div {
+    padding: 1.2rem .5rem 0;
+}
+
+#private .tabs.history .list ul li > div:first-child {
+    width: 2.54rem;
+}
+
+#private .tabs.history .list ul li > div .card {
+    opacity: .6;
+}
+
+#private .tabs.history .list.current ul li > div .card {
+    opacity: 1;
+}
+
+#private .tabs.history .list ul li > div strong {
+    display: inline-block;
+    padding-left: .1rem;
+}
+
+#private .tabs.history {}
+
+/* REJECT */
+.reject .content {
+    width: 100%;
+}
+
+/* POPUP */
+.hidden {
+    display: none;
+}
+
+.mfp-content .box {
+    background: #FFF;
+    width: 100%;
+    box-sizing: border-box;
+    max-width: 37rem;
+    padding: 2.8rem 3.6rem;
+    background: #FFF;
+    text-align: center;
+}
+
+.mfp-content .box .mfp-close:not([type="button"]) {
+    display: inline-block;
+}
+
+/* CANCEl */
+#cancel {
+    padding: 2.8rem 2.6rem
+}
+
+#cancel h3 {
+    margin-bottom: 3rem;
+}
+
+#cancel button,
+#cancel .cancel {
+    margin: 0 .2rem;
+    padding: .8rem 1.8rem;
+    font-size: 1.33rem;
+}
+
+/* CHECK */
+#check {}
+
+#check p {
+    margin: 2rem 0 -1rem;
+}
+
+#check label {
+    display: inline-block;
+    margin: 3.5rem
+    0;
+}
+
+#check label input {
+    padding-botom: .4rem;
+    width: 9.5rem;
+    margin-right: 1.7rem;
+}
+
+#check div button,
+#check div a {
+    padding: .9rem 1.1rem;
+    margin-bottom: .6rem;
+}
+
+#check div a {
+    display: inline-block;
+    margin-left: 1rem;
+}
+
+/* CHECKED */
+#checked {
+    text-align: center;
+}
+
+#checked .icon {
+    display: inline-block;
+    width: 3rem;
+    height: 3rem;
+    background-size: contain;
+    background-repeat: no-repeat;
+    background-position: center center;
+}
+
+#checked .icon.contract {
+    background-image: url(../img/contract.svg);
+}
+
+#checked .icon.card {
+    background-image: url(../img/card-ok.svg);
+}
+
+#checked h3 {
+    margin: 1.5rem 0;
+}
+
+/* BUBLE */
+#check .text {
+    position: relative;
+}
+
+#check .buble-open {
+    display: inline;
+    cursor: pointer;
+    color: #6a6a6a;
+    border-bottom: 1px dashed #6a6a6a;
+}
+
+#check .buble {
+    color: #000;
+    position: absolute;
+    display: none;
+    width: 90vw;
+    padding-bottom: 2rem;
+    bottom: .4rem;
+    left: 50%;
+    margin-left: -45vw;
+}
+
+#check .buble::after,
+#check .buble::before  {
+    content: "";
+    position: absolute;
+    bottom: 1.6rem;
+    left: 50%;
+    width: 1rem;
+    height: 1rem;
+    margin-left: -0.5rem;
+    transform: rotate(45deg);
+    z-index: 3;
+    background: #FFF;
+}
+
+#check .buble::before {
+    z-index: 1;
+    box-shadow: 0 0 .62rem rgba(0, 0, 0, .15);
+}
+
+#check .buble > div {
+    position: relative;
+    z-index: 2;
+    width: 100%;
+    background: #FFF;
+    padding: 1.25rem;
+    box-sizing: border-box;
+    box-shadow: 0 0 .62rem rgba(0, 0, 0, .15);
+    text-align: left;
+}
+
+#check .buble .heading {
+    font-size: 1.08;
+}
+
+#check .buble ol {
+    margin: 1.3rem 0 1rem;
+    padding: 0;
+    list-style-position: inside;
+    font-size: 1rem;
+    line-height: 1.45;
+}
+
+#check .buble ol li {
+    margin: 1rem 0;
+}
+
+/* VALIDATION */
+input.error {
+    border-color: red!important;
+}
+
+span.error {
+    display: none!important;
+}
+
+/* PLUP */
+label div.plup{
+    position: relative;
+    display: inline-block;
+}
+
+label div.plup .floating-label,
+label div.plup input:not(:focus) ~ .floating-label{
+    position: absolute;
+    pointer-events: none;
+    top: .2rem;
+    left: 0;
+    transition: 0.2s ease all;
+}
+
+label div.plup input:focus ~ .floating-label,
+label div.plup input.sup ~ .floating-label {
+    top: -1.6rem;
+    opacity: 1;
+    font-size: .85rem;
+}
+
+label div.plup input:focus ~ .floating-label {
+    opacity: 1;
+}
+
+label div.plup input.sup:not(:focus) ~ .floating-label {
+    opacity: .6;
+}
+
+.message_error {
+    display: block !important;
+    color: red;
+}

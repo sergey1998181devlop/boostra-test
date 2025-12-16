@@ -1,0 +1,5 @@
+[deploy]
+boostra-prod ansible_host=51.250.51.126 ansible_user='{{ user }}' ansible_ssh_pass='{{ pass }}'
+
+[dlmnt]
+boostra-development ansible_host=51.250.111.252 ansible_user='{{ userdev }}' ansible_ssh_pass='{{ passdev }}'

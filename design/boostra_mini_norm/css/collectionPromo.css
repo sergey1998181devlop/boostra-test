@@ -1,0 +1,87 @@
+#collectionPromo {
+    border-radius: 20px;
+    width: 420px;
+    background: #fff;
+    margin: 0 auto;
+    padding: 20px;
+    text-align: center;
+}
+@media only screen and (min-device-width: 320px) and (max-device-width: 568px) and (-webkit-min-device-pixel-ratio: 2) {
+    #collectionPromo {
+        width: 90%;
+        font-size: 24px;
+    }
+}
+@media only screen and (min-device-width: 375px) and (max-device-width: 667px) and (-webkit-min-device-pixel-ratio: 2) {
+    #collectionPromo {
+        width: 90%;
+        font-size: 24px;
+    }
+}
+@media only screen and (min-device-width: 414px) and (max-device-width: 736px) and (-webkit-min-device-pixel-ratio: 3) {
+    #collectionPromo {
+        width: 90%;
+        font-size: 24px;
+    }
+}
+@media only screen and (min-device-width: 375px) and (max-device-width: 812px) and (-webkit-min-device-pixel-ratio: 3) {
+    #collectionPromo {
+        width: 90%;
+        font-size: 24px;
+    }
+}
+@media only screen and (min-device-width: 414px) and (max-device-height: 896px) and (-webkit-device-pixel-ratio: 3){
+    #collectionPromo {
+        width: 90%;
+        font-size: 24px;
+    }
+}
+@media only screen and (min-device-width: 390px) and (max-device-height: 844px) and (-webkit-device-pixel-ratio: 3){
+    #collectionPromo {
+        width: 90%;
+        font-size: 24px;
+    }
+}
+@media only screen and (min-device-width: 428px) and (max-device-height: 926px) and (-webkit-device-pixel-ratio: 3){
+    #collectionPromo {
+        width: 90%;
+        font-size: 24px;
+    }
+}
+@media only screen and (min-device-width: 320px) and (max-device-height: 640px) and (-webkit-device-pixel-ratio: 2){
+    #collectionPromo {
+        width: 90%;
+        font-size: 24px;
+    }
+}
+@media only screen and (min-device-width: 320px) and (max-device-height: 640px) and (-webkit-device-pixel-ratio: 3){
+    #collectionPromo {
+        width: 90%;
+        font-size: 24px;
+    }
+}
+@media only screen and (min-device-width: 360px) and (max-device-height: 640px) and (-webkit-device-pixel-ratio: 3){
+    #collectionPromo {
+        width: 90%;
+        font-size: 24px;
+    }
+}
+
+#collectionPromo .modal_title {
+    font-size: 24px;
+    font-weight: bold;
+    margin-bottom: 30px;
+}
+#collectionPromo .modal_title a {
+    float: right;
+}
+.no_bold {
+    font-weight: normal;
+}
+#collectionPromo h3 {
+    line-height: 30px;
+}
+.new_amount {
+    font-size: 35px;
+    color: #ff7700;
+}

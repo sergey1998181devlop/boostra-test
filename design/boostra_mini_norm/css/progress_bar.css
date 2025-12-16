@@ -1,0 +1,285 @@
+/* Палитра и системные константы */
+:root {
+    /* Общие цвета */
+    --color-white: #fff;
+    --color-black: #000;
+    --color-text-default: #212529;
+    --color-gray-100: #F6F7F9; /* фоновая подсветка */
+    --color-gray-200: #E9ECEF; /* светлая граница/трек */
+    --color-gray-350: #C9CED6; /* иконка info */
+    --color-gray-600: #6C757D; /* вторичный текст */
+    --color-gray-650: #9399A3; /* метки/тики */
+
+    /* Цвета "бакетов" просрочки */
+    --bucket-color-1-3:   #038AEE; /* 1–3 */
+    --bucket-color-4-10:  #FFD809; /* 4–10 */
+    --bucket-color-11-30: #FF5F18; /* 11–30 */
+    --bucket-color-31plus:#212529; /* 31+ */
+
+    /* Размеры и отступы */
+    --space-2: 8px;
+    --space-3: 12px;
+    --space-4: 15px;
+    --space-5: 18px;
+    --space-6: 22px;
+    --radius-s: 8px;
+
+    --slider-height: 7px;
+    --slider-thumb: 18px;
+
+    --donut-size: 56px;
+
+    /* Эффекты */
+    --shadow-outline: 0 0 0 2px rgba(0, 0, 0, .08);
+}
+
+/* Компонент и его дефолты (могут переопределяться снаружи) */
+.overdue-progress {
+    /* Текущий активный цвет бакета и прогресс */
+    --bucket-active-color: var(--bucket-color-1-3);
+    --progress: 80%;
+
+    margin-top: var(--space-3);
+    padding: var(--space-3) 0;
+    overflow: hidden;
+}
+
+.overdue-progress__header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.overdue-progress__title {
+    font-weight: 600;
+}
+
+.overdue-progress__info {
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    border: 1px solid var(--color-gray-350);
+    background: var(--color-white);
+    line-height: 20px;
+    font-weight: 700;
+    font-size: 12px;
+    cursor: pointer;
+    padding: 0 !important;
+    flex: 0 0 22px;
+}
+
+.overdue-progress__info:hover {
+    background: var(--color-white) !important;
+}
+
+.overdue-progress__info.bucket-1-3 {
+    border: 2px solid var(--bucket-color-1-3);
+    color: var(--bucket-color-1-3);
+}
+
+.overdue-progress__info.bucket-4-10 {
+    border: 2px solid var(--bucket-color-4-10);
+    color: var(--bucket-color-4-10);
+}
+
+.overdue-progress__info.bucket-11-30 {
+    border: 2px solid var(--bucket-color-11-30);
+    color: var(--bucket-color-11-30);
+}
+
+.overdue-progress__info.bucket-31plus {
+    border: 2px solid var(--bucket-color-31plus);
+    color: var(--bucket-color-31plus);
+}
+
+.overdue-progress__message {
+    margin: 8px 0 var(--space-3);
+    font-size: 12px;
+    color: var(--color-gray-600);
+}
+
+.overdue-progress__slider-wrap {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+}
+
+.overdue-progress__slider {
+    flex: 1;
+    -webkit-appearance: none;
+    appearance: none;
+    height: var(--slider-height);
+    border-radius: 2px;
+    outline: none;
+    border-bottom: none !important;
+
+    /* цветная часть трека + базовый трек */
+    background:
+            linear-gradient(to right, var(--bucket-active-color) 0 0) no-repeat,
+            var(--color-gray-200);
+    background-size: var(--progress) 100%;
+}
+
+.overdue-progress__slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: var(--slider-thumb);
+    height: var(--slider-thumb);
+    border-radius: 50%;
+    background: var(--bucket-active-color);
+    border: 2px solid var(--color-white);
+    box-shadow: 0 0 0 2px rgba(0, 0, 0, .08);
+    cursor: pointer;
+    margin-top: 12px;
+}
+
+.overdue-progress__slider::-webkit-slider-runnable-track {
+    height: 7px;
+    border-radius: 15px
+}
+
+.overdue-progress__slider::-webkit-slider-container {
+    height: 7px;
+    border-radius: 15px
+}
+
+.overdue-progress__slider::-moz-range-track {
+    height: 7px;
+    border-radius: 15px
+}
+
+.overdue-progress__slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+    margin-top: -15px;
+    background: var(--bucket-active-color);
+    border: 6px solid #ffffff;
+    box-shadow: 0 0 16px #00000029;
+    border-radius: 50%;
+    width: 36px;
+    height: 36px;
+    z-index: 100;
+}
+
+/* Фокусные состояния для доступности */
+.overdue-progress__slider:focus-visible,
+.overdue-progress__info:focus-visible,
+.overdue-progress__donut:focus-visible {
+    outline: 2px solid var(--bucket-active-color);
+    outline-offset: 2px;
+}
+
+.overdue-progress__tick{
+    position:absolute;
+    transform: translateX(-50%);  /* центрируем подпись под «точкой» */
+    font-size:14px;
+    color:var(--color-gray-650);
+    white-space:nowrap;
+}
+
+.overdue-progress__ticks {
+    position: absolute;
+    left: 0;
+    right: calc(var(--donut-size) + var(--space-3) + 22px + var(--space-3));
+    bottom: 6px;
+    z-index: 1;
+    pointer-events: none;
+}
+
+.overdue-progress__ticks span{ transform: translateX(-2px); } /* лёгкая «подгонка» как на макете */
+.overdue-progress__ticks span:first-child{ transform:none; }   /* у 1 — ровно под началом */
+
+.overdue-progress__ticks span:not(:first-child):before {
+    content: "";
+    position: absolute;
+    left: 50%;
+    width: 1.5px;
+    height: 17px;
+    background: #E6E6E6;
+    transform: translateX(-50%);
+    top: -31px;
+}
+
+.overdue-progress__donut {
+    width: var(--donut-size);
+    height: var(--donut-size);
+    border-radius: 50%;
+    border: none;
+    cursor: pointer;
+    position: relative;
+
+    /* Внутренняя дырка + прогресс по кругу */
+    background:
+            radial-gradient(var(--color-white) 62%, transparent 63%),
+            conic-gradient(var(--bucket-active-color) var(--progress), var(--color-gray-200) 0) !important;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 0 0 1px var(--color-gray-200) inset;
+    flex: 0 0 var(--donut-size);
+}
+
+.overdue-progress__donut-value {
+    font-weight: 600;
+    font-size: 12px;
+    color: var(--color-black);
+}
+
+.overdue-progress__tooltip {
+    margin-top: var(--space-5);
+    padding: var(--space-2) 10px;
+    border-radius: var(--radius-s);
+    font-size: 12px;
+    line-height: 1.3;
+    color: var(--color-text-default);
+    background: var(--color-gray-100);
+    border: 1px solid var(--color-gray-200);
+    max-width: 500px;
+}
+
+/* Установка активного цвета по выбранному бакету */
+.overdue-progress.bucket-1-3    { --bucket-active-color: var(--bucket-color-1-3); }
+.overdue-progress.bucket-4-10   { --bucket-active-color: var(--bucket-color-4-10); }
+.overdue-progress.bucket-11-30  { --bucket-active-color: var(--bucket-color-11-30); }
+.overdue-progress.bucket-31plus { --bucket-active-color: var(--bucket-color-31plus); }
+
+.overdue-progress__slider-wrap {
+    width: 100%;
+    max-width: 500px;
+}
+
+.overdue-progress__range {
+    flex: 1 1 auto;
+    min-width: 0;
+}
+
+.overdue-progress__range input[type="range"] {
+    position: relative;
+    z-index: 2;
+    width: 100%;
+}
+
+.overdue-progress__slider {
+    height: var(--slider-height);
+    padding-bottom: 0 !important;
+}
+
+@media (max-width: 420px){
+    .overdue-progress{ --donut-size: 48px; --space-3: 10px; }
+    .overdue-progress__slider-wrap, .overdue-progress__tooltip {
+        max-width: 320px;
+    }
+}
+
+@media (max-width: 480px){
+    .overdue-progress__slider-wrap{
+        padding-bottom: 12px;
+    }
+
+    .overdue-progress__ticks span:not(:first-child):before {
+        top: -39px;
+    }
+}

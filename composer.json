@@ -1,0 +1,45 @@
+{
+  "require": {
+    "php": "<=7.4.33",
+    "ext-iconv": "*",
+    "ext-intl": "*",
+    "ext-json": "*",
+    "ext-mbstring": "*",
+    "ext-soap": "*",
+    "setasign/fpdf": "1.8.*",
+    "setasign/fpdi": "^2.0",
+    "predis/predis": "^1.1",
+    "tecnickcom/tcpdf": "^6.4",
+    "yoomoney/yookassa-sdk-php": "^2.4",
+    "phpmailer/phpmailer": "^6.6",
+    "ext-curl": "*",
+    "ext-zip": "*",
+    "dompdf/dompdf": "^2.0",
+    "aws/aws-sdk-php": "^3.303",
+    "firebase/php-jwt": "6.10.0",
+    "vlucas/phpdotenv": "^5.6",
+    "monolog/monolog": "^2.10",
+    "opensearch-project/opensearch-php": "^2.3"
+  },
+  "autoload": {
+    "files": [
+      "app/Core/Helpers/BaseHelper.php",
+      "app/Core/Helpers/ResponseHelper.php",
+      "app/Core/Helpers/LoggingHelper.php"
+    ],
+    "psr-4": {
+      "Messengers\\": "rest_api/Messengers//",
+      "User\\": "rest_api/User//",
+      "ADDONS\\": "api/addons//",
+      "App\\": "app/"
+    }
+  },
+  "require-dev": {
+    "phpunit/phpunit": "^9.6.19",
+    "ext-mysqli": "*",
+    "mockery/mockery": "^1.6"
+  },
+  "config": {
+    "platform-check": false
+  }
+}

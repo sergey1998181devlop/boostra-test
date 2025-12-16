@@ -1,0 +1,36 @@
+/****min-width****/
+@media screen and (min-width: 1400px) {
+  .container {
+    max-width: 1160px;
+  }
+}
+@media screen and (min-width: 768px) {
+  #calculator_wrapper {
+    max-width: 380px;
+  }
+}
+@media screen and (min-width: 576px) {
+  #modal_phone .modal-dialog {
+    max-width: 320px;
+  }
+}
+/****max-width****/
+@media screen and (max-width: 767.98px) {
+  .faq [role=button] {
+    font-size: 0.875rem;
+  }
+  .lh-md-1 {
+    line-height: 1;
+  }
+  .h6-md {
+    font-size: 1rem;
+  }
+  .fs-md-small {
+    font-size: 0.875rem;
+  }
+  .ion_slider_wrapper .irs--round .irs-handle {
+    width: 25px;
+    height: 25px;
+    top: 10px;
+  }
+}/*# sourceMappingURL=media.css.map */

@@ -1,0 +1,49 @@
+.download-mobile-banner {
+  display: none!important;
+}
+@media (max-width: 600px) {
+.download-mobile-banner {
+    display: block!important;
+    height: 220px;
+    position: relative;
+    background-color: #E5F3FF;
+    z-index: 9;
+    box-shadow: none;
+        background-image: url(/design//boostra_mini_norm/assets/image/rustoreBannerBg.svg);
+        background-repeat: no-repeat;
+        margin: 40px 0;
+        background-position: center right;
+    }
+.download-mobile-banner__img {
+        height: auto;
+        background: none;
+        margin: 0px auto 50px;
+    }
+.download-mobile-banner__img_place_lk {
+        margin: 0px auto 0px;
+    }
+.download-mobile-banner_place_lk {
+        background-color: #038AEE;
+        margin: 0;
+    }.download-mobile-banner__wrapperLink {
+text-decoration: none;
+display: flex;
+align-items: flex-start;
+justify-content: flex-start;
+width: 100%;
+height: 100%;
+padding: 22px 25px;
+}
+.download-mobile-banner_place_lk_img {
+max-width: 400px;
+height: auto;
+margin: 15px auto 0px;
+background: none;
+}
+.download-mobile-banner__wrapperLink_img {
+padding: 0;
+}
+.mobileBanner_hidden {
+display: none!important;
+}
+}

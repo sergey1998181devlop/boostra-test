@@ -1,0 +1,30 @@
+version: "3.7"
+
+services:
+  app:
+    image: boostra-site
+    hostname: boostra-site
+    container_name: boostra-site
+    build:
+      context: ./
+      dockerfile: ./.docker/images/Dockerfile
+    command: >
+      sh -c "
+      composer install --no-dev --optimize-autoloader &&
+      chown -R www-data:www-data vendor &&
+      supervisord -n -c /etc/supervisor/supervisord.conf
+      "
+    volumes:
+      - ./:/var/www/html
+    ports:
+      - 80:80
+
+  redis:
+    container_name: boostra-site-redis
+    image: redis:7.0.7
+    restart: unless-stopped
+    ports:
+        - "6379:6379"
+    environment:
+        - ALLOW_EMPTY_PASSWORD=yes
+

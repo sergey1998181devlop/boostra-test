@@ -1,0 +1,211 @@
+:root{
+    --blue:#0997FF;
+    --even:#FF9335;  /* чётные */
+    --odd:#FFD809;   /* нечётные */
+    --ring:#ECECF3;
+    --text:#fff;
+    --fg:#1c1c28;
+    --wheel-fast-period:320ms;
+}
+
+.wheel { --size: min(92vw, 480px); --blue:#1e88e5; --blue-2:#0d6efd; --gray:#e8edf2; --gray-2:#f4f7fa;
+    --orange:#ffa726; --yellow:#ffd54f; --hub:#ff8f00; --dark:#2e3a47; --text:#ffffff; }
+
+.wheel { display:flex; flex-direction:column; align-items:center; gap:16px; }
+.wheel__stage { width:var(--size); }
+.wheel__svg { width:100%; height:auto; display:block; overflow:visible; }
+
+.wheel__rim { fill:none; stroke:var(--gray); stroke-width:20; }
+.wheel__rim-inner { fill:none; stroke:var(--gray-2); stroke-width:12; }
+
+#wheelRotor { transform-box: view-box; transform-origin: 50% 50%; transition: transform 4s cubic-bezier(0.1, 0.57, 0.1, 1); will-change: transform; }
+
+#wheelRotor.fast-spin { animation: wheel-fast-spin var(--wheel-fast-period, 320ms) linear infinite; }
+
+.wheel__rotor .sector-a { fill: var(--yellow); }
+.wheel__rotor .sector-b { fill: var(--orange); }
+
+.wheel__hub { fill:#ffa000; stroke:var(--blue); stroke-width:4; }
+.wheel__hub-fill { fill:#ffa000; }
+
+.wheel__rim-dots circle { fill:var(--orange); }
+.wheel__rim-dots circle.alt { fill:var(--yellow); }
+
+.wheel__pointer-stroke { fill:none; stroke:var(--blue); stroke-width:4; stroke-linecap:round; }
+.wheel__pointer-drop { fill:var(--blue); }
+
+.wheel__label { font: 600 12px/1.1 "Montserrat", "Open Sans", system-ui; fill:#fff; text-anchor:middle; }
+.wheel__icon { transform-box: fill-box; transform-origin: 50% 50%; }
+
+.wheel__btn { display:inline-flex; align-items:center; justify-content:center; padding:.75rem 1.25rem;
+    background:#ff7a00; color:#fff; border:0; border-radius:.5rem; cursor:pointer; }
+.wheel__btn:disabled { opacity:.5; cursor:not-allowed; }
+
+.wheel__result { min-height: 1.2em; text-align:center; color:var(--dark); }
+
+@keyframes wheel-fast-spin{
+    to { transform: rotate(360deg); }
+}
+
+@media (max-width: 420px){
+    .wheel__label { font-size:10px; }
+}
+
+@supports not (transform-box: view-box){
+    #wheelRotor {
+        transform-origin: 50% 50%;
+        transform-box: fill-box;
+    }
+}
+
+/*.wheel-modal {*/
+/*    display: none;*/
+/*    position: fixed;*/
+/*    z-index: 9999;*/
+/*    left: 0;*/
+/*    top: 0;*/
+/*    width: 100%;*/
+/*    height: 100%;*/
+/*    background-color: rgba(0, 0, 0, 0.4);*/
+/*}*/
+
+/* === MVP modal (как на макете) === */
+body.wheel-modal-open { overflow: hidden; }               /* блокируем фон при открытии */
+
+#wheel-mvp-modal.wheel-modal{
+    position: fixed;
+    inset: 0;
+    z-index: 10000;
+    display: none;                                          /* откроем классом .is-open */
+    align-items: center; justify-content: center;
+    padding: 16px;
+    background: rgba(17, 24, 39, .45);                      /* затемнение */
+}
+
+#wheel-mvp-modal.wheel-modal.is-open{ display: flex; }    /* показ модалки */
+
+.wheel-modal__box{
+    width: min(92vw, 420px);
+    background: #fff;
+    border-radius: 16px;
+    padding: 28px 24px;
+    box-shadow:
+            0 30px 60px rgba(15, 23, 42, .18),
+            0  6px 18px rgba(15, 23, 42, .12);
+    border: 1px solid rgba(6, 81, 204, .08);
+    animation: wheel-modal-pop .26s cubic-bezier(.2,.8,0,1);
+    text-align: center;
+}
+
+/* Заголовок: резерв под иконки по краям */
+.wheel-modal__title{
+    position: relative;
+    padding: 0 44px;
+    margin: 4px 0 14px;
+    text-align: center;
+    color: #1f2a37;
+    font: 800 24px/1.25 "Montserrat","Inter",system-ui;
+    letter-spacing: .2px;
+}
+
+/* Эмодзи по сторонам, всегда внутри заголовка */
+.wheel-modal__title::before,
+.wheel-modal__title::after {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 28px;
+    line-height: 1;
+    pointer-events: none;
+}
+.wheel-modal__title::before{
+    content: "🧑‍🔧";
+    left: 12px;
+}
+.wheel-modal__title::after{
+    content: "🛠️";
+    right: 12px;
+}
+
+.wheel-modal__text{
+    text-align: center;
+    color: #111827;
+    font: 500 18px/1.5 "Inter",system-ui;
+    margin: 0 0 22px;
+}
+
+/* мелкая адаптация */
+@media (max-width: 380px){
+    .wheel-modal__title{ font-size: 20px; }
+    .wheel-modal__text{ font-size: 16px; }
+}
+
+@keyframes wheel-modal-pop{
+    from{ opacity: 0; transform: translateY(6px) scale(.98); }
+    to  { opacity: 1; transform: translateY(0)   scale(1); }
+}
+
+.wheel__head {
+    width: 100%;
+    text-align: center;
+    margin-top: 20px;
+}
+
+#wheelResult{
+    margin-top: 12px;
+    text-align: center;
+    color: #111827;
+    font: 500 16px/1.5 "Inter", system-ui;
+    min-height: 44px; /* чтобы блок не "прыгал" при смене текста */
+}
+
+#wheelResult.is-win .wheel__result-congrats{
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 12px;
+    border-radius: 999px;
+    background: #eff6ff;          /* светло-голубой фон */
+    border: 1px solid #c7ddff;     /* деликатная кайма */
+    margin-bottom: 6px;
+}
+
+#wheelResult.is-win .wheel__result-ico{
+    font-size: 18px;
+    line-height: 1;
+}
+
+#wheelResult.is-win .wheel__result-title{
+    font: 800 16px/1 "Inter", system-ui;
+    color: #0f172a; /* slate-900 */
+}
+
+#wheelResult .wheel__result-text{
+    margin-top: 6px;
+    font-weight: 600;
+}
+
+.wheel__actions {
+    text-align: center;
+    margin-top: 20px;
+}
+
+.wheel-wrap {
+    max-width: 600px;
+    margin-top: 30px;
+}
+
+@media (max-width: 380px){
+    .wheel-modal__title{ padding: 0 36px; font-size: 20px; }
+    .wheel-modal__title::before,
+    .wheel-modal__title::after{ font-size: 24px; }
+    .wheel-wrap { max-width: 380px; margin-top: 20px; }
+    .wheel-modal__box { width: min(80vw, 300px); }
+    #wheel-mvp-modal.wheel-modal { padding: 0; }
+}
+@media (max-width: 320px){
+    .wheel-modal__title{ padding: 0 22px; }
+    .wheel-modal__title::after{ display: none; }
+    .wheel-wrap { max-width: 320px; margin-top: 15px; }
+    .wheel-modal__box { width: min(80vw, 250px); }
+}

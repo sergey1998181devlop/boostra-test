@@ -1,0 +1,38 @@
+variables:
+  DOCKER_TLS_CERTDIR: ""
+  DOCKER_REGISTRY: cr.yandex/crpbmo0llrf3kifjdq43
+#  CONTAINER_BASE_IMAGE: ${DOCKER_REGISTRY}/base-boostra-site-new:latest
+  CONTAINER_IMAGE_APP: ${DOCKER_REGISTRY}/site:${CI_COMMIT_SHA}
+  CONTAINER_IMAGE_APP_LATEST: ${DOCKER_REGISTRY}/site:latest
+  CONTAINER_IMAGE_SITE_STAGE: ${DOCKER_REGISTRY}/site-stage:${CI_COMMIT_SHA}
+  CONTAINER_IMAGE_SITE_STAGE_LATEST: ${DOCKER_REGISTRY}/site-stage:latest
+  NODE_VERSION: 12.22.8
+  DOCKER_VERSION: 20.10.17
+  APP_VERSION: ${CI_COMMIT_SHORT_SHA}
+
+include:
+  - local: ".deploy/aqa-autotests.yml"
+#  - local: ".deploy/build-base-image.yml"
+  - local: ".deploy/build-image-develop.yml"
+  - local: ".deploy/build-image-prod.yml"
+  - local: ".deploy/deploy-dev.yml"
+  - local: ".deploy/deploy-prod.yml"
+  - template: Security/SAST.gitlab-ci.yml
+
+stages:
+  - build-app
+  - deploy-swarm
+  # - deploy-prod
+  # - build-base
+  - build-app-dev
+  - deploy-swarm-dev
+  - aqa-autotests
+  - sast-test
+
+sast:
+  stage: sast-test
+  allow_failure: false
+  tags:
+    - develop-deploy
+  variables:
+    GIT_DEPTH: 0

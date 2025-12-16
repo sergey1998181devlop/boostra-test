@@ -1,0 +1,622 @@
+@media all and (min-width: 450px){
+    /* UNIVERSAL */
+    .wrap {
+        padding: 1.85rem 2.67rem;
+    }
+
+        h1 {
+            margin-top: 2rem;
+        }
+
+        #response-nav .close:before,
+        #response-nav .close:after {
+            top: 2.6rem;
+        }
+    /* HEADER */
+    header ul li.logo .about {
+        display: inline;
+    }
+
+        header nav > ul > li .response-open {
+            top: 2.6rem;
+        }
+
+    /* CALCULATOR */
+    #calculator .slider-box {
+        margin: 3rem 0 4rem;
+    }
+
+        #calculator .slider-box > div {
+            width: 23rem;
+        }
+
+    /* PRIVATE */
+    
+    #private .tabs .nav ul li a {
+        padding: 1.3rem 2.3rem;
+    }
+
+    /* LK */
+
+    #private .tabs.lk .about > * {
+        margin-right: 5rem;
+    }
+
+    #private .tabs.lk .split ul:first-child {
+        margin-right: 12rem;
+    }
+
+        #private .tabs.lk .split ul li > div {
+            width: auto;
+        }
+
+        #private .tabs.lk .split ul li > div:last-child {
+            width: 10rem;
+        }
+
+    /* PAY */
+    #private .tabs.pay .method ul li {
+        display: block;
+        width: 14.5rem;
+        padding: 2rem 2.25rem;
+        margin: 1rem auto;
+    }
+
+        #private .tabs.pay .about li {
+            display: inline-block;
+        }
+
+            #private .tabs.pay .about li > * {
+                display: inline;
+                padding-left: .5rem;
+            }
+
+    #private .tabs.pay .method ul li .heading {
+        font-size: 1.33rem;
+    }
+
+        #private .tabs.pay .method ul li .heading.bank-card {
+            padding-left: 3.7rem;
+            background-size: 3rem;
+        }
+
+        #private .tabs.pay .method ul li .heading.bill {
+            padding-left: 4.2rem;
+            background-size: 2.9rem;
+        }
+
+        #private .tabs.pay .method ul li .heading.mandarin {
+            padding-left: 3.75rem;
+            background-size: 2.55rem;
+        }
+}
+
+@media all and (min-width: 600px){
+    /* UNIVERSAL */
+
+    input, textarea {
+        font-size: 1rem;
+    }
+
+    /* WORKSHEET */
+        .box {
+            width: 60%;
+            margin: 5rem auto 2rem;
+        }
+
+    /* INFO */
+        #info .box {
+            width: 90%;
+        }
+
+            #demands ul {
+                display: flex;
+                justify-content: space-between;
+            }
+
+                #demands ul li {
+                    text-align: left;
+                    margin: 0;
+                }
+
+                #demands ul li .icon {
+                    background-postition: bottom left;
+                }
+
+    /* LOGIN */
+        #login .wrapper {
+            box-sizing: content-box;
+            width: 29.6rem;
+        }
+
+    /* HISTORY */
+    #private .tabs.history .list {
+        overflow: hidden;
+    }
+
+        #private .tabs.history .list ul {
+            display: table;
+            width: 85%;
+        }
+
+            #private .tabs.history .list ul li {
+                border: none;
+                padding: 0;
+                display: table-row;
+                overflow: hidden;
+            }
+
+                #private .tabs.history .list ul li > div {
+                    float: none;
+                    height: auto;
+                    display: table-cell;
+                    padding: 2rem .5rem 1.1rem;
+                    vertical-align: middle;
+                    border-bottom: 1px solid rgba(0, 0, 0, .1);
+                }
+
+                #private .tabs.history .list ul li > div:first-child {
+                    width: 2.54rem;
+                }
+
+                #private .tabs.history .list ul li > div:last-child {
+                    display: table-cell;
+                    width: 20%;
+                    text-align: right;
+                }
+
+                #private .tabs.history .list ul li > div strong {
+                    display: block;
+                    padding: none;
+                }
+
+    /* LK */
+    #private .tabs.lk .action {
+        text-align: left;
+    }
+
+        #private .tabs.lk .action a {
+            margin-left: 0;
+        }
+    /* CONTRACT */
+
+
+        #private .tabs.contract .scrollbar {
+            width: 80%;
+            margin: 2rem auto;
+            position: relative;
+        }
+
+            #private .tabs.contract .scrollbar .shadow {
+                box-shadow: 0 0 2.8rem rgba(0, 0, 0, 0.05);
+                box-sizing: border-box;
+                width: 95%;
+                margin: 0 auto;
+                padding: 2.3rem 5rem;
+            }
+
+        #private .tabs.contract .scrollbar-inner {
+            height: 30.5rem;
+        }
+
+        #private .tabs.contract .scrollbar > .scroll-element div {
+            display: block;
+        }
+
+        #private .tabs.contract .scrollbar > .scroll-element {
+            top: .7rem;
+        }
+
+        #private .tabs.contract .scrollbar > .scroll-element .scroll-element_track {
+            background: url(../img/dot-gray-down.svg) repeat-y center 0;
+            background-size: .3rem;
+        }
+
+        #private .tabs.contract .scrollbar > .scroll-element .scroll-bar {
+            background: url(../img/dot-down.svg) repeat-y center 0;
+            background-size: .3rem;
+        }
+
+    /* CARD */
+    
+    #private .tabs.select-card fieldset {
+        width: 37rem;
+        padding: 1.45rem 1.9rem;
+    }
+
+        #private .tabs.select-card fieldset > label input {
+            width: 100%;
+            font-size: 1rem;   
+        }
+
+        #private .tabs.select-card fieldset .split label,
+        #private .tabs.select-card fieldset .split .date {
+            display: block;
+            width: 14rem;
+            float: left;
+            padding: .2rem;
+            box-sizing: birder-box;
+        }
+
+            #private .tabs.select-card fieldset .split .code {
+                float: right;
+            }
+
+            #private .tabs.select-card fieldset .split input {
+                font-size: .91rem;
+                padding: .2rem .625rem;
+            }
+
+            #private .tabs.select-card fieldset .split label.code span {
+                width: 60%;
+            }
+
+            #private .tabs.select-card fieldset .split label.code div {
+                width: 40%;
+                text-align: right;
+            } 
+            
+                #private .tabs.select-card  fieldset .split .date input {
+                    margin: 0 .2rem;
+                }
+    /* POPUPS */
+        #check, #checked {
+        }
+
+    /* BUBLE */
+    #check .buble-open {
+        position: relative;
+    }
+
+        #check .buble {
+            width: 28rem;
+            margin: 0;
+            bottom: 0;
+            left: 0;
+        }
+
+        #check .buble::after,
+        #check .buble::before  {
+            content: "";
+            position: absolute;
+            bottom: 1.6rem;
+            left: 10%;
+        }
+}
+
+@media all and (min-width: 800px){
+    html, body {
+        font-size: 13px;
+    }
+
+    /* SECTION */
+    section > div {
+        padding: 1rem 0;
+    }
+
+        /* CALCULATOR */
+        #calculator .irs-min {
+            left: -5.5rem;
+        }
+
+        #calculator .irs-max {
+            right: -5.5rem;
+        }
+
+            #calculator .payment-methods img {
+                height: .85rem;
+            }
+
+            #calculator .payment-methods img:first-child {
+                height: .55rem;
+            }
+    /* FOOTER */
+    footer {
+        font-size: .85rem;
+    }
+
+        footer > ul > li {
+            text-align: center;
+            width: 33.33%;
+            float: left;
+            padding: 0;
+        }
+
+            footer > ul > li:first-child {
+                text-align: left;
+                display: block;
+            }
+
+            footer > ul > li:last-child {
+                text-align: right;
+            }
+
+
+    /* WORKSHEET */
+        .box {
+            width: 60%;
+            margin: 5rem auto 1.4rem;
+        }
+
+        #worksheet .progress {
+            width: calc(100% - 25rem);
+        }
+
+        #worksheet .progress .irs-min {
+            left: -10rem;
+        }
+
+        #worksheet .progress .irs-max {
+            right: -10rem;
+        }
+
+        #worksheet #steps fieldset label {
+            width: 33.33%;
+            margin: 2.5rem 0;
+            padding: 0 1.3rem;
+        }
+
+        #worksheet #steps fieldset span.title {
+            padding: 0 1.3rem;
+        }
+
+            #worksheet #steps fieldset label .floating-label,
+            #worksheet #steps fieldset label input.sup:not(:focus):valid ~ .floating-label{
+                        left: 1.3rem;
+            }
+
+    /* INFO */
+
+        #questions ul {
+            vertical-align: top;
+            display: inline-block;
+            width: 42%;
+            margin-right: 7%;
+        }
+
+        #questions ul:nth-child(2n + 1) {
+            margin: 0 0 0 8%;
+        }
+    
+
+        #docs ul li {
+            display: inline-block;
+            width: 45%;
+            margin-right: 4%;
+            padding: 1rem 0;
+        }
+
+        #docs ul li:nth-child(2n) {
+            margin: 0 0 0 4%;
+        }
+
+    /* LK */
+    #private .tabs.lk .split ul {
+        width: 40%;
+    }
+
+    /* HISTORY */
+        #private .tabs.history .list ul li > div strong {
+            display: inline-block;
+            padding-left: .3rem;
+        }
+
+        #private .tabs.history .list ul li > div:nth-child(5) {
+            text-align: right;
+            padding-right: 0;
+        }
+
+            #private .tabs.history .list ul li > div:nth-child(5) strong {
+                width: 4.3rem;
+                text-align: left;
+            }
+}
+
+@media all and (min-width: 930px){
+    /* BODY BG */
+    body.boy {
+        background-size: 25%;
+    }
+
+        body.boy.wait {
+            background-size: 30%;
+        }
+
+    body.girl {
+        background-size: 20%;
+    }
+
+        body.girl.wait {
+            background-size: 25%;
+        }
+
+    body.girl.main {
+        background-image: url(../img/girl.svg);
+    }
+
+    body.boy.main {
+        background-image: url(../img/boy.svg);
+    }
+
+    body.boy.wait {
+        background-image: url(../img/wait.boy.svg);
+    }
+
+    body.girl.wait {
+        background-image: url(../img/wait.girl.svg);
+        background-position: right 5% bottom 5%;
+    }
+
+    /* HEADER */
+    header nav > ul > li ul {
+        display: table;
+    }
+
+    header nav > ul > li .response-open {
+        display: none;
+    }
+
+    /* INFO */
+        #info .box {
+            width: 51%;
+        }
+
+    /* PRIVATE */
+    
+    #private .tabs {
+        min-height: 11rem;
+        background-position: right 20% center;
+    }
+
+    .girl #private .tabs {
+        background-size: 20%;
+    }
+
+    .boy #private .tabs.wait {
+        background-image: url(../img/wait.boy.svg);
+    }
+
+    .girl #private .tabs.wait {
+        background-image: url(../img/wait.girl.svg);
+    }
+
+    .girl #private .tabs.approved {
+        background-image: url(../img/approved.girl.svg);
+    }
+
+    .boy #private .tabs.approved {
+        background-image: url(../img/approved.boy.svg);
+    }
+
+    .boy #private .tabs.calc {
+        background-image: url(../img/boy.svg);
+    }
+
+    .girl #private .tabs.calc {
+        background-image: url(../img/girl.svg);
+    }
+
+    .wait .content,
+    .approved .content,
+    .calc .content {
+        width: 65%;
+    }
+
+    /* PAY */
+    #private .tabs.pay .about {
+        display: flex;
+        justify-content: space-between;
+    }
+
+        #private .tabs.pay .about li {
+            padding: 0;
+        }
+
+    /* PAY */
+    #private .tabs.pay .method ul li {
+        display: inline-block;
+        margin: .7rem 1.2rem;
+    }
+
+    /* WORKSHEET */
+    #worksheet #steps fieldset .next a.prev {
+        position: absolute;
+        left: 50%;
+        top: 1.2rem;
+        margin-left: -10.2rem;
+    }
+}
+
+@media all and (min-width: 1200px){
+    /* BODY BG */
+    body {
+        background-size: 25rem; 
+    }
+
+    body.boy {
+        background-size: 27rem; 
+    }
+
+    /* WORKSHEET */
+        .box {
+            width: 47%;
+            margin: 5rem auto 1.2rem;
+        }
+
+    /* WAIT */
+
+    #private .tabs {
+        background-position: right 20% center;
+    }
+
+    /* PAY */
+    #private .tabs.pay .method ul li {
+        margin: 1rem 3.4rem;
+    }
+}
+
+@media all and (min-width: 1600px){
+    html, body {
+        font-size: 18px;
+    }
+
+    /* BODY BG */
+    body {
+        background-size: 20rem; 
+    }
+
+    body.boy {
+        background-size: 24rem; 
+    }
+
+    /* WAIT */
+    #private .tabs.wait {
+        background-position: right 20% center;
+    }
+
+    #private .tabs.approved {
+        background-position: right 10% center;
+        background-size: 24%;
+    }
+
+    #private .tabs.calc {
+        background-position: 80% center;
+        background-size: 23%;
+    }
+
+    .girl #private .tabs.calc {
+        background-position: 80% center;
+        background-size: 20%;
+    }
+
+    .wait .content,
+    .approved .content,
+    .calc .content {
+        width: 56%;
+    }
+
+    /* LK */
+    #private .tabs.lk .split ul:first-child {
+        margin-right: 10rem;
+    }
+
+    /* INFO */
+    #info .box {
+        width: 60%;
+    }
+
+    /* CARD */
+        #private .tabs.select-card fieldset {
+            width: 34rem;
+        }
+}
+@media all and (min-width: 1800px){
+    html, body {
+        font-size: 20px;
+    }
+}
+@media all and (min-width: 2400px){
+    html, body {
+        font-size: 24px;
+    }
+}

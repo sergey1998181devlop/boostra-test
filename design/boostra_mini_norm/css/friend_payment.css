@@ -1,0 +1,179 @@
+.friend_payment_wrapper {
+    margin-top: 16px;
+}
+
+.friend_action {
+    display: flex;
+    align-items: center;
+}
+
+.payment_friend_button {
+    background-color: #038AEE;
+    border: none;
+    color: #ffffff;
+    padding: 12px 24px;
+    border-radius: 50px;
+    font-weight: 600;
+    font-size: 14px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0px 4px 20px 0px #02113B1A;
+    margin-bottom: 18px;
+    width: 100%;
+    max-width: 300px;
+}
+
+.payment_friend_button:hover {
+    background-color: #0279d1;
+}
+
+.payment_friend_button:disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
+}
+
+.payment_friend_button.button-inverse {
+    color: #038AEE;
+    background-color: #F0F8FF;
+    box-shadow: none;
+}
+
+.payment_friend_button.button-inverse:hover {
+    background-color: #038AEE;
+    color: #F0F8FF;
+}
+
+.friend_payment_loader {
+    display: none;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 24px;
+}
+
+.friend_payment_spinner {
+    width: 20px;
+    height: 20px;
+    border: 3px solid #D6E3ED;
+    border-top-color: #038AEE;
+    border-radius: 50%;
+    animation: friend-spin 0.8s linear infinite;
+}
+
+@keyframes friend-spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+.friend_loader_text {
+    color: #038AEE;
+    font-weight: 600;
+    font-size: 14px;
+}
+
+.friend_payment_block {
+    margin-top: 16px;
+    max-width: 520px;
+}
+
+.friend_info {
+    background: #ffffff;
+    border-radius: 32px;
+    padding: 24px;
+    box-shadow: 0px 4px 20px 0px #02113B1A;
+    text-align: center;
+    margin-bottom: 18px;
+}
+
+.friend_info_title {
+    font-size: 20px;
+    font-weight: 700;
+    margin-bottom: 8px;
+    color: #1E262E;
+    line-height: 1.3;
+}
+
+.friend_info_subtitle {
+    font-size: 14px;
+    margin-bottom: 16px;
+    color: #6f7985;
+    font-weight: 500;
+}
+
+.friend_more_link {
+    color: #038AEE;
+    font-weight: 600;
+    font-size: 14px;
+    text-decoration: none;
+    transition: all 0.3s ease;
+}
+
+.friend_more_link:hover {
+    text-decoration: underline;
+}
+
+.friend_more_text {
+    margin-top: 16px;
+    font-size: 13px;
+    line-height: 1.5;
+    color: #6f7985;
+    text-align: left;
+}
+
+.friend_ok_btn {
+    margin-top: 20px;
+    width: 100%;
+    background-color: #038AEE;
+    padding: 12px 24px;
+    border-radius: 50px;
+    border: none;
+    color: #ffffff;
+    font-weight: 600;
+    font-size: 14px;
+    line-height: 24px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.friend_ok_btn:hover {
+    background-color: #0279d1;
+}
+
+.friend_ok_btn:disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
+}
+
+.payment_friend_button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+}
+
+.friend_btn_icon {
+    width: 20px;
+    height: 20px;
+    object-fit: contain;
+    flex-shrink: 0;
+}
+
+@media screen and (max-width: 768px) {
+    .friend_payment_wrapper {
+        margin-top: 12px;
+    }
+
+    .friend_info {
+        border-radius: 24px;
+        padding: 18px;
+    }
+
+    .friend_info_title {
+        font-size: 18px;
+    }
+
+    .payment_friend_button,
+    .friend_ok_btn {
+        width: 100%;
+    }
+}

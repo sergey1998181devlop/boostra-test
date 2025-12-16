@@ -1,0 +1,197 @@
+/* Основные стили для модального окна */
+#modal_email_feedback {
+    width: 600px;
+    min-height: 449px;
+    background: #FFFFFF;
+    border-radius: 15px;
+    padding: 30px;
+    max-width: 100%;
+    margin: 0 auto;
+}
+
+#modal_email_feedback .modal-btns {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+#modal_email_feedback .modal-header h4 {
+    font-family: 'Manrope', sans-serif;
+    font-weight: 600;
+    font-size: 24px;
+    line-height: 33px;
+    color: #282735;
+}
+
+#modal_email_feedback .modal-close-btn {
+    cursor: pointer;
+}
+
+#modal_email_feedback .modal-close-btn img {
+    width: 16px;
+    height: 16px;
+}
+
+/* Контент модального окна */
+#modal_email_feedback .modal-content-feedback {
+    display: flex;
+    flex-direction: column;
+}
+
+#modal_email_feedback .feedback-content h2 {
+    font-family: 'Manrope', sans-serif;
+    font-weight: 600;
+    font-size: 20px;
+    margin-bottom: 10px;
+}
+
+#modal_email_feedback .feedback-content-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+}
+
+#modal_email_feedback .input-control {
+    margin-bottom: 15px;
+}
+
+#modal_email_feedback .input-control input,
+#modal_email_feedback .input-control select,
+#modal_email_feedback .input-control textarea {
+    width: 100%;
+    height: 45px;
+    border: 1px solid #D6D6D6;
+    border-radius: 5px;
+    padding: 0 15px;
+    font-family: 'Manrope', sans-serif;
+    font-size: 14px;
+    line-height: 130%;
+    color: #606060;
+}
+
+#modal_email_feedback .input-control textarea {
+    height: 90px;
+    resize: none;
+    padding: 15px;
+}
+
+#modal_email_feedback #count_message {
+    right: 10px;
+    font-size: 0.6em;
+    position: relative;
+    top: -30px;
+    float: right;
+}
+
+#modal_email_feedback .input-control input::placeholder,
+#modal_email_feedback .input-control textarea::placeholder {
+    color: #AEAEAE;
+}
+
+#modal_email_feedback .input-control select {
+    background: none;
+}
+
+#modal_email_feedback .feedback_category {
+    height: 45px;
+}
+
+#modal_email_feedback .feedback_category option {
+    padding-left: 20px;
+}
+
+/* Стили для файлов и сообщений об ошибках */
+#modal_email_feedback #feedback_file_name {
+    margin-left: 10px;
+    color: green;
+}
+
+#modal_email_feedback .has-error * {
+    color: red;
+    border-color: red;
+}
+
+/* Модальное окно для отправки подтверждения */
+#modal_email_feedback_sended.modal_email_feedback_sended_modal {
+    background-color: white;
+    max-width: 600px;
+    margin: auto;
+    overflow: hidden;
+    border-radius: 5px;
+    padding: 1rem;
+    min-height: 120px;
+    display: flex;
+    flex-direction: column;
+    position: relative;
+    box-sizing: border-box;
+}
+
+#modal_email_feedback_sended .modal-close-btn {
+    position: absolute;
+    right: 1rem;
+    top: 1rem;
+    cursor: pointer;
+}
+
+#modal_email_feedback_sended h2 {
+    margin: auto;
+}
+
+/* Медиазапросы для адаптивности */
+@media (max-width: 700px) {
+    #modal_email_feedback,
+    #modal_email_feedback_sended {
+        width: 100%;
+        padding: 15px;
+    }
+
+    #modal_email_feedback .feedback-content-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+#modal_email_feedback .modal-footer {
+    display: flex;
+    gap: 10px;
+    justify-content: start;
+    flex-wrap: wrap;
+    align-items: center;
+}
+
+#modal_email_feedback .bi-paperclip::before {
+    transform: rotate(30deg);
+    color: #1f2937;
+}
+
+#modal_email_feedback #add_feedback_file {
+    background-color: #ffffff;
+    border: 1px solid #DDDCDC;
+}
+
+#modal_email_feedback #feedback_file_list {
+    padding: 0;
+}
+
+#modal_email_feedback #feedback_file_list li {
+    display: flex;
+    align-items: center;
+}
+
+#modal_email_feedback #feedback_file_list li .remove-attached-file {
+    color: #f87171;
+}
+
+#modal_email_feedback #feedback_file_list li .remove-attached-file:hover {
+    color: #dc2626;
+}
+
+.white-popup-block {
+    background: #fff;
+    border: 2px solid #222;
+    padding: 20px 30px;
+    border-radius: 10px;
+    max-width: 600px;
+    margin: 0 auto;
+    text-align: center;
+}
