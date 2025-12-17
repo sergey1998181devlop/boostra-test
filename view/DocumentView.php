@@ -85,7 +85,7 @@ class DocumentView extends View
         if ($type === 'agreement_disagreement_to_receive_ko') {
             if ($user_id && $user = $this->users->get_user($user_id)) {
                 if ($last_order = $this->orders->get_last_order($user->id)) {
-                    $agreementParams = $this->docs->getOfferAgreementParams((object)$user, $last_order['order_id']);
+                    $agreementParams = $this->docs->getOfferAgreementParams((object)$user, $last_order->order_id);
                     foreach ($agreementParams as $param_name => $param_value) {
                         $this->design->assign($param_name, $param_value);
                     }

@@ -506,6 +506,7 @@ class Orders extends Simpla
 
         $this->db->query($query);
         if ($result = $this->db->result()) {
+            $result->{'1c_id'} = $result->id_1c;
             $this->addAdditionalServicesFields($result, $result->id);
             return $result;
         }

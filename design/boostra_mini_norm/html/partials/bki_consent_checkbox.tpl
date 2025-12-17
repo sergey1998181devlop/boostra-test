@@ -6,7 +6,7 @@
         </div>
     </label>
     <p>
-        Я согласен на <a href="{$config->root_url}/preview/agreement_disagreement_to_receive_ko" target="_blank">
+    Я согласен на <a href="{$config->root_url}/preview/agreement_disagreement_to_receive_ko?user_id={$user->id}" target="_blank">
             направление запросов в БКИ
         </a>
     </p>
