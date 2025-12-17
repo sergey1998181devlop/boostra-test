@@ -84,58 +84,12 @@ class DocumentView extends View
 
         if ($type === 'agreement_disagreement_to_receive_ko') {
             if ($user_id && $user = $this->users->get_user($user_id)) {
-                $last_order = $this->orders->get_last_order($user->id);
-
-                if ($last_order) {
+                if ($last_order = $this->orders->get_last_order($user->id)) {
                     $agreementParams = $this->docs->getOfferAgreementParams((object)$user, $last_order['order_id']);
-                } else {
-                    $organisation = $this->organizations->get_base_organization();
-                    $user_passport_split = $this->helpers->splitPassportSerial($user->passport_serial);
-                    $addressReg = trim(sprintf(
-                        '%s %s, %s, ул. %s, д. %s, кв. %s',
-                        $user->Regindex,
-                        $user->Regregion,
-                        $user->Regcity,
-                        $user->Regstreet,
-                        $user->Reghousing,
-                        $user->Regroom
-                    ));
-
-                    $agreementParams = [
-                        'full_name' => $this->helpers->getFIO((object)$user),
-                        'email' => $user->email,
-                        'phone' => $user->phone_mobile,
-                        'passport_serial' => $user_passport_split['serial'],
-                        'passport_number' => $user_passport_split['number'],
-                        'passport_date' => $user->passport_date,
-                        'passport_issued' => $user->passport_issued,
-                        'subdivision_code' => $user->subdivision_code,
-                        'registration_address' => $addressReg,
-                        'organization_name' => $organisation->name,
-                        'organization_ogrn' => $organisation->ogrn,
-                        'zaim_number' => 'б/н',
-                        'zaim_date' => date('d.m.Y'),
-                        'organization_site' => $organisation->site,
-                        'organization_address_post' => $organisation->address,
-                        'organization_director' => $organisation->director ?? 'Поздняковa С.В.',
-                        'organization_address_req' => $organisation->address,
-                        'organization_email' => $organisation->email,
-                        'plaintiff_name' => 'ООО ПКО "ПРАВОВАЯ ЗАЩИТА"',
-                        'plaintiff_site' => 'https://pravza.com/',
-                        'accept_sms' => ' ',
-                        'order_signed' => false,
-                        'organization_id' => $organisation->id,
-                        'sign_date' => date('d.m.Y H:i:s'),
-                    ];
+                    foreach ($agreementParams as $param_name => $param_value) {
+                        $this->design->assign($param_name, $param_value);
+                    }
                 }
-
-                foreach ($agreementParams as $param_name => $param_value) {
-                    $this->design->assign($param_name, $param_value);
-                }
-            }
-        } else {
-            if (in_array(strtoupper($type), ['agreement_disagreement_to_receive_ko'])) {
-                $organization_id = $this->organizations->get_base_organization_id();
             }
         }
 
