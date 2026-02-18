@@ -1,7 +1,7 @@
 <section id="references_wrapper" class="--hide">
-        <div class="tab_wrapper" style="margin-left: 60px">
+        <div class="tab_wrapper">
             <div class="tab_tabs">
-                <h2 style="width: max-content">Справки доступные для скачивания</h2>
+                <h2>Справки доступные для скачивания</h2>
                 <div id = 'reference-table'>
                     <table class="table table-references">
                         {foreach $loan_history as $loan_history_item}
@@ -40,6 +40,7 @@
     <style>
         #references_wrapper .tab_wrapper {
             height: auto!important;
+            margin-left: 60px;
         }
         .table-references td {
             text-align: left;
@@ -52,6 +53,9 @@
             max-width: 600px;
         }
         @media only screen and (max-width: 900px) {
+            #references_wrapper .tab_wrapper {
+                margin-left: 0;
+            }
             .alert-reference {
                 font-size: inherit;
                 max-width: 100%;

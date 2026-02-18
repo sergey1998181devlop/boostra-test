@@ -1,7 +1,7 @@
 <section id="cessii_wrapper" class="--hide">
-        <div class="tab_wrapper" style="margin-left: 60px">
+        <div class="tab_wrapper">
             <div class="tab_tabs">
-                <h2 style="width: max-content">Цессии и Агентские договоры</h2>
+                <h2>Цессии и Агентские договоры</h2>
                 <div id='cessii-table'>
                     <table class="table table-references">
                         {foreach $loan_history as $loan_history_item}
@@ -23,8 +23,9 @@
 
 {literal}
     <style>
-        #references_wrapper .tab_wrapper {
+        #cessii_wrapper .tab_wrapper {
             height: auto!important;
+            margin-left: 60px;
         }
         .table-references td {
             text-align: left;
@@ -37,6 +38,9 @@
             max-width: 600px;
         }
         @media only screen and (max-width: 900px) {
+            #cessii_wrapper .tab_wrapper {
+                margin-left: 0;
+            }
             .alert-reference {
                 font-size: inherit;
                 max-width: 100%;

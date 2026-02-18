@@ -920,7 +920,7 @@
     }
 
     .tickets-btn-primary.create-ticket {
-        width: 40%;
+        width: 100%;
         justify-content: center;
         font-size: 1.3em;
     }
