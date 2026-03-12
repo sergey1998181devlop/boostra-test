@@ -78,15 +78,16 @@
         'soglasie_recurrent' => ['verify' => 0, 'filename' => "/user/docs?action=soglasie_recurrent&organization_id={$user_order['organization_id']}", 'docname' => 'Соглашение о регулярных (рекуррентных) платежах'],
         'agreed_offer_docs' => ['verify' => 1, 'docname' => "<a href=\"/user/docs?action=offer_agreement&order_id={$user_order['id']}\" target=\"_blank\">Соглашение об акцепте оферты</a>, <a href=\"/user/docs?action=asp_agreement&order_id={$user_order['id']}\" target=\"_blank\">Соглашение об АСП</a>, <a href=\"/user/docs?action=arbitration_agreement&order_id={$user_order['id']}\" target=\"_blank\">Арб.соглашение</a>, <a href=\"/user/docs?action=offer_arbitration_cessionary&order_id={$user_order['id']}\" target=\"_blank\">Оферта</a>"],
         'agreed_4' => ['verify' => 1, 'filename' => "/files/docs/rzs/get_loan_user_docs/Договор_об_условиях_предоставления_Акционерное_общество_«Сургутнефтегазбанк».pdf", 'docname' => 'Договором об условиях предоставления Акционерное общество «Сургутнефтегазбанк» услуги по переводу денежных средств с использованием реквизитов банковской карты с помощью Интернет-ресурса ООО «Бест2пей» (Публичная оферта)'],
-        'agreed_5' => ['verify' => 1, 'filename' => "user/docs?action=micro_zaim&organization_id={$ORGANIZATION_RZS}", 'docname' => 'Заявлением о предоставлении микрозайма'],
+        'agreed_5' => ['verify' => 1, 'filename' => "/user/docs?action=micro_zaim&organization_id={$ORGANIZATION_RZS}", 'docname' => 'Заявлением о предоставлении микрозайма'],
+        'agreed_6' => ['verify' => 1, 'filename' => "/files/docs/rzs/register_user_docs/soglasie-na-obrabotku-pd.pdf", 'docname' => 'Согласие на обработку персональных данных'],
+        'agreed_7' => ['verify' => 1, 'filename' => "/files/docs/rzs/register_user_docs/poluchenie-marketingovyh-kommunikacij.pdf", 'docname' => 'Согласие на получение маркетинговых коммуникаций'],
+        'agreed_8' => ['verify' => 1, 'filename' => "/files/docs/rzs/accept_documents/Soglashenie_ob_ispolzovanii_ASP.pdf", 'docname' => 'Соглашение об использовании аналога собственноручной подписи'],
+        'agreed_11' => ['verify' => 1, 'filename' => "/files/docs/rzs/accept_documents/Pravila_predostavleniya_zajmov.pdf", 'docname' => 'Правила предоставления займов (доп.)'],
+        'agreed_12' => ['verify' => 1, 'filename' => "/files/docs/rzs/accept_documents/politika-bezopasnosti-platezhei-best2pay.pdf", 'docname' => 'Политика безопасности платежей'],
         'credit_doctor_checkbox' => [],
         'tv_medical' => [],
         'rcl_limit' => ['verify' => 1, 'filename' => "/preview/rcl_limit?{http_build_query($rcl_params)}", 'docname' => 'Заявление на установку расходного кредитного лимита'],
-        'rcl_transh' => ['verify' => 1, 'filename' => "/preview/rcl_transh?{http_build_query($rcl_params)}", 'docname' => 'Заявление на получение транша'],
-
-        'rcl_transh' => ['verify' => 1, 'filename' => "/files/docs/rzs/accept_documents/Pravila_predostavleniya_zajmov.pdf", 'docname' => 'Правила предоставления займов' , 'class' => 'js-agree-claim-value' ],
-        'rcl_transh' => ['verify' => 1, 'filename' => "/files/docs/rzs/accept_documents/politika-bezopasnosti-platezhei-best2pay.pdf", 'docname' => 'Политика безопасности платежей' , 'class' => 'js-agree-claim-value' ],
-        'rcl_transh' => ['verify' => 1, 'filename' => "/files/docs/rzs/accept_documents/Soglashenie_ob_ispolzovanii_ASP.pdf", 'docname' => 'Соглашение об использовании аналога собственноручной подписи' , 'class' => 'js-agree-claim-value' ]
+        'rcl_transh' => ['verify' => 1, 'filename' => "/preview/rcl_transh?{http_build_query($rcl_params)}", 'docname' => 'Заявление на получение транша']
     ]}
 {elseif $user_order['organization_id'] == $ORGANIZATION_LORD}
     {$accept_documents = [
@@ -137,13 +138,18 @@
     ]}
 {elseif $user_order['organization_id'] == $ORGANIZATION_FRIDA}
     {$accept_documents = [
-        'agreed_1' => ['verify' => 1, 'filename' => "/files/docs/frida/accept_documents/obschie-usloviya.pdf", 'docname' => 'Общие условия договора займаа'],
+        'agreed_1' => ['verify' => 1, 'filename' => "/files/docs/frida/accept_documents/obschie-usloviya.pdf", 'docname' => 'Общие условия договора займа'],
         'agreed_2' => ['verify' => 1, 'filename' => "/files/docs/frida/accept_documents/pravila-predostavleniya.pdf", 'docname' => 'Правила предоставления займов'],
         'agreed_3' => ['verify' => 1, 'filename' => "/files/docs/frida/register_user_docs/polozhenie-asp.pdf", 'docname' => 'Положение АСП'],
         'soglasie_recurrent' => ['verify' => 0, 'filename' => "/user/docs?action=soglasie_recurrent&organization_id={$user_order['organization_id']}", 'docname' => 'Соглашение о регулярных (рекуррентных) платежах'],
         'agreed_offer_docs' => ['verify' => 1, 'docname' => "<a href=\"/user/docs?action=offer_agreement&order_id={$user_order['id']}\" target=\"_blank\">Соглашение об акцепте оферты</a>, <a href=\"/user/docs?action=asp_agreement&order_id={$user_order['id']}\" target=\"_blank\">Соглашение об АСП</a>, <a href=\"/user/docs?action=arbitration_agreement&order_id={$user_order['id']}\" target=\"_blank\">Арб.соглашение</a>, <a href=\"/user/docs?action=offer_arbitration_cessionary&order_id={$user_order['id']}\" target=\"_blank\">Оферта</a>"],
         'agreed_4' => ['verify' => 1, 'filename' => '/files/docs/frida/get_loan_user_docs/Oferta-ob-usloviyah-ispolzovanie-servisa-processingovogo-centra.pdf', 'docname' => 'Оферта об использовании процессингового центра BEST2PAY'],
-        'agreed_5' => ['verify' => 1, 'filename' => "user/docs?action=micro_zaim&organization_id={$ORGANIZATION_FRIDA}", 'docname' => 'Заявлением о предоставлении микрозайма'],
+        'agreed_5' => ['verify' => 1, 'filename' => "/user/docs?action=micro_zaim&organization_id={$ORGANIZATION_FRIDA}", 'docname' => 'Заявлением о предоставлении микрозайма'],
+        'agreed_6' => ['verify' => 1, 'filename' => "/files/docs/personal_data_consent.pdf", 'docname' => 'Согласие на обработку персональных данных'],
+        'agreed_7' => ['verify' => 1, 'filename' => "/files/docs/marketing_consent.pdf", 'docname' => 'Согласие на получение маркетинговых коммуникаций'],
+        'agreed_8' => ['verify' => 1, 'filename' => "/files/docs/frida/register_user_docs/polozhenie-asp.pdf", 'docname' => 'Соглашение об использовании аналога собственноручной подписи'],
+        'agreed_11' => ['verify' => 1, 'filename' => "/files/docs/frida/get_loan_user_docs/Politika-bezopasnosti-platezhej-Best2Pay.pdf", 'docname' => 'Политика безопасности платежей'],
+        'agreed_12' => ['verify' => 1, 'filename' => "/files/docs/frida/get_loan_user_docs/Oferta-ob-usloviyah-ispolzovanie-servisa-processingovogo-centra.pdf", 'docname' => 'Оферта Best2Pay'],
         'credit_doctor_checkbox' => [],
         'tv_medical' => [],
         'rcl_limit' => ['verify' => 1, 'filename' => "/preview/rcl_limit?{http_build_query($rcl_params)}", 'docname' => 'Заявление на установку расходного кредитного лимита'],
@@ -243,13 +249,13 @@
             {/if}
 
             <div>
-                {if $accept_document_key == 'agreed_1' && ! $isSafetyFlow}
+                {if $accept_document_key == 'agreed_1' && (! $isSafetyFlow || $user_order['organization_id'] == $ORGANIZATION_RZS || $user_order['organization_id'] == $ORGANIZATION_FRIDA)}
                     {print_document accept_document_key='agreed_5' accept_document=$accept_documents['agreed_5']}
                 </div>
                 <div>
                 {/if}
 
-                {if $accept_document_key != 'agreed_5' && ($accept_document_key == 'agreed_offer_docs' || ! $isSafetyFlow)}
+                {if $accept_document_key != 'agreed_5' && ($accept_document_key == 'agreed_offer_docs' || ! $isSafetyFlow || $user_order['organization_id'] == $ORGANIZATION_RZS || $user_order['organization_id'] == $ORGANIZATION_FRIDA)}
                     {print_document accept_document_key=$accept_document_key accept_document=$accept_document}
                 {/if}
             </div>

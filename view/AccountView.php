@@ -58,6 +58,8 @@ class AccountView extends View
     {
         $this->jwtAuthValidate();
 
+        $this->organizations->assign_to_design();
+
         if ($this->request->method('post'))
         {
             $stage = $this->request->post('stage');

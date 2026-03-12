@@ -1,11 +1,25 @@
 {$meta_title = "АСП договора" scope=parent}
 
-{$docs_list = [
-    ["title" => "Положение об использовании АСП", "url" => "{$config->root_url}/files/docs/asp_usage_policy.pdf"],
-    ["title" => "Согласие на хранение и обработку персональных данных", "url" => "{$config->root_url}/files/docs/personal_data_consent.pdf"],
-    ["title" => "Согласие на получение маркетинговых коммуникаций", "url" => "{$config->root_url}/files/docs/marketing_consent.pdf"],
-    ["title" => "Индивидуальные условия договора займа", "url" => "{$individual_url}"]
-]}
+{if $order->organization_id == $ORGANIZATION_RZS || $order->organization_id == $ORGANIZATION_FRIDA}
+    {$docs_list = [
+        ["title" => "Заявление о предоставлении микрозайма", "url" => "{$config->root_url}/user/docs?action=micro_zaim&organization_id={$order->organization_id}"],
+        ["title" => "Согласие на обработку персональных данных", "url" => "{$config->root_url}/files/docs/{if $order->organization_id == $ORGANIZATION_RZS}rzs/register_user_docs/soglasie-na-obrabotku-pd.pdf{else}personal_data_consent.pdf{/if}"],
+        ["title" => "Согласие на получение маркетинговых коммуникаций", "url" => "{$config->root_url}/files/docs/{if $order->organization_id == $ORGANIZATION_RZS}rzs/register_user_docs/poluchenie-marketingovyh-kommunikacij.pdf{else}marketing_consent.pdf{/if}"],
+        ["title" => "Условия об использовании АСП", "url" => "{$config->root_url}/files/docs/{if $order->organization_id == $ORGANIZATION_RZS}rzs/accept_documents/Soglashenie_ob_ispolzovanii_ASP.pdf{else}frida/register_user_docs/polozhenie-asp.pdf{/if}"],
+        ["title" => "Правила предоставления займа", "url" => "{$config->root_url}/files/docs/{if $order->organization_id == $ORGANIZATION_RZS}rzs/accept_documents/pravila-predostavleniya.pdf{else}frida/accept_documents/pravila-predostavleniya.pdf{/if}"],
+        ["title" => "Общие условия договора займа", "url" => "{$config->root_url}/files/docs/{if $order->organization_id == $ORGANIZATION_RZS}rzs/accept_documents/obschie-usloviya.pdf{else}frida/accept_documents/obschie-usloviya.pdf{/if}"],
+        ["title" => "Положение об использовании АСП", "url" => "{$config->root_url}/files/docs/{if $order->organization_id == $ORGANIZATION_RZS}rzs/register_user_docs/polozhenie-asp.pdf{else}frida/register_user_docs/polozhenie-asp.pdf{/if}"],
+        ["title" => "Индивидуальные условия договора займа", "url" => "{$individual_url}"],
+        ["title" => "Договор об условиях предоставления услуг Best2Pay", "url" => "{$config->root_url}/files/docs/{if $order->organization_id == $ORGANIZATION_RZS}rzs/get_loan_user_docs/Договор_об_условиях_предоставления_Акционерное_общество_«Сургутнефтегазбанк».pdf{else}frida/get_loan_user_docs/Oferta-ob-usloviyah-ispolzovanie-servisa-processingovogo-centra.pdf{/if}"]
+    ]}
+{else}
+    {$docs_list = [
+        ["title" => "Положение об использовании АСП", "url" => "{$config->root_url}/files/docs/asp_usage_policy.pdf"],
+        ["title" => "Согласие на хранение и обработку персональных данных", "url" => "{$config->root_url}/files/docs/personal_data_consent.pdf"],
+        ["title" => "Согласие на получение маркетинговых коммуникаций", "url" => "{$config->root_url}/files/docs/marketing_consent.pdf"],
+        ["title" => "Индивидуальные условия договора займа", "url" => "{$individual_url}"]
+    ]}
+{/if}
 
 {assign var="final_approved_amount" value="{if $il_approved_amount && $settings->il_nk_loan_edit_amount['status'] && in_array($order->utm_source, $settings->il_nk_loan_edit_amount['utm_sources'])}{$il_approved_amount}{else}{$decisionSum}{/if}"}
 <div id="autoconfirm">
