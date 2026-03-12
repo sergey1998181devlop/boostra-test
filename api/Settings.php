@@ -81,8 +81,7 @@ require_once('Simpla.php');
  * @property array $sum_order_auto_approve
  * @property string $check_redirect_list
  * @property string $likezaim_enabled
- * @property string $site_warning_message_enabled
- * @property string $site_warning_message
+ * @property string $site_warning_banner_config
  * @property string $addresses_is_dadata
  * @property string $dbrain_auto
  * @property string $autoapprove_plus_30
@@ -131,12 +130,16 @@ require_once('Simpla.php');
  * @property array $sms_template_phone_partner
  * @property bool $returning_users_flow_utm_sources Utm метки для клиентов, которые вернулись после длительного отсутствия для продолжения регистрации
  * @property array $partner_api_repeat_client_utm_sources utm партнерского апи для повторников
-
+ * @property array $il_nk_loan_edit_amount Настройки ИЛ займа, изменении суммы при подаче НК
+ * @property array $organization_switch Настройки переключения организации в заявке
+ * @property string $base_organization_id Базовая организация
+ * @property array $usedesk_settings Настройки usedesk
+ *
  */
 class Settings extends Simpla
 {
 	private $vars = array();
-	private ?string $current_site_id = null;
+	private ?string $currentSiteId = null;
 
     const CONTACT_ME_NOTICE_ENABLED_FOR_REPEAT_CLIENTS = 1;
     const CONTACT_ME_NOTICE_ENABLED_FOR_NEW_CLIENTS = 2;
@@ -148,7 +151,7 @@ class Settings extends Simpla
 
 		$site_id = $this->config->site_id;
 		if ($site_id !== null && $site_id !== '') {
-			$this->current_site_id = $site_id;
+			$this->currentSiteId = $site_id;
 		}
 
 		$this->loadSettings();
@@ -167,7 +170,7 @@ class Settings extends Simpla
 	 */
 	private function loadSettings(bool $use_fallback = true)
 	{
-		if ($this->current_site_id === null) {
+		if ($this->currentSiteId === null) {
 			$this->db->query('SELECT name, value FROM __settings WHERE site_id IS NULL');
 		} else {
 			if ($use_fallback) {
@@ -180,7 +183,7 @@ class Settings extends Simpla
 				}
 			}
 
-            $this->db->query('SELECT name, value FROM __settings WHERE site_id = ?', $this->current_site_id);
+            $this->db->query('SELECT name, value FROM __settings WHERE site_id = ?', $this->currentSiteId);
 		}
 
 		foreach($this->db->results() as $result) {
@@ -189,30 +192,94 @@ class Settings extends Simpla
 				? $unserialized
 				: $result->value;
 		}
+
+        // API ключи загружаем с отдельной логикой
+        if ($use_fallback) {
+            $this->loadApiKeys();
+        }
 	}
+
+    private function loadApiKeys()
+    {
+        if (empty($this->currentSiteId)) {
+            return;
+        }
+
+        $this->db->query("
+            SELECT site_id, `value` 
+            FROM __settings 
+            WHERE 
+                `name` = 'apikeys' AND 
+                (
+                    site_id IS NULL OR
+                    site_id = ? 
+                )
+        ", $this->currentSiteId);
+
+        $apikeys = $this->db->results();
+        if (empty($apikeys)) {
+            return;
+        }
+
+        $globalApikeys = [];
+        $siteSpecificApikeys = [];
+        foreach($apikeys as $apikeysRow) {
+            if (!empty($apikeysRow->site_id)) {
+                $siteSpecificApikeys = @unserialize($apikeysRow->value) ?? [];
+            }
+            else {
+                $globalApikeys = @unserialize($apikeysRow->value) ?? [];
+            }
+        }
+
+        $filteredSiteSpecificApikeys = [];
+        foreach($siteSpecificApikeys as $key => $value) {
+            if (empty($value)) {
+                continue;
+            }
+
+            if (is_array($value)) {
+                $hasAnyValues = false;
+                foreach($value as $subvalue) {
+                    if (!empty($subvalue)) {
+                        $hasAnyValues = true;
+                        break;
+                    }
+                }
+
+                if (!$hasAnyValues) {
+                    continue;
+                }
+            }
+
+            $filteredSiteSpecificApikeys[$key] = $value;
+        }
+
+        $this->vars['apikeys'] = array_replace_recursive($globalApikeys, $filteredSiteSpecificApikeys);
+    }
 
 	/**
 	 * Установить контекст site_id и перезагрузить настройки
 	 *
-	 * @param int|null $site_id ID сайта или NULL для глобальных настроек
+	 * @param string|null $site_id ID сайта или NULL для глобальных настроек
 	 * @param bool $use_fallback Использовать fallback на глобальные настройки при загрузке (по умолчанию true)
 	 */
 	public function setSiteId(?string $site_id, bool $use_fallback = true)
 	{
-		$this->current_site_id = $site_id;
+		$this->currentSiteId = $site_id;
 		$this->vars = array();
 		$this->loadSettings($use_fallback);
 	}
 
-	/**
-	 * Получить текущий site_id
-	 *
-	 * @return int|null
-	 */
-	public function getSiteId(): ?int
+    /**
+     * Возвращает текущий id сайта.
+     *
+     * @return string|null Идентификатор сайта (site_id) или NULL для глобальных настроек
+     */
+    public function getSiteId(): ?string
     {
-		return $this->current_site_id;
-	}
+        return $this->currentSiteId;
+    }
 
 	public function __get($name)
 	{
@@ -232,8 +299,8 @@ class Settings extends Simpla
 
         $nameFilter = $this->db->placehold("AND name = ?", $name);
 
-        if (!empty($this->current_site_id)) {
-            $siteIdFilter = $this->db->placehold("AND site_id =", $this->current_site_id);
+        if (!empty($this->currentSiteId)) {
+            $siteIdFilter = $this->db->placehold("AND site_id =", $this->currentSiteId);
         } else {
             $siteIdFilter = $this->db->placehold("AND site_id IS NULL");
         }
@@ -250,7 +317,7 @@ class Settings extends Simpla
         $settings = $this->db->results();
 
         // Если настройка по site_id не найдена, то пробуем найти глобальные
-        if (empty($settings) && !empty($this->current_site_id)) {
+        if (empty($settings) && !empty($this->currentSiteId)) {
             $siteIdFilter = $this->db->placehold("AND site_id IS NULL");
             // Получение настроек
             $query = $this->db->placehold("
@@ -280,7 +347,7 @@ class Settings extends Simpla
             }
         } else {
             // Если настройки нет, то добавляем и логируем
-            $query = $this->db->placehold('INSERT INTO __settings SET ?%', ['name' => $name, 'value' => $newValue, 'site_id' => $this->current_site_id]);
+            $query = $this->db->placehold('INSERT INTO __settings SET ?%', ['name' => $name, 'value' => $newValue, 'site_id' => $this->currentSiteId]);
             $this->db->query($query);
             $settingId = $this->db->insert_id();
 

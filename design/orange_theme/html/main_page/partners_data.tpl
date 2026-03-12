@@ -33,7 +33,7 @@
 "Екапуста" => "https://ekapusta.ru/documents",
 "Moneyman" => "https://moneyman.ru/about/docs/",
 "Умные наличные" => "https://smartcash.ru/#documents",
-"Max Credit" => "https://max.credit/documents/",
+"Max Credit" => "https://max.credit/#docs",
 "Kviku" => "https://kviku.ru/site/page?view=documents",
 "Joymoney" => "https://joy.money/documents/usloviya-dogovora/",
 "Fastmoney" => "https://fastmoney.ru/documents.html",
@@ -52,7 +52,7 @@
 "Привет, Сосед!" => "https://privsosed.ru/documentation"
 ]}
 
-<section class="section" id="partners-section" style="display: none">
+<section class="section is_noindex" id="partners-section">
     <div class="container">
         <div class="section__inner">
             <div class="partners">

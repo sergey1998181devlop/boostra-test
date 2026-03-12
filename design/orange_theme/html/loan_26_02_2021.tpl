@@ -7,7 +7,7 @@
     <script src="design/{$settings->theme}/js/jquery.magnific-popup.min.js" type="text/javascript"></script>
     <script src="design/{$settings->theme}/js/jquery.validate.min.js?v=2.10" type="text/javascript"></script>
     <script src="design/{$settings->theme}/js/worksheet.validate.js?v=1.75" type="text/javascript"></script>
-    <script src="design/{$settings->theme}/js/loan.app.js?v=1.81" type="text/javascript"></script>
+    <script src="design/{$settings->theme}/js/loan.app.js?v=1.83" type="text/javascript"></script>
 {/capture}
 
 <section id="worksheet">

@@ -18,13 +18,15 @@ class PartnerHref extends Simpla
     {
         $id = $_SESSION['partner_item_id'] ?? 0;
         $ctype = $is_pk ? 'pk' : 'nk';
+        $site_id = $this->config->site_id;
         $this->db->query("SELECT id, href
                           FROM s_partner_href
                           WHERE
                             client_type = ?
                             AND link_type = ?
-                            AND id > IF(EXISTS(SELECT * FROM s_partner_href WHERE id > ? AND link_type = ? AND client_type = ?), ?, 0)
-                          LIMIT 1", $ctype, $link_type, $id, $link_type, $ctype, $id);
+                            AND id > IF(EXISTS(SELECT * FROM s_partner_href WHERE id > ? AND link_type = ? AND client_type = ? AND site_id = ?), ?, 0)
+                            AND site_id = ?
+                          LIMIT 1", $ctype, $link_type, $id, $link_type, $ctype, $id, $site_id, $site_id);
         $result = $this->db->result();
 
         if (!empty($result)) {

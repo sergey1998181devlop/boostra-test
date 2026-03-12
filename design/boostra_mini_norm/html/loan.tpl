@@ -5,9 +5,9 @@
 {capture name=page_scripts}
     <script src="design/{$settings->theme}/js/jquery.inputmask.min.js" type="text/javascript"></script>
     <script src="design/{$settings->theme}/js/jquery.magnific-popup.min.js" type="text/javascript"></script>
-    <script src="design/{$settings->theme}/js/jquery.validate.min.js?v=2.10" type="text/javascript"></script>
-    <script src="design/{$settings->theme}/js/worksheet.validate.js?v=1.77" type="text/javascript"></script>
-    <script src="design/{$settings->theme}/js/loan.app.js?v=1.834" type="text/javascript"></script>
+    <script src="design/{$settings->theme}/js/jquery.validate.min.js?v=2.11" type="text/javascript"></script>
+    <script src="design/{$settings->theme}/js/worksheet.validate.js?v=1.83" type="text/javascript"></script>
+    <script src="design/{$settings->theme}/js/loan.app.js?v=1.841" type="text/javascript"></script>
     <script src="/js/autocomplete/jquery.autocomplete-min.js"></script>
     <link rel="stylesheet" href="/js/autocomplete/styles.css"/>
 {/capture}
@@ -53,7 +53,7 @@
                   id="loan_form"
                   action="{if $flow_after_personal_data}{$smarty.server.REQUEST_URI}{else}neworder?amount={$amount}&period={$period}{/if}"
                   class=""
-                  onsubmit="submitLoanForm()">
+                  {* onsubmit="submitLoanForm()" *}>
                 <div id="steps">
                     
                     <label class="js-info-block big" style="display:block;margin-top:20px;{if !$error}display:none{/if}">
@@ -65,8 +65,6 @@
                             <span class="error-text">Аккаунт на Ваше имя удален.<br /></span>
                         {elseif $error == 'user_exists'}
                             <span class="error-text">Пользователь с таким номером уже зарегистрован.<br /><a class="error-a" href="user/login?phone={$phone|escape}">Воспользуйтесь формой входа для клиентов</a></span>
-                        {else}
-                            <span class="error-text">{$error}</span>
                         {/if}    
                     </label>
 
@@ -93,7 +91,7 @@
                             <div class="clearfix flex">
                                 <div class="clearfix-group">
                                     <label class="{if $error=='empty_lastname'}error{/if}">
-                                        <input autocomplete type="text" class="js-camelcase js-cirylic js-cirylic-plus" name="lastname"
+                                        <input autocomplete="family-name" type="text" class="js-camelcase-two-words js-cirylic js-cirylic-plus" name="lastname"
                                                id="lastname" placeholder=""
                                                value="{if $is_developer}Тестовый{else}{$lastname|escape}{/if}" required=""
                                                aria-required="true">
@@ -102,7 +100,7 @@
                                         <span class="floating-label">Фамилия</span>
                                     </label>
                                     <label class="{if $error=='empty_firstname'}error{/if}">
-                                        <input autocomplete type="text" class="js-camelcase js-cirylic js-cirylic-plus" name="firstname"
+                                        <input autocomplete="given-name" type="text" class="js-camelcase-two-words js-cirylic js-cirylic-plus" name="firstname"
                                                id="firstname" placeholder=""
                                                value="{if $is_developer}Тест{else}{$firstname|escape}{/if}" required=""
                                                aria-required="true">
@@ -113,7 +111,7 @@
 
 
                                             <label class="{if $error=='empty_patronymic'}error{/if}">
-                                                <input autocomplete type="text" class="js-camelcase js-cirylic" name="patronymic"
+                                                <input autocomplete="additional-name" type="text" class="js-camelcase js-cirylic" name="patronymic"
                                                        id="patronymic"
                                                        placeholder=""
                                                        value="{if $is_developer}Тестович{else}{$patronymic|escape}{/if}"
@@ -132,16 +130,16 @@
                                             </label>
 
                                     <label class="{if $error=='invalid_email'}error{/if}">
-                                        <input autocomplete
+                                        <input autocomplete="email"
                                                type="email"
                                                name="email"
                                                id="email"
                                                placeholder=""
-                                               value="{$email}">
+                                               value="{$email}"
+                                               >
                                         <span class="floating-label">Email</span>
-                                        <small class="err error" id="err-email">{if $error=='invalid_email'}Введите корректный email{/if}</small>
                                     </label>
-
+                                    <small class='hint' id="email-hint" style="display: none"></small>
                                 </div>
                             </div>
 
@@ -606,7 +604,7 @@
             {*
             <div>
                 <label>
-                    <div class="checkbox" style="border-width: 1px;width: 14px !important;height: 14px !important;margin-top: 9px;">
+                    <div class="checkbox" style="border-width: 1px;width: 16px !important;height: 16px !important;margin-top: 9px;">
                         <input class="js-service-reason" type="checkbox" value="1" id="service_reason_check" name="service_reason" checked="true" />
                         <span style="margin:0;width: 100%;height: 100%;top: 0;left: 0;"></span>
                     </div> В случае отказа по заявке, я хочу получить описание причины отказа в соответствии с <a href="https://www.boostra.ru/files/docs/polozhenie-o-dopolnitelnyh-finansovyh-uslugah-mkk-ooo-bustra-stop-list.pdf" target="_blank">Положением</a>
@@ -630,30 +628,127 @@
                 return _block;
             }
 
+            function formatResultEmail(item, short_value) {
+                // Simple highlighting without complex regex
+                if (!short_value) return '<span>' + item.value + '</span>';
+                
+                const escapedQuery = short_value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+                const regex = new RegExp(`(${escapedQuery})`, 'gi');
+                const highlighted = item.value.replace(regex, '<strong>$1</strong>');
+                return '<span>' + highlighted + '</span>';
+            }
+
             $(document).ready(function () {
+                setTimeout(function() {
+                    $('input[autocomplete="off"]').each(function() {
+                        var $input = $(this);
+                        
+                        // Определяем тип поля и ставим правильный autocomplete
+                        if ($input.is('[name="lastname"]')) {
+                            $input.attr('autocomplete', 'family-name');
+                        } else if ($input.is('[name="firstname"]')) {
+                            $input.attr('autocomplete', 'given-name');
+                        } else if ($input.is('[name="email"]')) {
+                            $input.attr('autocomplete', 'email');
+                        } else if ($input.is('[name="patronymic"]')) {
+                            $input.attr('autocomplete', 'additional-name');
+                        }
+                    });
+                }, 1000);
                 if ($("#loan_form .step1").is(":visible")) {
                     sendMetric('reachGoal', 'registration_income_to_contact');
+                }
+                const emailField = $('[name="email"]');
+
+                emailField.on('blur', (e) => {
+                    emailField.valid();
+                })
+
+                emailField.autocomplete({
+                    serviceUrl: 'ajax/dadata.php?action=email',
+                    type: 'GET',
+                    dataType: 'json',
+                    paramName: 'query',
+                    noCache: false,
+                    triggerSelectOnValidInput: false,
+                    preventBadQueries: true, 
+                    autoSelectFirst: false,
+                    onSelect: function(item) {
+                        ym(45594498, 'reachGoal', 'hint_click_email');
+                        emailField.val(item.value);
+                        emailField.autocomplete().dispose();
+        
+                        // Восстанавливаем через 1.5 секунды
+                        setTimeout(function() {
+                            if (emailField.val()) {
+                                initEmailAutocomplete();
+                            }
+                        }, 200);
+                        emailField.valid();
+                    },
+                    formatResult: formatResultEmail
+                });
+
+                function initEmailAutocomplete() {
+                    emailField.autocomplete({
+                        serviceUrl: 'ajax/dadata.php?action=email',
+                        type: 'GET',
+                        dataType: 'json',
+                        paramName: 'query',
+                        noCache: false,
+                        triggerSelectOnValidInput: false,
+                        preventBadQueries: true,
+                        autoSelectFirst: false,
+                        lookupDelay: 0,
+                        
+                        onSelect: function(item) {
+                            ym(45594498, 'reachGoal', 'hint_click_email');
+                            emailField.val(item.value);
+                            emailField.autocomplete().dispose();
+                            setTimeout(function() {
+                            if (emailField.val()) {
+                                initEmailAutocomplete();
+                                }
+                            }, 200);
+                            emailField.valid();
+                        },
+                        formatResult: formatResultEmail
+                    });
                 }
 
                 $('[name="lastname"]').autocomplete({
                     serviceUrl: 'ajax/dadata.php?action=lastname',
-                    onSelect: function (item) {
-                        $('[name="lastname"]').val(item.data.surname);
+                    beforeRender: () => {
+                        ym(45594498,'reachGoal','hint_shown_lastname')
                     },
-                    formatResult: formatResult
+                    onSelect: function (item) {
+                        ym(45594498,'reachGoal','hint_click_lastname')
+                        $('[name="lastname"]').val(item.data.surname);
+                        $('#loan_form').find('[name="lastname"]').valid();
+                    },
+                    formatResult: formatResult,
                 });
 
                 $('[name="firstname"]').autocomplete({
                     serviceUrl: 'ajax/dadata.php?action=firstname',
+                    beforeRender: () => {
+                        ym(45594498,'reachGoal','hint_shown_firstname')
+                    },
                     onSelect: function (item) {
+                        ym(45594498,'reachGoal','hint_click_firstname')
                         $('[name="firstname"]').val(item.data.name);
+                        $('#loan_form').find('[name="firstname"]').valid();
                     },
                     formatResult: formatResult
                 });
 
                 $('[name="patronymic"]').autocomplete({
                     serviceUrl: 'ajax/dadata.php?action=patronymic',
+                    beforeRender: () => {
+                        ym(45594498,'reachGoal','hint_shown_patronymic')
+                    },
                     onSelect: function (item) {
+                        ym(45594498,'reachGoal','hint_click_patronymic')
                         $('[name="patronymic"]').val(item.data.patronymic);
                     },
                     formatResult: formatResult

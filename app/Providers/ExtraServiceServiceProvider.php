@@ -4,12 +4,16 @@ namespace App\Providers;
 use App\Core\Application\Container\Container;
 use App\Core\Application\Container\ServiceProvider;
 use App\Core\Application\Session\Session;
+use App\Core\Cache\CacheInterface;
+use App\Core\Cache\RedisCache;
 use App\Repositories\DoctorConditionRepository;
 use App\Repositories\DoctorReturnLogRepository;
 use App\Repositories\OracleReturnLogRepository;
 use App\Repositories\ContractRepository;
 use App\Repositories\OrderRepository;
+use App\Repositories\ReturnCoefficientRepository;
 use App\Repositories\ReturnRepository;
+use App\Services\ReturnCoefficientService;
 use App\Services\ReturnExtraService;
 use App\Services\RiskGroupService;
 use App\Services\SafetyFlowService;
@@ -33,6 +37,11 @@ class ExtraServiceServiceProvider extends ServiceProvider
     {
         $this->container->bind(Session::class, function() {
             return Session::singleton();
+        });
+
+        // Cache Interface
+        $this->container->bind(CacheInterface::class, function () {
+            return new RedisCache();
         });
 
         // Регистрируем репозитории
@@ -102,20 +111,29 @@ class ExtraServiceServiceProvider extends ServiceProvider
             return new ReturnRepository();
         });
 
+        $this->container->bind(ReturnCoefficientRepository::class, function () {
+            return new ReturnCoefficientRepository();
+        });
+
+        $this->container->bind(ReturnCoefficientService::class, function () {
+            $c = $this->container;
+            return new ReturnCoefficientService(
+                $c->make(CacheInterface::class),
+                $c->make(ReturnCoefficientRepository::class),
+                $c->make(Users::class)
+            );
+        });
+
         $this->container->bind(ReturnExtraService::class, function() {
             $c = $this->container;
             return new ReturnExtraService(
                 $c->make(Session::class),
                 $c->make(Users::class),
                 $c->make(UserData::class),
-                $c->make(SafetyFlowService::class),
                 $c->make(DoctorReturnLogRepository::class),
-                $c->make(OracleReturnLogRepository::class),
                 $c->make(DoctorConditionRepository::class),
-                $c->make(RiskGroupService::class),
-                $c->make(ScoringService::class),
                 $c->make(Settings::class),
-                $c->make(ReturnRepository::class)
+                $c->make(ReturnCoefficientService::class)
             );
         });
     }

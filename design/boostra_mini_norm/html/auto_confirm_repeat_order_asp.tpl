@@ -143,9 +143,7 @@
                 }
             }
         }
-        .promocodes {
-            text-align: center;
-        }
+
         .promo-block {
             padding: 15px;
             border: 1px black dashed;
@@ -172,7 +170,7 @@
                         <span class="info" id="accept_info">На Ваш телефон {$user->phone_mobile} было отправлено СМС-сообщение с кодом для подтверждения.</span>
                         <div id="autoconfirm_sms">
                             <div>
-                                <input type="text" name="code" maxlength="4" placeholder="Код из СМС" />
+                                <input type="text" autocomplete="one-time-code" name="code" maxlength="4" placeholder="Код из СМС" />
                                 <span class="js-autoconfirm-error error-info"></span>
                             </div>
                             <div class="js-repeat-autoconfirm-sms"></div>
@@ -185,7 +183,7 @@
             </div>
             <div class="autoconfirm_repeat_order_footer">
                 <br/>
-                <small class="small-text"><sup>*</sup>Сумма займа скорректирована на максимально доступное для выдачи значение с учетом результатов предварительного скоринга.</small>
+                <small class="small-text"><sup>*</sup>Сумма {if $rcl_loan}транша{else}займа{/if} скорректирована на максимально доступное для выдачи значение с учетом результатов предварительного скоринга.</small>
             </div>
         </div>
     </div>

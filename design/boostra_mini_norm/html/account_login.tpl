@@ -108,7 +108,7 @@
 				<div id="wrapper_fields">
 					<label id="login_form_phone">
 						<span id="login_form_description">Или авторизуйтесь с помощью{* <br/> *} мобильного телефона, который Вы указывали{* <br/> *} при получении займа</span>
-						<div><input id="phoneInput" inputmode="numeric" autocomplete="on" type="tel" name="phone" placeholder="Номер телефона" required="" {if $phone}value="{$phone}"{/if}/></div>
+						<div><input id="phoneInput" inputmode="tel" autocomplete="on" type="tel" name="phone" placeholder="Номер телефона" required="" {if $phone}value="{$phone}"{/if}/></div>
 					</label>
 				</div>
 
@@ -212,6 +212,7 @@
     window.same_tab_login = false || !'{$login_partner_href->href}'
     window.login_partner_href = '{$login_partner_href->href}'
     window.complaint_partner_href = '{$complaint_partner_href->href}'
+    window.href_append = '&utm_source2={$smarty.cookies.utm_source}'
     {/if}
 	$(document).ready(function() {
 		$('#auth-button-tinkoff').on('click', function(e) {

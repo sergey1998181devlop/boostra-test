@@ -31,6 +31,11 @@ class SelfDec extends Simpla
     {
         $orderCrm = $this->orders->get_crm_order($orderId);
 
+        if (empty($orderCrm)) {
+            $this->logging(__METHOD__, '', 'Заявка не найдена', ['order' => $orderCrm, 'order_id' => $orderId], self::LOG_FILE);
+            return self::NO_DECISION;
+        }
+
         $curTime = date('H:i:s');
 
         // Если текущее время меньше установленного максимума
@@ -42,8 +47,13 @@ class SelfDec extends Simpla
                 return $selfDecDecision;
             }
 
-            // 2. Проверить, есть ли самозапрет согласно скорингам акси
-            $result = $this->checkHasUserSelfDecByReportScorings($orderCrm);
+            $result = null;
+
+            // 2. Если не кросс-ордер, проверяем, есть ли у клиента успешный акси за сегодня
+            // Акси у кросс-ордеров не информативен, т.к. на шагах получения отчетов в акси стоят заглушки
+            if (!$this->orders->isCrossOrder($orderCrm)) {
+                $result = $this->checkHasUserSuccessAxi($orderCrm);
+            }
 
             if ($result === self::APPROVE_DECISION) {
                 return self::APPROVE_DECISION;
@@ -53,7 +63,7 @@ class SelfDec extends Simpla
         // 3. Проверить, есть ли самозапрет, отправив запрос в акси
         return $this->orders->isCrossOrder($orderCrm) ?
             $this->checkHasUserSelfDecByNewRequestToAxiForCrossOrder($orderCrm) :
-            $this->checkHasUserSelfDecByNewRequestToAxiForMainOrder($orderCrm);
+            $this->checkHasUserSelfDecByNewRequestToAxi($orderCrm);
     }
 
     /**
@@ -82,7 +92,7 @@ class SelfDec extends Simpla
      * @param stdClass $orderCrm
      * @return string
      */
-    private function checkHasUserSelfDecByReportScorings(stdClass $orderCrm): string
+    private function checkHasUserSuccessAxi(stdClass $orderCrm): string
     {
         $axiScoringType = $this->axi->getAxiScoringType($orderCrm);
 
@@ -96,12 +106,24 @@ class SelfDec extends Simpla
         foreach ($scorings as $scoring) {
             $scoringDate = date('Y-m-d', strtotime($scoring->created));
 
-            // Если за сегодня есть успешный акси значит самозапрета нет
-            if ($scoringDate === $curDate && !empty($scoring->success)) {
-                $this->logging(__METHOD__, '', ['order_id' => $orderCrm->order_id],
-                    'Нет самозапрета у заявки согласно скорингу акси c id ' . $scoring->id, self::LOG_FILE);
-                return self::APPROVE_DECISION;
+            // 1. Если акси не за сегодня или неуспешен, то пропускаем
+            if ($scoringDate !== $curDate || empty($scoring->success)) {
+                continue;
             }
+
+            if (!empty($scoring->body)) {
+                $body = json_decode($scoring->body);
+
+                // 2. Если по s_scoring_body акси отказал, то надо отправить запрос на самозапрет
+                if (!empty($body->name) && in_array($body->name, ['Отказ', 'Decline'])) {
+                    $this->logging(__METHOD__, '', 'У заявки отказной акси, отправляем запрос на самозапрет', ['order_id' => $orderCrm->order_id, 'scoring_id' => $scoring->id], self::LOG_FILE);
+                    return self::NO_DECISION;
+                }
+            }
+
+            // 3. Если за сегодня есть успешный акси значит самозапрета нет
+            $this->logging(__METHOD__, '', 'Нет самозапрета у заявки согласно скорингу акси, разрешаем выдачу', ['order_id' => $orderCrm->order_id, 'scoring_id' => $scoring->id], self::LOG_FILE);
+            return self::APPROVE_DECISION;
         }
 
         return self::NO_DECISION;
@@ -149,15 +171,20 @@ class SelfDec extends Simpla
             return $selfDecDecision;
         }
 
-        return $this->checkHasUserSelfDecByNewRequestToAxiForMainOrder($mainOrder);
+        return $this->checkHasUserSelfDecByNewRequestToAxi($mainOrder);
     }
 
     /**
      * @param stdClass $order
      * @return string
      */
-    private function checkHasUserSelfDecByNewRequestToAxiForMainOrder(stdClass $order): string
+    private function checkHasUserSelfDecByNewRequestToAxi(stdClass $order): string
     {
+        $order = $this->getOrderAllowedToGetReports($order);
+        if ($order === null) {
+            return self::NO_DECISION;
+        }
+
         $selfDecAxiApplicationId = $this->order_data->get((int)$order->order_id, $this->order_data::SELF_DEC_AXI_APPLICATION_ID);
 
         $prefix = 'SSP_';
@@ -237,11 +264,66 @@ class SelfDec extends Simpla
         return $hasUserSelfDec ? self::DECLINE_DECISION : self::APPROVE_DECISION;
     }
 
+    /**
+     * Проверяем, можно ли по данной заявке запросить отчеты из акси для проверки на самозапрет
+     * Если можно, возвращаем текущую заявку
+     * Если нельзя, получаем исходную (родительскую) заявку клиента (которая была до смены организации)
+     *
+     * Возвращает:
+     * stdClass $order - текущая заявка клиента, если по ней можно запросить отчеты и проверить на самозапрет
+     * stdClass $orderToCheckSelfDec - исходная (родительская) заявка клиента, по которой можно запросить отчеты и проверить на самозапрет
+     * null - у клиента не указана исходная заявка, чтобы по ней могли запросить отчеты ИЛИ у исходной заявки тоже стоит флаг, что нельзя запросить отчеты
+     *
+     * @param stdClass $order
+     * @return stdClass|null
+     */
+    private function getOrderAllowedToGetReports(stdClass $order): ?stdClass
+    {
+        $this->logging(__METHOD__, '', 'Начата проверка возможности запросить отчеты для проверки на самозапрет', ['order_id' => (int)$order->order_id], self::LOG_FILE);
+
+        $axiWithoutCreditReports = $this->order_data->read((int)$order->order_id, $this->order_data::AXI_WITHOUT_CREDIT_REPORTS);
+
+        // 1. Если по текущей заявке можно запросить отчеты, то возвращаем ее
+        if (empty($axiWithoutCreditReports)) {
+            $this->logging(__METHOD__, '', 'По заявке можно запросить отчеты', ['order_id' => (int)$order->order_id], self::LOG_FILE);
+            return $order;
+        }
+
+        // Берем родительскую заявку
+        $orderOrgSwitchParentOrderId = (int)$this->order_data->read((int)$order->order_id, $this->order_data::ORDER_ORG_SWITCH_PARENT_ORDER_ID);
+        $this->logging(__METHOD__, '', 'Получена исходная заявка клиента, по которой будем проверять самозапрет', ['order_id' => (int)$order->order_id, 'order_org_switch_parent_order_id' => $orderOrgSwitchParentOrderId], self::LOG_FILE);
+
+        // 2. Если родительской заявки нет, то не выдаем
+        if (empty($orderOrgSwitchParentOrderId)) {
+            $this->logging(__METHOD__, '', 'Ошибка! У заявки не установлен $orderOrgSwitchParentOrderId', ['order_id' => (int)$order->order_id, 'order_org_switch_parent_order_id' => $orderOrgSwitchParentOrderId], self::LOG_FILE);
+            return null;
+        }
+
+        $orderToCheckSelfDec = $this->orders->get_crm_order($orderOrgSwitchParentOrderId);
+
+        // 3. Если родительская заявка не найдена, то не выдаем
+        if (empty($orderToCheckSelfDec)) {
+            $this->logging(__METHOD__, '', 'Ошибка! Исходная заявка клиента не найдена', ['order_id' => (int)$order->order_id, 'order_org_switch_parent_order_id' => $orderOrgSwitchParentOrderId, 'order_to_check_self_dec' => $orderToCheckSelfDec], self::LOG_FILE);
+            return null;
+        }
+
+        $axiWithoutCreditReports = $this->order_data->read((int)$orderToCheckSelfDec->order_id, $this->order_data::AXI_WITHOUT_CREDIT_REPORTS);
+
+        // 4. Если по родительской заявке нельзя запрашивать отчеты, то не выдаем
+        if (!empty($axiWithoutCreditReports)) {
+            $this->logging(__METHOD__, '', 'Ошибка! По исходной заявке клиента нельзя запросить отчеты', ['order_id' => (int)$order->order_id, 'order_to_check_self_dec' => $orderToCheckSelfDec, 'axi_without_credit_reports' => $axiWithoutCreditReports], self::LOG_FILE);
+            return null;
+        }
+
+        // 5. Если по родительской заявке можно запрашивать отчеты, то возвращаем ее
+        return $orderToCheckSelfDec;
+    }
+
     public function rejectOrder(int $order_id): void
     {
         if (empty($order_id)) {
             $this->logging(__METHOD__, '', ['order_id' => $order_id],
-                'Заявка не найден', self::LOG_FILE);
+                'Заявка не найдена', self::LOG_FILE);
             return;
         }
 

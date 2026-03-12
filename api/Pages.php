@@ -29,11 +29,11 @@ class Pages extends Simpla
 	public function get_page($id)
 	{
 		if(gettype($id) == 'string')
-			$where = $this->db->placehold(' WHERE url=? ', $id);
+			$where = $this->db->placehold(' WHERE url=? AND site_id=?', $id, $this->config->site_id);
 		else
 			$where = $this->db->placehold(' WHERE id=? ', intval($id));
 		
-		$query = "SELECT id, url, header, name, meta_title, meta_description, meta_keywords, body, menu_id, position, visible, template
+		$query = "SELECT id, site_id, url, header, name, meta_title, meta_description, meta_keywords, body, menu_id, position, visible, template
 		          FROM __pages $where LIMIT 1";
 
 		$this->db->query($query);

@@ -144,19 +144,31 @@ class LoanView extends View
                     
                     $user_id = $this->users->add_user($user);
 
+                    // Метчим user_id и _ym_uid
+                    if ($_COOKIE["_ym_uid"]) {
+                        $this->custom_metric->addYmLog($user_id, $_COOKIE["_ym_uid"]);
+                    }
+
                     if (!empty($user_id)) {
                         $this->users->deleteInitUserPhone($user->phone_mobile);
                         unset($_SESSION['user_modal_phone']);
                         $_SESSION['user_id'] = $user_id;
                         setcookie('user_id', $user_id, time() + 86400 * 365, '/');
 
-                        $this->user_data->set($user_id, "is_virtual_card_consent", $_SESSION["virtual_card"]);
+                        $isVirtualCardEnabled = $this->settings->vc_enabled
+                            && isset($_COOKIE['utm_campaign'])
+                            && $_COOKIE['utm_campaign'] === 'vctest'
+                            && !empty($_SESSION["virtual_card"]);
+
+                        $this->user_data->set($user_id, "is_virtual_card_consent", $isVirtualCardEnabled ? 1: 0);
 
                         // Запуск прескорингов для проверки необходимости продажи карты отказного клиента
                         $this->scorings->add_scoring([
                             'user_id' => $user_id,
                             'type' => $this->scorings::TYPE_AGE,
                         ]);
+
+                        unset($_SESSION['virtual_card']);
                     }
 
                     \api\helpers\UserHelper::getJWTToken($this->config->jwt_secret_key, $user_id, 'auth_jwt_token', $this->config->jwt_expiration_time, true);

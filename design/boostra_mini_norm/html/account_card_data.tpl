@@ -4,7 +4,8 @@
 {*$add_order_css_js = true scope=parent*}
 
 {capture name=page_scripts}
-	<script src="design/{$settings->theme}/js/sbp.js?v=1.007"></script>
+	<script src="design/{$settings->theme}/js/sbp.js?v=1.010"></script>
+	<link rel="stylesheet" href="design/{$settings->theme}/css/cross_order_nk_sign.css?v=1.00">
 	{literal}
 	<script>
 		document.addEventListener('DOMContentLoaded', function() {
@@ -52,6 +53,14 @@
 		.box.b2p_card {
 			padding: clamp(48px, 33.6px + 4.127vw, 100px) clamp(25px, 10.1px + 4.365vw, 80px) /* clamp(48px, 7px + 12.063vw, 200px) */;
 		}
+
+		.sbp-bki-doc label{
+			width: 100% !important;
+		}
+		.sbp-bki-doc .docs_wrapper div .spec_size .checkbox{
+			margin-top: 0px !important;
+		}
+
 	</style>
 {/literal}
 
@@ -75,7 +84,7 @@
 			{/if}
 
 			<!-- Перенести в файл, не быдлокодить сука -->
-			<iframe id="add_card_frame" src="" style="display: none; width:100%; height:600px;border:0;" scrolling="no" {if $config->is_dev}allow="local-network-access"{/if}></iframe>
+			<iframe id="add_card_frame" src="" style="display: none; width:100%; height:1200px;border:0;" scrolling="no" {if $config->is_dev}allow="local-network-access"{/if}></iframe>
             {*include file='display_stages.tpl' current=1*}
 
 			{if $error}
@@ -84,6 +93,12 @@
 
 			{if $show_auto_confirm_2_asp}
 				{include file='auto_confirm_2_asp.tpl'}
+			{/if}
+
+			{* Модалка и экран подписания кросс-ордера: рендерим в DOM скрытыми, JS управляет показом *}
+			{if $should_render_cross_order}
+				{include file="auto_confirm_2_cross_order_modal.tpl"}
+				{include file="cross_order_nk_sign.tpl"}
 			{/if}
 
 			{if $show_select_bank_for_sbp}
@@ -99,7 +114,7 @@
             {* Секция следующих шагов; при автоподписании скрываем до SMS *}
             <div id="card-add-section" style="{if $show_auto_confirm_2_asp}display:none;{/if}">
                 {if $show_card_add}
-					<h1 class="add_card__title">Добавьте карту, мы переведем на нее деньги</h1>
+					<h1 class="add_card__title">Добавьте свою карту для получения кэшбека 💳✨</h1>
                     {if $settings->b2p_enabled || $user->use_b2p}
                         <a href="#" class="button medium js-b2p-add-card" data-organization_id="{$organization_id}" onclick="sendMetric('reachGoal', 'etap-reg-karty')">Добавить карту</a>
                     {elseif $user->add_card}

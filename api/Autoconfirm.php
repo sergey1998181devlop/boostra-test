@@ -182,4 +182,48 @@ class Autoconfirm extends Simpla
             );
         }
     }
+    
+    /**
+     * Сохраняет дополнительные услуги при автоподписании
+     * @param int $user_id ID пользователя
+     * @param int $is_user_credit_doctor Флаг услуги "Кредитный доктор"
+     * @param int $is_tv_medical Флаг услуги "Телемедицина"
+     * @param int|null $order_id ID заявки (если null, берётся последняя заявка пользователя)
+     * @param bool $isCross Флаг кросс-ордера (для выбора правильных ключей в БД)
+     * @return void
+     */
+    public function saveAdditionalServicesForAutoconfirm(
+        int $user_id,
+        int $is_user_credit_doctor,
+        int $is_tv_medical,
+        ?int $order_id = null,
+        bool $isCross = false
+    ): void {
+        $isOrganic = $this->users->checkUtmSource($user_id);
+        if (!$isOrganic) {
+            return;
+        }
+
+        if ($order_id === null) {
+            $last_order = $this->orders->get_last_order($user_id);
+            if (empty($last_order)) {
+                return;
+            }
+            $order_id = $last_order->id;
+        }
+
+        $is_user_credit_doctor = (int)(bool)$is_user_credit_doctor;
+        $is_tv_medical = (int)(bool)$is_tv_medical;
+
+        if ($isCross) {
+            $credit_doctor_key = $this->order_data::AUTOCONFIRM_CROSS_CREDIT_DOCTOR;
+            $tv_medical_key = $this->order_data::AUTOCONFIRM_CROSS_TV_MEDICAL;
+        } else {
+            $credit_doctor_key = $this->order_data::AUTOCONFIRM_CREDIT_DOCTOR;
+            $tv_medical_key = $this->order_data::AUTOCONFIRM_TV_MEDICAL;
+        }
+
+        $this->order_data->set($order_id, $credit_doctor_key, $is_user_credit_doctor);
+        $this->order_data->set($order_id, $tv_medical_key, $is_tv_medical);
+    }
 }

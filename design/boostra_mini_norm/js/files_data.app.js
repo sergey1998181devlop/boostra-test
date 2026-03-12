@@ -4,6 +4,7 @@ function FilesDataApp(form_selector)
     
     app.$form = $(form_selector);
     app.$new_other_file;
+    app.lastUploadError = undefined;
     
     app.init = function(){
         
@@ -156,7 +157,7 @@ function FilesDataApp(form_selector)
                 app.upload(this);
             }
         });
-        
+
         $(document).on('click', '.remove-file, .js-remove-file', function(e){
             e.preventDefault();
 
@@ -267,8 +268,7 @@ function FilesDataApp(form_selector)
         fr.readAsDataURL(input.files[0]);
     };
     
-    app.upload = function(input){
-        console.log(input)
+    app.upload = async function(input){
         var self = $(input),
             fileBlock = self.closest('.file-block'),
             _type = self.data('type'),
@@ -290,99 +290,120 @@ function FilesDataApp(form_selector)
         if (localStorage.cardPan != undefined) {
             formData.append('cardPan', localStorage.cardPan)
         }
-        $.ajax({
-            url: 'ajax/FileHandler.php',
-            data: formData,
-            type: 'POST',
-            dataType: 'json',
-            processData : false,
-            contentType : false, 
-            beforeSend: function(){
-                fileBlock.addClass('loading');
-            },
-            success: function(resp){
-                
-                fileBlock.removeClass('loading');
-                
-                let isNewResponseFormat = typeof resp.status !== 'undefined' && typeof resp.result !== 'undefined' && typeof resp.message !== 'undefined';
-                
-                if(isNewResponseFormat){
-    
-                    if (resp.status === false) {
-                        fileBlock.find('.alert').html(resp.message).fadeIn();
+        if (!file) return;
+        let pageCount;
+        if(input.files[0].type === "application/pdf") {
+            try {
+                const arrayBuffer = await file.arrayBuffer();
+                const pdf = await window.pdfjsLib.getDocument({ data: new Uint8Array(arrayBuffer) }).promise;
+                pageCount = pdf.numPages;
+            } catch(error) {
+                if(error?.name === "PasswordException"){
+                    fileBlock.find('.alert').html('Не удалось прочитать PDF или файл защищён паролем').fadeIn();
+                    app.lastUploadError = error.name;
+                }
+            }
+        }
+        let pdfPages = pageCount > 1 ? [1, 2] : [1];
+        formData.append('pdf_pages', JSON.stringify(pdfPages));
+        if(pageCount > 2) {
+            fileBlock.find('.alert').html('PDF содержит больше 2 страниц').fadeIn();
+        } else if(app.lastUploadError !== "PasswordException") {
+            $.ajax({
+                url: 'ajax/FileHandler.php',
+                data: formData,
+                type: 'POST',
+                dataType: 'json',
+                processData : false,
+                contentType : false, 
+                beforeSend: function(){
+                    fileBlock.addClass('loading');
+                },
+                success: function(resp){
+                    
+                    input.value = '';
+                    fileBlock.removeClass('loading');
+                    
+                    let isNewResponseFormat = typeof resp.status !== 'undefined' && typeof resp.result !== 'undefined' && typeof resp.message !== 'undefined';
+                    
+                    if(isNewResponseFormat){
+        
+                        if (resp.status === false) {
+                            fileBlock.find('.alert').html(resp.message).fadeIn();
+                            return;
+                        }
+        
+                        fileBlock.removeClass('error').find('.alert').fadeOut();
+                        
+                        let _input_id = _type === 'passport' ? '' : _type,
+                            _preview = '';
+                        
+                        _preview += '<label class="file-label">';
+                        _preview += '<div class="file-label-image">';
+                        _preview += '<img src="' + resp.result.filename + '" />';
+                        _preview += '</div>';
+                        _preview += '<span class="js-remove-file" data-id="' + resp.result.id + '">Удалить</span>';
+                        _preview += '<input type="hidden" id="' + _input_id + '" name="user_files[]" value="' + resp.result.id + '" />';
+                        _preview += '</label>';
+                        
+                        fileBlock.find('.file-field').hide();
+                        fileBlock.find('.user_files').append(_preview).fadeIn();
+                        
+                        $('.next-step-button').prop('disabled', false)
+                        _show_submit_button();
+        
                         return;
                     }
-    
-                    fileBlock.removeClass('error').find('.alert').fadeOut();
                     
-                    let _input_id = _type === 'passport' ? '' : _type,
-                        _preview = '';
-                    
-                    _preview += '<label class="file-label">';
-                    _preview += '<div class="file-label-image">';
-                    _preview += '<img src="' + resp.result.filename + '" />';
-                    _preview += '</div>';
-                    _preview += '<span class="js-remove-file" data-id="' + resp.result.id + '">Удалить</span>';
-                    _preview += '<input type="hidden" id="' + _input_id + '" name="user_files[]" value="' + resp.result.id + '" />';
-                    _preview += '</label>';
-                    
-                    fileBlock.find('.file-field').hide();
-                    fileBlock.find('.user_files').append(_preview).fadeIn();
-                    
-                    $('.next-step-button').prop('disabled', false)
-                    _show_submit_button();
-    
-                    return;
-                }
-                
-                if (!!resp.error)
-                {
-                    var error_text = '';
-                    if (resp.error == 'max_file_size')
-                        error_text = 'Превышен максимально допустимый размер файла.';
-                    else if (resp.error == 'error_uploading')
-                        error_text = 'Файл не удалось загрузить, попробуйте еще.';
-                    else if (resp.error == 'extension')
-                        error_text = 'Файл не удалось загрузить, Недопустимое расширение файла. Допускается загрузка форматов: '+resp.allowed_extensions.join(', ');
-                    else if (resp.error == 'empty_file')
-                        error_text = 'Ошибка файла, попробуйте ещё раз';
-                    else
-                        error_text = resp.error;
-
-                    fileBlock.find('.alert').html(error_text).fadeIn();
-                }
-                else
-                {
-                    fileBlock.removeClass('error').find('.alert').fadeOut();
-                    
-                    if (_type == 'passport')
+                    if (!!resp.error)
                     {
-                        var _input_id = ''
+                        var error_text = '';
+                        if (resp.error == 'max_file_size')
+                            error_text = 'Превышен максимально допустимый размер файла.';
+                        else if (resp.error == 'error_uploading')
+                            error_text = 'Файл не удалось загрузить, попробуйте еще.';
+                        else if (resp.error == 'extension')
+                            error_text = 'Файл не удалось загрузить, Недопустимое расширение файла. Допускается загрузка форматов: '+resp.allowed_extensions.join(', ');
+                        else if (resp.error == 'empty_file')
+                            error_text = 'Ошибка файла, попробуйте ещё раз';
+                        else
+                            error_text = resp.error;
+
+                        fileBlock.find('.alert').html(error_text).fadeIn();
                     }
                     else
                     {
-                        var _input_id = _type;
+                        fileBlock.removeClass('error').find('.alert').fadeOut();
+                        
+                        if (_type == 'passport')
+                        {
+                            var _input_id = ''
+                        }
+                        else
+                        {
+                            var _input_id = _type;
+                        }
+                        
+                        var _preview = '';
+                        _preview += '<label class="file-label">';
+                        _preview += '<div class="file-label-image">';
+                        _preview += '<img src="'+resp.filename+'" />';
+                        _preview += '</div>';
+                        _preview += '<span class="js-remove-file" data-id="'+resp.id+'">Удалить</span>';
+                        _preview += '<input type="hidden" id="'+_input_id+'" name="user_files[]" value="'+resp.id+'" />';
+                        _preview += '</label>';
+                        
+                        fileBlock.find('.file-field').hide();
+                        fileBlock.find('.user_files').append(_preview).fadeIn();
+
+                        $('.next-step-button').prop('disabled',false)
+                        _show_submit_button();
                     }
                     
-                    var _preview = '';
-                    _preview += '<label class="file-label">';
-                    _preview += '<div class="file-label-image">';
-                    _preview += '<img src="'+resp.filename+'" />';
-                    _preview += '</div>';
-                    _preview += '<span class="js-remove-file" data-id="'+resp.id+'">Удалить</span>';
-                    _preview += '<input type="hidden" id="'+_input_id+'" name="user_files[]" value="'+resp.id+'" />';
-                    _preview += '</label>';
-                    
-                    fileBlock.find('.file-field').hide();
-                    fileBlock.find('.user_files').append(_preview).fadeIn();
-
-
-                    $('.next-step-button').prop('disabled',false)
-                    _show_submit_button();
                 }
-                
-            }
-        });                
+            });
+        }
+        app.lastUploadError = undefined;
     };
     
     app.check_files = function(){
@@ -449,8 +470,6 @@ function FilesDataApp(form_selector)
                         app.$form.find('#file_form').remove();
                         app.$form.find('.js-error-block').fadeIn();
                 
-                        console.log(resp.error);
-                
                         app.$form.removeClass('loading');
                     } else if (!!resp.success) {
                         delete localStorage.openCardModal
@@ -501,4 +520,3 @@ $('.file-label .photo_btn:not(.get_mobile_photo), .file-field .file-label-image'
     input.removeAttribute('capture');
     input.click();
 });
-  

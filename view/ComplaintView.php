@@ -4,6 +4,7 @@ require_once 'View.php';
 require_once dirname(__DIR__) . '/api/traits/ComplaintMessageTrait.php';
 require_once dirname(__DIR__) . '/api/services/UsedeskService.php';
 require_once dirname(__DIR__) . '/api/TelegramApi.php';
+require_once dirname(__DIR__) . '/api/YaSmartCaptcha.php';
 
 use api\services\UsedeskService;
 
@@ -63,30 +64,130 @@ class ComplaintView extends View
         $this->design->assign('user', $this->user);
         $this->design->assign('complaint_topics', $complaintTopicsArray);
         $this->design->assign('eighteen_years_birthdate', date('Y-m-d', strtotime('-18 years')));
+        $this->design->assign('complaint_csrf', $this->getOrCreateCsrfToken());
 
         return $this->design->fetch('complaint/index.tpl');
     }
 
+    /**
+     * Возвращает CSRF-токен для формы жалобы.
+     *
+     * @return string
+     */
+    private function getOrCreateCsrfToken(): string
+    {
+        if (session_status() !== PHP_SESSION_ACTIVE) {
+            @session_start();
+        }
+
+        if (!isset($_SESSION['complaint_csrf']) || !is_string($_SESSION['complaint_csrf']) || strlen($_SESSION['complaint_csrf']) < 16) {
+            try {
+                $_SESSION['complaint_csrf'] = bin2hex(random_bytes(32));
+            } catch (\Throwable $e) {
+                $_SESSION['complaint_csrf'] = md5(microtime(true) . mt_rand());
+            }
+        }
+
+        return $_SESSION['complaint_csrf'];
+    }
+
+    /**
+     * Обрабатывает отправку формы жалобы.
+     *
+     * @return void
+     * @throws Exception
+     */
     private function createComplaint(): void
     {
         $organizationId = $this->organizations::FINTEHMARKET_ID;
 
-        $name = $this->request->post('complaint_name');
-        $phone = $this->request->post('complaint_phone');
-        $email = $this->request->post('complaint_email');
-        $birth = $this->request->post('complaint_birth');
-        $topic_id = $this->request->post('complaint_topic');
-        $text = $this->request->post('complaint_text');
-        $files = $this->request->files('complaint_file');
-
-        if (empty($name) || empty($phone) || empty($email) || empty($birth) || empty($topic_id) || empty($text)) {
-            header("Content-type: application/json; charset=UTF-8");
-            echo json_encode(['error' => 'empty_required_fields']);
-            exit;
+        if (session_status() !== PHP_SESSION_ACTIVE) {
+            @session_start();
         }
 
-        $topicData = $this->complaint->get_topic((int)$topic_id);
-        $topicName = $topicData ? $topicData->name : 'Тема не указана';
+        $csrf = (string)$this->request->post('complaint_csrf');
+        $csrfSession = (string)($_SESSION['complaint_csrf'] ?? '');
+        if ($csrf === '' || $csrfSession === '' || !hash_equals($csrfSession, $csrf)) {
+            $this->jsonError('csrf');
+        }
+
+        $hp = trim((string)$this->request->post('complaint_hp'));
+        if ($hp !== '') {
+            $this->jsonError('spam');
+        }
+
+        if (empty($this->is_developer)) {
+            $smartToken = (string)$this->request->post('smart-token');
+            if ($smartToken === '' || !\api\YaSmartCaptcha::check_captcha($smartToken)) {
+                $this->jsonError('captcha');
+            }
+        }
+
+        $agree = (string)$this->request->post('agree');
+        if ($agree === '') {
+            $this->jsonError('agree_required');
+        }
+
+        $name = trim((string)$this->request->post('complaint_name'));
+        $phone = trim((string)$this->request->post('complaint_phone'));
+        $email = trim((string)$this->request->post('complaint_email'));
+        $birth = trim((string)$this->request->post('complaint_birth'));
+        $topic_id = (int)$this->request->post('complaint_topic');
+        $text = trim((string)$this->request->post('complaint_text'));
+        $files = $this->request->files('complaint_file');
+
+        if ($name === '' || $phone === '' || $email === '' || $birth === '' || empty($topic_id) || $text === '') {
+            $this->jsonError('empty_required_fields');
+        }
+
+        if (!preg_match('/^[А-ЯЁа-яё]+(\s[А-ЯЁа-яё]+)+$/u', $name)) {
+            $this->jsonError('invalid_name');
+        }
+
+        if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+            $this->jsonError('invalid_email');
+        }
+
+        $digits = preg_replace('/\D+/', '', $phone);
+        if (strlen($digits) === 11 && $digits[0] === '8') {
+            $digits = '7' . substr($digits, 1);
+        }
+        if (strlen($digits) !== 11 || $digits[0] !== '7') {
+            $this->jsonError('invalid_phone');
+        }
+        $phone = '+'.$digits;
+
+        $birthDt = \DateTime::createFromFormat('Y-m-d', $birth);
+        $birthErrors = \DateTime::getLastErrors() ?: ['warning_count' => 0, 'error_count' => 0];
+        if (!$birthDt || !empty($birthErrors['warning_count']) || !empty($birthErrors['error_count'])) {
+            $this->jsonError('invalid_birth');
+        }
+
+        $year = (int)$birthDt->format('Y');
+        if ($year < 1920) {
+            $this->jsonError('invalid_birth');
+        }
+
+        $today = new \DateTime('today');
+        $eighteenYearsAgo = (clone $today)->modify('-18 years');
+        if ($birthDt > $today || $birthDt > $eighteenYearsAgo) {
+            $this->jsonError('invalid_birth');
+        }
+
+        $allowedTopics = $this->complaint->get_topics($organizationId);
+        $topicMap = [];
+        foreach ($allowedTopics as $t) {
+            $topicMap[(int)$t->id] = $t;
+        }
+        if (!isset($topicMap[$topic_id])) {
+            $this->jsonError('invalid_topic');
+        }
+        $topicName = (string)$topicMap[$topic_id]->name;
+
+        $len = function_exists('mb_strlen') ? mb_strlen($text, 'UTF-8') : strlen($text);
+        if ($len < 50 || $len > 300) {
+            $this->jsonError('invalid_text_length');
+        }
 
         $exist_complaint = $this->complaint->get_limit($name, $phone, $email, $birth);
         if ($exist_complaint && !empty($exist_complaint->created)) {
@@ -95,9 +196,7 @@ class ComplaintView extends View
             $diff = $current_date->diff($created);
 
             if ($diff->h == 0 && $diff->i <= static::PAUSE_MINUTES) {
-                header("Content-type: application/json; charset=UTF-8");
-                echo json_encode(['error' => 'time_limit']);
-                exit;
+                $this->jsonError('time_limit');
             }
         }
 
@@ -128,20 +227,19 @@ class ComplaintView extends View
                 $this->sendTelegramComplaintNotification($name, $phone, $email, $birth, $topicName, $text, $usedeskTicketId, $complaint_files);
             }
 
-            header("Content-type: application/json; charset=UTF-8");
-            echo json_encode(['message' => 'Обращение отправлено.']);
-            exit;
+            $this->jsonMessage('Обращение отправлено.');
         } catch (\Exception $e) {
             $this->logging('ERROR', 'Error send complaint', '', ['error' => $e->getMessage()], 'complaint.txt');
 
-            header("Content-type: application/json; charset=UTF-8");
-            echo json_encode(['message' => 'Сейчас невозможно отправить обращение.']);
-            exit;
+            $this->jsonMessage('Сейчас невозможно отправить обращение.');
         }
     }
 
     /**
-     * Обработка загруженных файлов
+     * Обрабатывает загруженные файлы из формы жалобы.
+     *
+     * @param array<string,mixed>|null $files
+     * @return array<int,array{path:string,mime_type:string,name:string}>
      */
     private function processUploadedFiles(?array $files): array
     {
@@ -152,22 +250,16 @@ class ComplaintView extends View
         }
 
         if (count($files['name']) > static::MAX_FILES_COUNT) {
-            header("Content-type: application/json; charset=UTF-8");
-            echo json_encode(['error' => 'max_files']);
-            exit;
+            $this->jsonError('max_files');
         }
 
         foreach ($files['name'] as $num => $file) {
             if ($files['size'][$num] >= static::MAX_FILE_SIZE) {
-                header("Content-type: application/json; charset=UTF-8");
-                echo json_encode(['error' => 'max_file_size']);
-                exit;
+                $this->jsonError('max_file_size');
             }
 
             if (!in_array($files['type'][$num], static::$available_image_exts) && !in_array($files['type'][$num], static::$available_doc_exts)) {
-                header("Content-type: application/json; charset=UTF-8");
-                echo json_encode(['error' => 'error_file_type']);
-                exit;
+                $this->jsonError('error_file_type');
             }
 
             if (!is_dir($this->config->root_dir . 'files/complaints/')) {
@@ -303,4 +395,26 @@ class ComplaintView extends View
         }
     }
 
+    /**
+     * Отправляет JSON-ответ с кодом ошибки.
+     *
+     * @param string $code
+     * @param array<string,mixed> $extra
+     * @return void
+     */
+    private function jsonError(string $code, array $extra = []): void
+    {
+        $this->request->json_output(array_merge(['error' => $code], $extra));
+    }
+
+    /**
+     * Отправляет JSON-ответ с сообщением.
+     *
+     * @param string $message
+     * @return void
+     */
+    private function jsonMessage(string $message): void
+    {
+        $this->request->json_output(['message' => $message]);
+    }
 }

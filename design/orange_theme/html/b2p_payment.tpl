@@ -248,9 +248,9 @@ $(function(){
                     </li> 
                 </ul>
                 
-                {*}
+                {*
                 <a href="#" target="_blank" class="button big" id="gpay" type="button"></a>
-                {*}
+                *}
                 
                 <div class="payment-amount">
                     {$amount} руб

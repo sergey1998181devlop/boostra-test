@@ -246,7 +246,7 @@ class Dadata extends Simpla
     {
         $query = $this->request->get('query');
 
-        return $this->suggest("fio", ["query" => $query, "count" => 10, 'parts' => ['NAME']]);
+        return $this->suggest("fio", ["query" => $query, "count" => 6, 'parts' => ['NAME']]);
     }
 
 
@@ -258,7 +258,7 @@ class Dadata extends Simpla
     {
         $query = $this->request->get('query');
 
-        return $this->suggest("fio", ["query" => $query, "count" => 10, 'parts' => ['SURNAME']]);
+        return $this->suggest("fio", ["query" => $query, "count" => 6, 'parts' => ['SURNAME']]);
     }
 
 
@@ -270,7 +270,29 @@ class Dadata extends Simpla
     {
         $query = $this->request->get('query');
 
-        return $this->suggest("fio", ["query" => $query, "count" => 10, 'parts' => ['PATRONYMIC']]);
+        return $this->suggest("fio", ["query" => $query, "count" => 6, 'parts' => ['PATRONYMIC']]);
+    }
+
+    /**
+     * Email
+     * @return bool|string
+     */
+    private function get_email()
+    {
+        $query = $this->request->get('query');
+
+        return $this->suggest("email", ["query" => $query, "count" => 6]);
+    }
+
+    /**
+     * ФИО
+     * @return bool|string
+     */
+    private function get_fio()
+    {
+        $query = $this->request->get('query');
+
+        return $this->suggest("fio", ["query" => $query, "count" => 10, 'parts' => ["SURNAME", "NAME", "PATRONYMIC"]]);
     }
 
 
@@ -340,6 +362,12 @@ class Dadata extends Simpla
 
             case 'patronymic':
                 return $this->get_patronymic();
+
+            case 'email':
+                return $this->get_email();
+
+            case 'fio':
+            return $this->get_fio();
 
             default:
                 return json_encode(array());

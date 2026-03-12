@@ -36,6 +36,8 @@
                        pattern="{literal}\+\d\s\(\d{3}\)\s\d{3}-\d{2}-\d{2}{/literal}"
                        title="Введите корректный номер телефона"
                        value="{substr($user->phone_mobile, 1)}"
+                       autocomplete="tel"
+                       inputmode="tel"
                        required
                 />
             </div>
@@ -45,6 +47,7 @@
                 <label for="email" class="ticket-create-form-label">E-mail*</label>
                 <input id="email"
                        name="email"
+                       autocomplete="email"
                        class="ticket-create-form-input"
                        type="email"
                        placeholder="example@mail.com"

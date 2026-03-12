@@ -187,8 +187,12 @@ sleep(1); // ?? задержка между запросами
 						'sms' => $check_sms
                     );
                     $user_id = $this->users->add_user($user);
-                    
-                    
+
+                    // Метчим user_id и _ym_uid
+                    if ($_COOKIE["_ym_uid"]) {
+                        $this->custom_metric->addYmLog($user_id, $_COOKIE["_ym_uid"]);
+                    }
+
     				$order = array(
                         'user_id' => $user_id,
     					'amount' => $_SESSION['amount'],
@@ -216,8 +220,15 @@ sleep(1); // ?? задержка между запросами
                     }
                     
                     $order_id = $this->orders->add_order($order);
+                    if (!empty($_SESSION['vid'])) {
+                        $this->order_data->set(
+                            $order_id,
+                            $this->order_data::VISITOR_ID,
+                            $_SESSION['vid']
+                        );
+                    }
                     $this->order_data->set($order_id, $this->order_data::USER_AMOUNT, $order['amount']);
-                    
+
                 }
                 // если нет юайди пользователя - сохраняем в базе полные 
                 // данные о пользователе и заявке для отправки кроном
@@ -268,6 +279,11 @@ sleep(1); // ?? задержка между запросами
 						'sms' => $check_sms
                     );
                     $user_id = $this->users->add_user($user);
+
+                    // Метчим user_id и _ym_uid
+                    if ($_COOKIE["_ym_uid"]) {
+                        $this->custom_metric->addYmLog($user_id, $_COOKIE["_ym_uid"]);
+                    }
                     
     				$order = array(
     					'user_id' => $user_id,
@@ -285,6 +301,13 @@ sleep(1); // ?? задержка между запросами
    					);
     
     				$order_id = $this->orders->add_order($order);
+                    if (!empty($_SESSION['vid'])) {
+                        $this->order_data->set(
+                            $order_id,
+                            $this->order_data::VISITOR_ID,
+                            $_SESSION['vid']
+                        );
+                    }
                     $this->order_data->set($order_id, $this->order_data::USER_AMOUNT, $order['amount']);
                 }
 

@@ -1,58 +1,84 @@
 .friend_payment_wrapper {
-    margin-top: 16px;
+    margin-top: 14px;
 }
 
 .friend_action {
     display: flex;
     align-items: center;
+    gap: 10px;
+    min-height: 42px;
+    margin-bottom: 16px;
 }
 
 .payment_friend_button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+
     background-color: #038AEE;
-    border: none;
     color: #ffffff;
-    padding: 12px 24px;
-    border-radius: 50px;
+    border: none;
+
+    padding: 8px 14px;
+    border-radius: 999px;
+
+    font-size: 13px;
     font-weight: 600;
-    font-size: 14px;
+    line-height: 1;
+
     cursor: pointer;
-    transition: all 0.3s ease;
-    box-shadow: 0px 4px 20px 0px #02113B1A;
-    margin-bottom: 18px;
-    width: 100%;
-    max-width: 300px;
+    transition: background-color 0.2s ease, box-shadow 0.2s ease, transform 0.15s ease;
+
+    width: auto;
+    min-height: 34px;
+
+    box-shadow: 0 3px 10px rgba(3, 138, 238, 0.22);
 }
 
 .payment_friend_button:hover {
     background-color: #0279d1;
+    box-shadow: 0 5px 14px rgba(3, 138, 238, 0.32);
+}
+
+.payment_friend_button:active {
+    transform: translateY(1px);
 }
 
 .payment_friend_button:disabled {
-    opacity: 0.7;
+    opacity: 0.6;
     cursor: not-allowed;
+    box-shadow: none;
 }
 
 .payment_friend_button.button-inverse {
-    color: #038AEE;
     background-color: #F0F8FF;
+    color: #038AEE;
     box-shadow: none;
 }
 
 .payment_friend_button.button-inverse:hover {
     background-color: #038AEE;
-    color: #F0F8FF;
+    color: #ffffff;
+}
+
+.friend_btn_icon {
+    width: 16px;
+    height: 16px;
+    object-fit: contain;
+    flex-shrink: 0;
 }
 
 .friend_payment_loader {
     display: none;
     align-items: center;
-    gap: 12px;
-    padding: 12px 24px;
+    gap: 8px;
+    padding: 6px 0;
 }
 
 .friend_payment_spinner {
-    width: 20px;
-    height: 20px;
+    width: 18px;
+    height: 18px;
     border: 3px solid #D6E3ED;
     border-top-color: #038AEE;
     border-radius: 50%;
@@ -68,44 +94,44 @@
 .friend_loader_text {
     color: #038AEE;
     font-weight: 600;
-    font-size: 14px;
+    font-size: 13px;
 }
 
 .friend_payment_block {
-    margin-top: 16px;
+    margin-top: 14px;
     max-width: 520px;
 }
 
 .friend_info {
     background: #ffffff;
-    border-radius: 32px;
-    padding: 24px;
-    box-shadow: 0px 4px 20px 0px #02113B1A;
+    border-radius: 28px;
+    padding: 22px;
+    box-shadow: 0 4px 18px rgba(2, 17, 59, 0.1);
     text-align: center;
-    margin-bottom: 18px;
+    margin-bottom: 16px;
 }
 
 .friend_info_title {
-    font-size: 20px;
+    font-size: 19px;
     font-weight: 700;
-    margin-bottom: 8px;
+    margin-bottom: 6px;
     color: #1E262E;
     line-height: 1.3;
 }
 
 .friend_info_subtitle {
-    font-size: 14px;
-    margin-bottom: 16px;
-    color: #6f7985;
+    font-size: 13px;
+    margin-bottom: 14px;
+    color: #6F7985;
     font-weight: 500;
 }
 
 .friend_more_link {
+    display: inline-block;
     color: #038AEE;
     font-weight: 600;
-    font-size: 14px;
+    font-size: 13px;
     text-decoration: none;
-    transition: all 0.3s ease;
 }
 
 .friend_more_link:hover {
@@ -113,26 +139,28 @@
 }
 
 .friend_more_text {
-    margin-top: 16px;
-    font-size: 13px;
-    line-height: 1.5;
-    color: #6f7985;
+    margin-top: 14px;
+    font-size: 12.5px;
+    line-height: 1.45;
+    color: #6F7985;
     text-align: left;
 }
 
 .friend_ok_btn {
-    margin-top: 20px;
+    margin-top: 18px;
     width: 100%;
     background-color: #038AEE;
-    padding: 12px 24px;
-    border-radius: 50px;
+    padding: 11px 20px;
+    border-radius: 999px;
     border: none;
+
     color: #ffffff;
     font-weight: 600;
-    font-size: 14px;
-    line-height: 24px;
+    font-size: 13px;
+    line-height: 1;
+
     cursor: pointer;
-    transition: all 0.3s ease;
+    transition: background-color 0.2s ease;
 }
 
 .friend_ok_btn:hover {
@@ -140,40 +168,21 @@
 }
 
 .friend_ok_btn:disabled {
-    opacity: 0.7;
+    opacity: 0.6;
     cursor: not-allowed;
 }
 
-.payment_friend_button {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    gap: 8px;
-}
-
-.friend_btn_icon {
-    width: 20px;
-    height: 20px;
-    object-fit: contain;
-    flex-shrink: 0;
-}
-
-@media screen and (max-width: 768px) {
+@media (max-width: 768px) {
     .friend_payment_wrapper {
         margin-top: 12px;
     }
 
     .friend_info {
-        border-radius: 24px;
+        border-radius: 22px;
         padding: 18px;
     }
 
     .friend_info_title {
-        font-size: 18px;
-    }
-
-    .payment_friend_button,
-    .friend_ok_btn {
-        width: 100%;
+        font-size: 17px;
     }
 }

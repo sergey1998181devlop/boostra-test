@@ -2,10 +2,16 @@
 
 {$meta_title = "Заявка на заём | Boostra" scope=parent}
 {*$add_order_css_js = true scope=parent*}
-
-{capture name=page_scripts}
-	<script src="design/{$settings->theme}/js/files_data.app.js?v=1.70" type="text/javascript"></script>
-{/capture}
+{capture_array key="footer_page_scripts"}
+    <script type="module">
+        import * as pdfjsLib from '/js/pdf.mjs';
+        
+        pdfjsLib.GlobalWorkerOptions.workerSrc = '/js/pdf.worker.mjs';
+        
+        window.pdfjsLib = pdfjsLib;
+    </script>
+	<script src="design/{$settings->theme}/js/files_data.app.js?v=1.73" type="text/javascript"></script>
+{/capture_array}
 <style>
     .mini-stages {
         text-align: center;
@@ -82,7 +88,7 @@
                                 </label> *}
 
                                 {* <label onclick="sendMetric('reachGoal', 'download_user_photo_3');"  class="photo_btn" for="user_file_passport1">Загрузить фото</label> *}
-                                <input type="file" id="user_file_passport1" name="passport1" accept="image/*" data-type="passport1" />
+                                <input type="file" id="user_file_passport1" name="passport1" accept="image/*, image/heic, application/pdf" data-type="passport1" />
                             </div>
                         </div>
                     </fieldset>
@@ -174,9 +180,9 @@
                             }
                         }
                     </style>
-                    <div class="clearfix">
+{*                    <div class="clearfix">
                         <input type="button" id="add_file" class="button button-inverse small" value="Добавить еще файл" />
-                    </div>
+                    </div>*}
                    <!-- <p
                         class="form-help mobile-green-bg"
                         style="font-weight: bold; text-align: left;"

@@ -40,6 +40,7 @@ class ShortFlow extends Simpla
 
     private const SCORINGS_LIST = [
         Scorings::TYPE_BLACKLIST,
+        Scorings::TYPE_TERRORIST_CHECK,
         Scorings::TYPE_AXILINK_2,
         Scorings::TYPE_UPRID,
         Scorings::TYPE_REPORT,
@@ -188,6 +189,14 @@ class ShortFlow extends Simpla
         $useragent = $this->request->post('juicescore_useragent') ?? $_SERVER['HTTP_USER_AGENT'];
         if (!empty($useragent))
             $this->order_data->set($order_id, $this->order_data::USERAGENT, $useragent);
+
+        if (!empty($_SESSION['vid'])) {
+            $this->order_data->set(
+                $order_id,
+                $this->order_data::VISITOR_ID,
+                $_SESSION['vid']
+            );
+        }
 
         // Финкарта
         $this->orders->saveFinkartaFp($order_id, $this->request->post('finkarta_fp'));

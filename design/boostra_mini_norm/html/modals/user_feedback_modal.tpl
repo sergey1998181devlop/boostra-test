@@ -377,7 +377,7 @@
                 <!-- Шаг 2.1.1: Если обратная связь по телефону, то спрашиваем номер телефона и просим выбрать причину недовольства из списка 4+1 -->
                 <div class="feedback-step step-phone-input" style="display: none;">
                     <div class="reason-question">Введите номер телефона</div>
-                    <input type="tel" id="phoneInput" class="contact-input" placeholder="+7 (___) ___-__-__">
+                    <input type="tel" inputmode="tel" id="phoneInput" class="contact-input" placeholder="+7 (___) ___-__-__">
                 </div>
 
                 <!-- Step 2.1.2: Если обратная связь по email, спрашиваем email и просим описать причину недовольства в текстовом поле -->

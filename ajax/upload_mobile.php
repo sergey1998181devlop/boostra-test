@@ -1,6 +1,7 @@
 <?php
 
 use api\services\FileStorageService;
+use api\traits\FileUploadConversionTrait;
 
 session_start();
 require_once('../api/Simpla.php');
@@ -9,34 +10,57 @@ $simpla = new Simpla();
 
 class UploadApp extends Simpla
 {
+    use FileUploadConversionTrait;
     private $response;
     private $user;
-    
-    private $max_file_size = 10485760;
-    
-    private $allowed_extensions = array(
+
+    private $max_file_size = 15 * 1024 * 1024;
+    private $pdf_max_pages = 2;
+    private $pdf_dpi = 300;
+    private $jpeg_quality = 85;
+    private $pdftoppm_timeout_seconds = 20;
+    private $last_conversion_error = '';
+    private $allowed_mime_types = [
+        'png'  => ['image/png'],
+        'jpg'  => ['image/jpeg', 'image/pjpeg'],
+        'jpeg' => ['image/jpeg', 'image/pjpeg'],
+        'jp2'  => ['image/jp2', 'image/jpeg2000', 'image/jpx', 'image/jpm', 'application/octet-stream'],
+        'pdf'  => ['application/pdf'],
+        'heic' => ['image/heic', 'image/heif', 'application/octet-stream'],
+        'heif' => ['image/heif', 'image/heic', 'application/octet-stream'],
+    ];
+
+    private $allowed_extensions = [
         'png',
         'jpg',
         'jpeg',
         'jp2',
-    );
-    
+        'pdf',
+        'heic',
+        'heif',
+    ];
+    private $convert_to_jpeg_extensions = [
+        'pdf',
+        'heic',
+        'heif',
+    ];
+
     public function __construct()
     {
         $this->response = new StdClass();
-        
+
         $this->run();
-        
+
         $this->output();
     }
-    
+
     public function run()
     {
         $user_id = $this->request->post('user_id', 'string');
 
         if (!empty($user_id))
             $this->user = $this->users->get_user((int)$user_id);
-        
+
 
         if ('123ighdfgys_dfgd' != $this->request->post('token'))
         {
@@ -48,28 +72,28 @@ class UploadApp extends Simpla
         }
         else
         {
-            
+
             switch ($this->request->post('action', 'string')) :
-                
+
                 case 'add':
                     $this->add();
-                break;
-                
+                    break;
+
                 case 'remove':
                     $this->remove();
-                break;
-                
+                    break;
+
                 default:
                     $this->response->error = 'undefined action';
-                
+
             endswitch;
-            
+
         }
     }
-    
+
     private function add()
     {
-    	if ($file =$this->request->files('file'))
+        if ($file =$this->request->files('file'))
         {
             if ($type = $this->request->post('type', 'string'))
             {
@@ -78,14 +102,27 @@ class UploadApp extends Simpla
                     $ext = strtolower(pathinfo($file['name'], PATHINFO_EXTENSION));
                     if (in_array($ext, $this->allowed_extensions))
                     {
+                        $detected_mime = $this->detectMimeType((string)$file['tmp_name']);
+                        if (!$this->isAllowedMimeType($ext, $detected_mime)) {
+                            $this->response->error = "С вашим файлом что-то не так, попробуйте другой";
+                            return;
+                        }
+                        $needs_conversion = in_array($ext, $this->convert_to_jpeg_extensions, true);
+                        $target_ext = $needs_conversion ? 'jpg' : $ext;
+
                         do {
-          		            $new_filename = md5(microtime().rand()).'.'.$ext;
-          		        } while ($this->users->check_filename($new_filename));
+                            $new_filename = md5(microtime().rand()).'.'.$target_ext;
+                        } while ($this->users->check_filename($new_filename));
 
                         $file_local_path = $this->config->root_dir . $this->config->original_images_dir . $new_filename;
-                        $file_uploaded = move_uploaded_file($file['tmp_name'], $file_local_path);
+                        if ($needs_conversion) {
+                            $this->last_conversion_error = '';
+                            $file_uploaded = $this->convertToJpeg($file['tmp_name'], $file_local_path, $ext);
+                        } else {
+                            $file_uploaded = move_uploaded_file($file['tmp_name'], $file_local_path);
+                        }
                         if( ! $file_uploaded ){
-                            $this->response->error = 'error_uploading';
+                            $this->response->error = $needs_conversion ? ($this->last_conversion_error ?: 'error_uploading') : 'error_uploading';
 
                             return;
                         }
@@ -128,7 +165,7 @@ class UploadApp extends Simpla
                         }
 
                         // Логируем добавление нового фото в лк
-                        if ($type === 'passport') {
+                        if ($type == 'passport') {
                             $this->changelogs->add_changelog(
                                 [
                                     'manager_id' => $this->managers::MANAGER_SYSTEM_ID,
@@ -149,7 +186,7 @@ class UploadApp extends Simpla
                     else
                     {
                         $this->response->error = 'extension';
-                        $this->response->allowed_extensions = $this->allowed_extensions;                        
+                        $this->response->allowed_extensions = $this->allowed_extensions;
                     }
                 }
                 else
@@ -169,8 +206,8 @@ class UploadApp extends Simpla
         {
             $this->response->error = 'empty_file';
         }
-    } 
-    
+    }
+
     private function remove()
     {
         if ($id = $this->request->post('id', 'integer'))
@@ -178,27 +215,27 @@ class UploadApp extends Simpla
             $this->notify->soap_delete_file($id, 1);
 
             $this->users->delete_file($id);
-            
+
             $this->response->success = 'removed';
-            
+
         }
         else
         {
             $this->response->error = 'empty_file_id';
         }
-    } 
-    
+    }
+
     private function output()
     {
-   		header("Content-type: application/json; charset=UTF-8");
-    	header("Cache-Control: must-revalidate");
-    	header("Pragma: no-cache");
-    	header("Expires: -1");		
-        
+        header("Content-type: application/json; charset=UTF-8");
+        header("Cache-Control: must-revalidate");
+        header("Pragma: no-cache");
+        header("Expires: -1");
+
         echo json_encode($this->response);
         exit();
     }
-    
+
 }
 
 

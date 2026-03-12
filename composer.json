@@ -19,7 +19,9 @@
     "firebase/php-jwt": "6.10.0",
     "vlucas/phpdotenv": "^5.6",
     "monolog/monolog": "^2.10",
-    "opensearch-project/opensearch-php": "^2.3"
+    "opensearch-project/opensearch-php": "^2.3",
+    "virtual-card/virtual-card-client": "dev-main",
+    "ext-imagick": "*"
   },
   "autoload": {
     "files": [
@@ -41,5 +43,11 @@
   },
   "config": {
     "platform-check": false
-  }
+  },
+  "repositories": [
+    {
+      "type": "vcs",
+      "url": "https://gcib0d3c8bstra.boostra.ru/external/virtual-card/virtual-card-client"
+    }
+  ]
 }

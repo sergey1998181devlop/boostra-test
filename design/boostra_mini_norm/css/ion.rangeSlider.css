@@ -223,6 +223,12 @@
         top: 22px;
     }
 }
+
+@media (min-width: 2400px) {
+    .irs-slider.single {
+        top: 55px;
+    }
+}
 .irs-slider.state_hover, .irs-slider:hover, .irs-slider:active {
     background-color: #FFFFFF;
 }

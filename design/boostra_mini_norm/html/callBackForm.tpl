@@ -163,11 +163,11 @@ var params = window
                 <fieldset style="display: block">
                     <div class="clearfix">
                         <label class="w-50">
-                            <input required id="phone" type="tel" name="telephone" placeholder="" value=""/>
+                            <input required id="phone" autocomplete="tel" inputmode="tel" type="tel" name="telephone" placeholder="" value=""/>
                             <span class="floating-label">Номер телефона</span>
                         </label>
                          <label class="w-50">
-                            <input required  type="text" name="email"  value=""/>
+                            <input required autocomplete="email"  type="text" name="email"  value=""/>
                             <span class="floating-label">Адрес электронной почты</span>
                         </label>
                     </div>

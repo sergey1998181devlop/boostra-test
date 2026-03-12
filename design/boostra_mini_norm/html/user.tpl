@@ -7,16 +7,15 @@
 {$add_order_css_js = true scope=parent}
 {assign var="currentPage" value="user"}
 
-<div id="userData" data-order-status="{$user->order['status']}" data-order-id="{$user->order['id']}" data-number="{$user->order['1c_id']}" style="display:none;"></div>
+<div id="userData" data-order-status="{$user->order['status']}" data-order-id="{$user->order['id']}" data-number="{$user->order['1c_id']}" data-1c-status="{$user->order['1c_status']}" style="display:none;"></div>
 
 {capture name=page_scripts}
     <script src="design/boostra_mini_norm/js/mobile_download_banners/mobile_banners.js?v=1.002" type="text/javascript"></script>
-    <script src="design/{$settings->theme|escape}/js/b2p.app.js?v=1.021" type="text/javascript"></script>
-    <script src="design/{$settings->theme|escape}/js/user.js?v=1.405" type="text/javascript"></script>
-    <script src="design/{$settings->theme|escape}/js/prolongation.app.js?v=1.06" type="text/javascript"></script>
-    <script src="design/{$settings->theme|escape}/js/installment_payment_buttons.app.js?v=1.014" type="text/javascript"></script>
-    <script src="design/{$settings->theme|escape}/js/user_statuses.js?v=0.001" type="text/javascript"></script>
-    <script src="design/{$settings->theme}/js/friend_payment.js"></script>
+    <script src="design/{$settings->theme|escape}/js/b2p.app.js?v=1.022" type="text/javascript"></script>
+    <script src="design/{$settings->theme|escape}/js/user.js?v=1.414" type="text/javascript"></script>
+    <script src="design/{$settings->theme|escape}/js/prolongation.app.js?v=1.18" type="text/javascript"></script>
+    <script src="design/{$settings->theme|escape}/js/installment_payment_buttons.app.js?v=1.019" type="text/javascript"></script>
+    <script src="design/{$settings->theme|escape}/js/user_statuses.js?v=0.002" type="text/javascript"></script>
 {/capture}
 <script type="text/javascript">
     let userUtmSource = "{$user->utm_source|escape:'javascript'}";
@@ -225,25 +224,14 @@
             <form method="POST" action="{$redirect['url']}" id="newlk_form" data-user="{$user->id}">
                 <input type="hidden" name="data" value="{$redirect['data']}"/>
                 <input type="hidden" name="signature" value="{$redirect['signature']}"/>
-                <button type="submit"
-                        class="button big {if $config->snow}snow-relative primary{else}green{/if} bg-warning"
-                >
-                    {if $config->snow}
-                        <img class="snow-man" src="design/orange_theme/img/holidays/snow/snow_man.png?v=2"
-                             alt="Заявка на заём"/>
-                    {/if}
+                <button type="submit" class="button big green bg-warning">
                     Заявка на заём
                 </button>
             </form>
         {elseif $quantity_loans_block}
-            <div style="color:red;font-size:1.5rem;">
-                Вы можете подать новую заявку не ранее чем {$quantity_loans_block|date} {$quantity_loans_block|time}
+            <div class="view_order">
+                {include file='order_statuses/quantity_loans_block.tpl'}
             </div>
-            {*
-            <p>
-                <a href="partners" target="_blank" class="part-item__link button">Обратитесь к нашим партнерам</a>
-            </p>
-            *}
         {else}
 
             {if $user_discount}
@@ -252,13 +240,6 @@
                     {if $user_discount->percent > 0}
                         Для вас есть акционное предложение: {$user_discount->percent*1}% по займу вместо 0.8%!
                         <br/>
-                    {else}
-{*                        Для вас доступен беспроцентный заём на {$user_discount->max_period} {$user_discount->max_period|plural:'день':'дней':'дня'}*}
-{*                        <br/>*}
-{*                        {if !$user_discount->end_date}*}
-{*                            <a href="{$config->root_url}/files/docs/zaim_0.pdf" style="font-size:1rem" target="_blank">**}
-{*                                Условия акции «ПЕРВЫЙ ЗАЁМ 0%»</a>*}
-{*                        {/if}*}
                     {/if}
                     {if $user_discount->end_date}
                         Срок действия акции: до {$user_discount->end_date|date}
@@ -282,370 +263,39 @@
 
 {function name='view_order'}
 <div class="view_order">
-
-    {if !$current_order['status']}
+    {if $current_order._flags.is_empty}
         <p>Спасибо за вашу заявку, она будет обработана в ближайшее время.</p>
-    {/if}
 
-    {if in_array($current_order['status'], [15, 16]) && $current_order['status'] !== 8}
-        <div class="waits waits-transfer">
-            <p>
-                Ваша заявка одобрена!
-                <br />
-                Ожидайте, мы переводим Вам займ на карту.
-            </p>
-        </div>
-    {elseif !in_array($current_order['status'], [8, 9, 10, 11, 13, 14, 17, 16]) && $current_order['1c_status'] == '3.Одобрено'}
+    {elseif $current_order._flags.is_waiting_transfer}
+        {include file='order_statuses/waiting_transfer.tpl'}
 
+    {elseif $current_order._flags.is_show_accept_credit}
         {include file='accept_credit.tpl' user_order=$current_order}
 
-    {elseif in_array($current_order['status'], [8, 9, 14, 16]) || ($current_order['1c_status'] != '6.Закрыт' && in_array($current_order['status'], [10]))}
-    {if $current_order['1c_status'] == '5.Выдан'}
-        <style>
-            .waits-transfer {
-                display: none;
-            }
-        </style>
-        {* Показываем баннер/модалку «Оцените наш сервис» только если НЕ бакеты 1–3 *}
-        {if empty($debtInDays) || ($debtInDays < 1 && $debtInDays > 3)}
-            <!--- Выводим модальное окно обратной связи --->
-            {include file='modals/user_feedback_modal.tpl' user_id=$user->id order_id=$current_order['id']}
-        {/if}
-    {/if}
-        {* Ложная ошибка. Просим пользователя ПЕРЕПРИВЯЗАТЬ свою карту на Финлаб *}
-        {if $current_order['status'] == 14}
-            <form id="confirm-card-form" class="confirm-card-form" data-order_id="{$current_order['id']}" onsubmit="return false;">
-                <input type="hidden" name="card_id" value="{$current_order['card_id']}" />
-                <input type="hidden" name="organization_id" value="{$current_order['organization_id']}">
+    {elseif $current_order._flags.is_show_issued_block}
+        {include file='order_statuses/issued.tpl' order=$current_order}
 
-                <div class="card-confirm" id="card-confirm">
-                    <div class="error-block">
-                        <p>Ошибка выдачи!</p>
-                        <p>Привяжите карту!</p>
-                    </div>
+    {elseif $current_order._flags.is_transfer_delay}
+        {include file='order_statuses/transfer_delay.tpl'}
 
-                    <div class="request-error-block" style="display: none">
+    {elseif $current_order._flags.is_not_issued}
+        {include file='order_statuses/not_issued.tpl'}
 
-                    </div>
+    {elseif $current_order._flags.is_photo_error}
+        {include file='order_statuses/photo_error.tpl'}
 
-                    <button class="confirm-button" id="confirm-button">Привязать</button>
-                </div>
-            </form>
-        {/if}
-        {* Если хотя бы по одной заявке есть статус STATUS_WAIT_CARD (14) - скрываем все блоки об успешном подписании договора *}
-        {* Block hidden when status is 8 to allow cooling-off timer display *}
+    {elseif $current_order._flags.is_new || $current_order._flags.is_crm_waiting || $current_order._flags.is_corrected}
+        {include file='order_statuses/pending.tpl' order=$current_order}
 
-        {if !$is_admin && !$is_looker}
-            <script type="text/javascript">
-                $(document).ready(function (){
-                    {if $user->loan_history|count == 0}
-                        sendMetric('reachGoal', 'dogovor_podpisan_nk');
-                    {else}
-                        sendMetric('reachGoal', 'dogovor_podpisan_pk');
-                    {/if}
-                });
-            </script>
-        {/if}
-        <style>
-            .modal {
-                display: none;
-                position: fixed;
-                z-index: 1;
-                left: 0;
-                top: 0;
-                width: 100%;
-                height: 100%;
-                overflow: auto;
-                background-color: rgba(0,0,0,0.4);
-            }
-            .modal-content {
-                width: 320px;
-                height: 240px;
-                background-color: #FFFFFF;
-                border-radius: 12px;
-                padding: 6px;
-                margin: 56px auto 0;
-                text-align: center;
-                border: 1px solid #888;
-                position: relative;
-            }
-
-            #jubilee-modal .modal-content {
-                height: 200px;
-            }
-
-            .btn-modal {
-                display: block;
-                padding: 5px;
-                width: 258px;
-                margin-top: 35px;
-                margin-left:10px;
-                background-color: #0997ff;
-                color: #fff;
-                text-decoration: none;
-                border-radius: 5px;
-                font-size: 15px;
-            }
-            .btn-modal:hover {
-                background-color: #0080ff;
-                text-decoration: none;
-            }
-            .close {
-                position: absolute;
-                top: 10px;
-                right: 10px;
-                font-size: 28px;
-                font-weight: bold;
-                color: #aaa;
-                cursor: pointer;
-            }
-            .modal .modal-content h2 {
-                font-size: 20px;
-                font-weight: 600;
-                margin-top: 10px;
-            }
-            #private .tabs .content .modal-text {
-                margin: 18px;
-                font-size: 14px;
-                line-height: 1.7;
-            }
-        </style>
-        <script type="text/javascript">
-            $(document).ready(function() {
-                $('#current-year').text(new Date().getFullYear());
-                $(".close").click(function() {
-                    $("#jubilee-modal").css("display", "none");
-                });
-                $(".btn-modal").click(function() {
-                    ym(45594498, 'reachGoal', 'click_to_telegram_bot');
-                });
-            });
-        </script>
-
-    {elseif in_array($current_order['status'], [13])}
-
-        <div class="waits">
-            <p>
-                С переводом средств возникла задержка.
-                <br />
-                Ожидайте, деньги поступят Вам на карту в ближайшее время.
-            </p>
-        </div>
-
-    {elseif in_array($current_order['status'], [11])}
-
-        <div >
-            <p style="color:#d22">
-                При переводе произошла ошибка
-            </p>
-        </div>
-        {loan_form cards=$cards}
-
-    {elseif $current_order['status'] == 5}
-
-        <div class="files">
-            <p>Некоторые ваши фото не прошли проверку. Для получения займа вам необходимо их заменить!</p>
-            <a href="user/upload" class="button medium"> Заменить файлы</a>
-        </div>
-
-    {elseif $current_order['status'] == 1}
-
-    {if $view_fake_first_order}
-        <div>
-            <p style="color:#d22">
-                К сожалению Вам отказано.
-                <br />Попробуйте отправить заявку повторно,
-                <br />так как возможны технические сбои.
-            </p>
-            <form method="POST" id="repeat_loan_form">
-
-                <input type="hidden" name="service_recurent" value="1" />
-                <input type="hidden" name="service_sms" value="1" />
-                <input type="hidden" name="service_insurance" value="1" />
-                <input type="hidden" name="service_reason" value="0" />
-                {if ($user_return_credit_doctor)}
-                    <input type="hidden" name="service_doctor" value="0" />
-                {else}
-                    <input type="hidden" name="service_doctor" value="1" />
-                {/if}
-                <input type="hidden" name="service_recurent" value="1" />
-
-                <input type="hidden" value="1" name="repeat_first_loan" />
-                <input type="hidden" value="{$current_order['id']}" name="order_id" />
-
-                <label class="js-accept-block medium left {if $error=='empty_accept'}error{/if}" >
-                    <div class="checkbox">
-                        <input class="js-input-accept" type="checkbox" value="1" id="repeat_loan_terms" name="accept" {if $accept}checked="true"{/if} />
-                        <span></span>
-                    </div>
-                    Я ознакомлен и согласен <a href="javascript:void(0);" id="accept_link">со следующим</a>
-                    <span class="error">Необходимо согласиться с условиями</span>
-                </label>
-
-                <p>
-                    <button type="submit" id="repeat_loan_submit" class="button big">
-                        Отправить повторно
-                    </button>
-                </p>
-            </form>
-        </div>
-    {else}
-        {*Если это автоодобрение и оно не готово покажем заглушку*}
-    {if $current_order['utm_source'] == 'crm_auto_approve' && $user->auto_approve_order->status != 'SUCCESS'}
-        <h3 class="text-orange">Определяем возможность выдачи займа, пожалуйста подождите</h3>
-    {else}
-        {if $current_order.is_new_card_linked}
-        <div class="loan-review-status">
-            <div class="status-content">
-                <div class="status-icon">
-                    <svg viewBox="0 0 24 24">
-                        <path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10 10-4.5 10-10S17.5 2 12 2zm0 18c-4.4 0-8-3.6-8-8s3.6-8 8-8 8 3.6 8 8-3.6 8-8 8zm.5-13H11v6l5.2 3.2.8-1.3-4.5-2.7V7z"/>
-                    </svg>
-                </div>
-                <div class="status-text">Ваша заявка отправлена на повторное рассмотрение. Ожидайте!</div>
-            </div>
-        </div>
-        {else}
-            <div class="timer-wrapper">
-                <blockquote class="timer__text">Деньги у вас через:</blockquote>
-                <div id="countdown-container">
-                    <div class="countdown-item" id="minutes-item">
-                        <span id="minutes">02</span>
-                        <p>минут</p>
-                    </div>
-                    <div class="countdown-item" id="separator-item">
-                        <span id="separator">:</span>
-                        <p></p>
-                    </div>
-                    <div class="countdown-item" id="seconds-item">
-                        <span id="seconds">59</span>
-                        <p>секунд</p>
-                    </div>
-                </div>
-            </div>
-        {/if}
-
-        {if $has_vk}
-            {include "vk_group_bot_widget.tpl"}
-        {else}
-            {include "loan_game.tpl"}
-        {/if}
-    {/if}
-    {/if}
+    {elseif $current_order._flags.is_cooling_off}
+        {include file='order_statuses/cooling_off.tpl' order=$current_order}
     {/if}
 
-    {if $current_order['1c_status'] == '6.Закрыт' && ($user->file_uploaded || Helpers::isFilesRequired($user))}
-        {loan_form cards=$cards}
+    {if ($current_order._flags.has_reason_block || $current_order._flags.is_rejected)
+    && !$current_order._flags.is_hidden_reject_reason
+    && !$can_show_new_order_form}
+        {include file='order_statuses/rejected.tpl' order=$current_order}
     {/if}
-
-    {if $reason_block}
-        <span class="has-reason-block"></span>
-    {if $current_order['status'] == 3}
-        <p style="margin:1rem 0" class="warning-credit-text">
-            К сожалению по Вашей заявке отказано.
-            {if $current_order['official_response']}
-                <br/>
-                Причина отказа: {$current_order['official_response']}
-            {/if}
-        </p>
-    {if in_array($current_order['reason_id'],[1,5,7,9,12,14,18,19,22,23,28,38]) && !$current_order['payment_refuser']}
-        <a type="button" href="javascript:void(0)" order-id="{$current_order['id']}" order-number="{$user->balance->zaim_number}" class="button medium green" id="btn-modal-quick-approval">Узнай причину отказа за 49
-            руб.</a>
-        <span class="payment-block-error">
-                    Не удалось оплатить
-                </span>
-    {/if}
-    {/if}
-
-    {if $reason_block == 999}
-        <p style="margin:1rem 0" class="warning-credit-text">Вы не можете оставить заявку {$reason_block}</p>
-    {else}
-        <p style="margin:1rem 0" class="warning-credit-text">Вы можете повторно обратиться за займом : {$reason_block|date} {$reason_block|time} (мск)</p>
-    {/if}
-
-    {elseif $current_order['status'] == 3}
-    {if $first_time_visit_after_rejection }
-        <span class="first_time_visit_after_rejection"></span>
-    {/if}
-    {if $repeat_loan_block}
-        <p>
-            К сожалению по Вашей заявке отказано.
-            {if $current_order['official_response']}
-                <br/>
-                Причина отказа: {$current_order['official_response']}
-            {/if}
-            <br/>
-            {if in_array($current_order['reason_id'],[1,5,7,9,12,14,18,19,22,23,28,38]) && !$current_order['payment_refuser'] && $current_order['reason_id']}
-                <a type="button" href="javascript:void(0)" order-id="{$current_order['id']}" order-number="{$user->balance->zaim_number}" class="button medium green" id="btn-modal-quick-approval">Узнай причину отказа за
-                    49 руб.</a>
-                <span class="payment-block-error">
-                    Не удалось оплатить
-                </span>
-                <br/>
-            {/if}
-        </p>
-        Вы можете повторно обратиться за займом {$repeat_loan_block|date} {$repeat_loan_block|time} (мск)
-
-        {include file='credit_doctor/credit_doctor_allowed.tpl'}
-        {include file='credit_doctor/credit_doctor_banner.tpl'}
-    {elseif $next_loan_mandatory}
-        <div class="clearfix">
-            {if $user->file_uploaded || Helpers::isFilesRequired($user)}
-                {loan_form cards=$cards}
-            {/if}
-        </div>
-    {else}
-    {if $user->fake_order_error == 0}
-
-    {if !in_array($current_order['status'], [11])
-        && !$user->file_uploaded
-        && !Helpers::isFilesRequired($user)
-        && ($quantity_loans_block
-        || $redirect)
-        && $current_order['1c_status'] != '6.Закрыт'}
-        <p class="warning-credit-text">К сожалению по Вашей заявке от {$current_order['date']|date} отказано.</p>
-    {/if}
-
-    {if in_array($current_order['reason_id'],[1,5,7,9,12,14,18,19,22,23,28,38]) && !$current_order['payment_refuser']  && $current_order['reason_id']}
-        <a type="button" href="javascript:void(0)" order-id="{$current_order['id']}" order-number="{$user->balance->zaim_number}" class="button medium green" id="btn-modal-quick-approval">Узнай причину отказа за 49
-            руб.</a>
-        <span class="payment-block-error">
-                    Не удалось оплатить
-                </span>
-    {/if}
-
-    {if $user->id != 42863} {* фикс для одного пользователя (просьба Толика) *}
-    {if $current_order['official_response']}
-        <p class="warning-credit-text">Причина отказа: {$current_order['official_response']}</p>
-    {else}
-    {if $collapse_rating_banner && $show_rating_banner}
-        <p style="margin: 0;">
-            <a
-                    href="#"
-                    onclick="return showRatingBanner();"
-                    style="font-size: 1.5rem;
-                                                text-decoration: underline;
-                                                color: #701ecb;
-                                                text-decoration-color: #701ecb;"
-            ><b>Почему отказано в займе?</b></a>
-        </p>
-        {sendMetric}
-        {include 'credit_rating/credit_rating.tpl'}
-    {/if}
-    {/if}
-    {/if}
-        {include file='credit_doctor/credit_doctor_allowed.tpl'}
-        {include file='credit_doctor/credit_doctor_banner.tpl'}
-
-    {/if}
-        <div class="clearfix">
-            {if $user->file_uploaded || Helpers::isFilesRequired($user)}
-                {loan_form cards=$cards}
-            {/if}
-        </div>
-    {/if}
-    {/if}
-
 </div>
     <div class="hidden">
         <div id="quick-approval-modal">
@@ -668,13 +318,6 @@
     </div>
 {/function}
 
-{*if !$consultation_send}
-    {include file='consultation_form_v2.tpl'}
-{/if*}
-
-{*if !$consultation_send}
-    {include file='consultation_form.tpl'}
-{/if*}
 <input type="hidden" class="user-id" data-id="{$user->id}">
 <section id="private">
     <input type="hidden" name="is_new_client" value="{$is_new_client}"/>
@@ -687,101 +330,10 @@
             <div class="content">
 
                 {if $action == "user"}
-
-                    {if $restricted_mode === 1 && (in_array($due_days, [0])) && $due_days !== 'not'}
-
-                    <div class="container">
-                        <div class="row">
-                            <div class="col-md-6 row restrict_mode_panel">
-                                <div class="col-md-8 restrict_info">
-                                    <h2>{$salute_prefix|escape}, <span class="restrict_salute">{$salute|escape}</span>!</h2>
-                                    <div class="restrict_alert row">
-                                        <div class="col-md-3 hidden-xs">
-                                            <img src="design/{$settings->theme|escape}/img/restrict/alert1.png">
-                                        </div>
-                                        <div class="col-md-7">
-                                            Предлагаем Вам воспользоваться <span style="color: #684A2D; text-decoration: underline">уникальным предложением</span> для постоянных клиентов, которые ценят своё время и деньги.
-                                        </div>
-                                    </div>
-                                    <div class="restrict_info_text">Мы подготовили для Вас заём с увеличенной суммой и уверены, что новый заём станет для Вас еще одним шагом к финансовому благополучию и поможет достичь тех целей, к которым Вы стремитесь.</div>
-                                    <br>
-                                    <span class="restrict_divider"></span><br>
-                                    <div class="restrict_alert_text">
-                                        Помните, что каждое Ваше решение открывает двери к новым возможностям.
-                                    </div>
-                                    <div class="restrict_alert row">
-                                        <div class="col-md-3 hidden-xs">
-                                            <img src="design/{$settings->theme|escape}/img/restrict/alert2.png">
-                                        </div>
-                                        <div class="col-md-7">
-                                            Мы верим в Вас и Вашу способность делать правильные шаги на пути к успеху. Давайте вместе строить Ваше блестящее будущее.
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="col-md-3 col-md-offset-1 hidden-xs restrict_sidebar">
-                                    <img src="design/{$settings->theme|escape}/img/restrict/sidebar.png">
-                                </div>
-                                <div class="clear"></div>
-                                <div class="restrict_img_bg hidden-xs" style="background: url('design/{$settings->theme|escape}/img/restrict/bg_img.png')"></div>
-                                {foreach $all_orders as $key => $orders_data}
-                                    {foreach $orders_data as $order_data}
-                                        {if $order_data->balance->zaim_number != null}
-                                            {if $order_data->order->additional_service_repayment}
-                                                {if ($order_data->balance->ostatok_od + $order_data->balance->ostatok_percents + $order_data->balance->ostatok_peni >= 500)}
-                                                    <input type="hidden" name="tv_medical_amount" value="{$vita_med->price}"/>
-                                                    <input type="hidden" name="tv_medical" value="1"/>
-                                                    <input type="hidden" name="tv_medical_id" value="{$vita_med->id}"/>
-                                                    {assign var="amount_value" value=$order_data->balance->ostatok_od + $vita_med->price + $order_data->balance->ostatok_percents + $order_data->balance->ostatok_peni + $order_data->balance->penalty}
-                                                {else}
-                                                    {assign var="amount_value" value=$order_data->balance->ostatok_od + $order_data->balance->ostatok_percents + $order_data->balance->ostatok_peni + $order_data->balance->penalty}
-                                                {/if}
-                                            {else}
-                                                {assign var="amount_value" value=$order_data->balance->ostatok_od + $order_data->balance->ostatok_percents + $order_data->balance->ostatok_peni + $order_data->balance->penalty}
-                                            {/if}
-                                            <br>
-                                            <div class="restrict_loan_info">
-                                                <div class="float_left_block" style="margin-right: 50px;">
-                                                    <p>Номер договора</p>
-                                                    <h3>{$order_data->balance->zaim_number}</h3>
-                                                </div>
-                                                <div class="float_left_block">
-                                                    <p>Сумма долга</p>
-                                                    <h3>{$order_data->balance->ostatok_od + $order_data->balance->ostatok_percents + $order_data->balance->ostatok_peni + $order_data->balance->penalty} руб.</h3>
-                                                </div>
-                                                <div class="clear"></div>
-                                                <div>
-                                                    <form method="POST" action="user/payment" class="user_payment_form" style="margin: 0;">
-                                                        <div class="action">
-                                                            {if $order_data->order->additional_service_repayment}
-                                                                {if ($order_data->balance->ostatok_od + $order_data->balance->ostatok_percents + $order_data->balance->ostatok_peni >= 500)}
-                                                                    <input type="hidden" name="tv_medical_amount" value="{$vita_med->price}"/>
-                                                                    <input type="hidden" name="tv_medical" value="1"/>
-                                                                    <input type="hidden" name="tv_medical_id" value="{$vita_med->id}"/>
-                                                                {/if}
-                                                            {/if}
-                                                            <input type="hidden" name="amthash" value="{base64_encode($amount_value)}">
-                                                            <input type="hidden" name="number" value="{$order_data->balance->zaim_number}"/>
-                                                            <input type="hidden" name="order_id" value="{$order_data->order->order_id}"/>
-                                                            <input style="display:none" class="payment_amount"
-                                                                   data-order_id="{$order_data->balance->zaim_number}" data-user_id="{$user->id}" type="text"
-                                                                   name="amount"
-                                                                   value="{$amount_value}"
-                                                                   max="{$amount_value}" min="1"/>
-                                                            <button class="restrict_button" data-user="{$user->id}"
-                                                                    data-event="4" type="submit">Заплатить и взять новый
-                                                            </button>
-                                                        </div>
-                                                    </form>
-                                                </div>
-                                            </div>
-                                        {/if}
-                                    {/foreach}
-                                {/foreach}
-                            </div>
-                        </div>
-                    </div>
+                    {if $is_virtual_card_enabled}
+                        {include file='virtual_card.tpl'}
                     {else}
-                        {include 'user_current_loan_list.tpl'}
+                        {include file='user_tab.tpl'}
                     {/if}
                 {/if}
 
@@ -790,44 +342,7 @@
                 {/if}
                 {if $action=="history"}
                     <div class="panel">
-                        {*if $current_orders}
-                        <div class="list current">
-                            <h4>Открытый займ.</h4>
-                            <ul class="table">
-                                {foreach $current_orders as $order}
-                                <li>
-                                    <div>
-                                        <span class="card master">
-                                        </span>
-                                    </div>
-                                    <div>
-                                        Займ на
-                                        <strong>{$order->amount*1} {$currency->sign|escape}</strong>
-                                    </div>
-                                    <div>
-                                        Заявка
-                                        <a href='order/{$order->url}'>
-                                        <strong>{$order->id}</strong>
-                                        </a>
-                                    </div>
-                                    <div>
-                                        Дата заявки
-                                        <strong>
-                                        {$order->date|date}
-                                        </strong>
-                                    </div>
-                                    <div>
-                                    <!--
-                                        Просрочен на
-                                        <strong>2 дня</strong>
-                                        -->
-                                    </div>
 
-                                </li>
-                                {/foreach}
-                            </ul>
-                        </div>
-                        {/if*}
                         {if $orders}
                             <div class="list">
                                 <!--h4>Прочие займы  <span>.</span></h4-->
@@ -1366,7 +881,8 @@
     <script src="design/{$settings->theme|escape}/js/due_block.js?v=1.003" type="text/javascript"></script>
 {/if}
 
-<script src="design/{$settings->theme|escape}/js/accept_credit.js?v=1.019" type="text/javascript"></script>
+<script src="design/{$settings->theme}/js/sbp.js?v=1.010"></script>
+<script src="design/{$settings->theme|escape}/js/accept_credit.js?v=1.026" type="text/javascript"></script>
 
 {if $restricted_mode === 1 && (in_array($due_days, [0,1,2])) && $due_days !== 'not'}
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-grid-only@1.0.0/bootstrap.min.css">

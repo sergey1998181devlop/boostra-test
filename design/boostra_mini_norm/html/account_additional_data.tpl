@@ -7,14 +7,14 @@
 {capture name=page_scripts}
     <script src="design/{$settings->theme}/js/jquery.inputmask.min.js" type="text/javascript"></script>
     <script src="design/{$settings->theme}/js/jquery.validate.min.js?v=2.10" type="text/javascript"></script>
-    <script src="design/{$settings->theme}/js/worksheet.validate.js?v=1.7.5" type="text/javascript"></script>
+    <script src="design/{$settings->theme}/js/worksheet.validate.js?v=1.8.0" type="text/javascript"></script>
     {*<script src="design/{$settings->theme}/js/jquery.kladr.min.js" type="text/javascript"></script>
     <link rel="stylesheet" type="text/css" href="design/{$settings->theme|escape}/css/jquery.kladr.min.css?v=1.13"/>
     <script src="design/{$settings->theme}/js/neworder.kladr.js?v=1.64" type="text/javascript"></script>*}
     <script type="text/javascript" src="/js/autocomplete/jquery.autocomplete-min.js"></script>
     <link rel="stylesheet" href="/js/autocomplete/styles.css"/>
     <script src="design/{$settings->theme}/js/additional_data.app.js?v=1.78" type="text/javascript"></script>
-    <script src="design/{$settings->theme}/js/dadata_init.js?v=1.12" type="text/javascript"></script>
+    <script src="design/{$settings->theme}/js/dadata_init.js?v=1.14" type="text/javascript"></script>
 {/capture}
 
 {* Скрипт для определния, мол, можно ли показывать чекбокс кредитного доктора или нет. Показывать его можно только
@@ -92,6 +92,18 @@
         text-align: center;
     }
 
+    .workLabel {
+        transition: all .3s;
+        opacity: 1;
+        max-height: 140px;
+    }
+
+    #worksheet #additional_data #steps fieldset label.workLabel.labelHidden {
+        max-height: 0px;
+        opacity: 0;
+        margin: 0px;
+    }
+
     {if $is_short_flow}
     fieldset {
         margin-top: 20px;
@@ -149,7 +161,7 @@
                             {if $user->work_scope == 'Пенсионер'}{$other_work_scope_active = 0}{/if}
 
                             <label
-                                    class="full js-pensioner-hidden {if $error=='empty_workplace'}error{/if}"
+                                    class="workLabel full js-pensioner-hidden {if $error=='empty_workplace'}error{/if}"
                                     {if $user->work_scope == 'Пенсионер'}style="display:none"{/if}
                             >
                                 <input type="text" name="workplace" value="{$user->workplace}" placeholder=""
@@ -158,7 +170,7 @@
                                 {if $error=='empty_workplace'}<span class="error">Укажите сокращенное наименование организации</span>{/if}
                             </label>
 
-                            <label class="full js-pensioner-hidden"
+                            <label class="workLabel full js-pensioner-hidden"
                                    {if $user->work_scope == 'Пенсионер'}style="display:none"{/if}>
 								<textarea
                                         name="work_full_address"
@@ -203,47 +215,6 @@
                             </label>
 
                             <div style="clear:both"></div>
-                            
-                            {if $settings->additional_work_scope}
-                            <input type="hidden" id="work_scope" name="work_scope"  value="" aria-required="false" />
-                            <div class="clearfix row radio_work">
-                            <label for="work_scope_pensioner" class="full text-left" style="margin-top: 0;">
-                                <div class="radio">
-                                    <input 
-                                        type="radio"
-                                        name="work_scope_additional"
-                                        id="work_scope_pensioner"
-                                        class="work_scope_checkbox"
-                                        value="Пенсионер" />
-                                    <span></span>
-                                </div>
-                                Пенсионер
-                            </label>
-
-                            <div style="clear:both"></div>
-
-                            <label for="work_scope_selfemployed" class="full text-left" style="margin-top: 0;">
-                                <div class="radio">
-                                    <input 
-                                        type="radio"
-                                        name="work_scope_additional"
-                                        id="work_scope_selfemployed"
-                                        class="work_scope_checkbox"
-                                        value="Самозанятый" />
-                                    <span></span>
-                                </div>
-                                Самозанятый
-                            </label>
-                            </div>
-                            <div style="clear:both"></div>
-                            {/if}
-
-{*                            <label class="medium left">*}
-{*								<div class="checkbox">*}
-{*									<input type="checkbox" value="1" id="has_estate" name="has_estate" {if $has_estate}checked="true"{/if} />*}
-{*									<span></span>*}
-{*								</div> Наличие в собственности недвижимости*}
-{*							</label>*}
 
                             <label class="{if $error=='empty_education'}error{/if}">
                                 <div class="select">
@@ -258,15 +229,6 @@
                                 <span class="floating-label">Образование</span>
                                 <small class="error">{if $error=='empty_education'}Укажите образование{/if}</small>
                             </label>
-
-                            {if $virtual_card_consent}
-                                <label class="medium left">
-                                    <div class="checkbox">
-                                        <input type="checkbox" value="1" id="virtual_card" name="virtual_card" checked="checked" />
-                                        <span></span>
-                                    </div> Я согласен с <a href="{$config->root_url}../../../share_docs/general/docs_uslugi_oferta_esp_0250725.pdf" target="_blank">«Офертой ООО РНКО «Платежный конструктор» на выпуск виртуальной карты Boostra»</a>
-                                </label>
-                            {/if}
                         </div>
 
                         <div class="register js-pensioner-hidden" style="display:none">
@@ -782,58 +744,103 @@
 {if $settings->additional_work_scope}
 {literal}
 <script>
-    $(document).ready(function () {        
-        const pensionerCheckbox = $('#work_scope_pensioner');
-        const selfEmployedCheckbox = $('#work_scope_selfemployed');
-        const workScope = $('#work_scope');
-        
-        // workplace input toggle
-        function updWorkPlace() {
-            let isPensioner = pensionerCheckbox.is(':checked');
-            let isSelfEmployed = selfEmployedCheckbox.is(':checked');
-            let checked = (isPensioner || isSelfEmployed);
-            let inputNames = ['workplace', 'work_full_address', 'profession'];
-
-            if (isPensioner) {
-                workScope.val('Пенсионер');
-            } else if (isSelfEmployed) {
-                workScope.val('Самозанятый');
-            } else {
-                workScope.val('');
-            }
-            
+    $(document).ready(function () {
+        const profSelect = $('select[name="profession"]');
+        const inputNames = ['workplace', 'work_full_address'];
+        function updProfession(ev) {
+            const isPensioner = profSelect.val() === 'пенсионер';
+            const isSelfEmployed = profSelect.val() === 'самозанятость';
+            const isNotEmployed = profSelect.val() === 'не работаю';
+            const checked = (isPensioner || isSelfEmployed || isNotEmployed);
             inputNames.forEach(function (name) {
                 const $input = $(`[name="${name}"]`);
 
-                $input.on('click', function () {
-                    workScope.val('');
-                    $('.work_scope_checkbox').prop('checked', false);
-                });
-
                 if ($input.length) {
-                    $input.val('');
                     $input.closest('label.error').removeClass('error');
 
                     if (checked) {
+                        if(!$input.data('checked')) {
+                            $input.data('saved-value', $input.val());
+                            $input.data('checked', checked);
+                        }
+                        $input.val('');
                         $input.removeAttr('required').removeClass('error').removeAttr('aria-describedby').removeAttr('aria-invalid');
                         $input.attr('aria-required', 'false');
+                        $input.parent().addClass('labelHidden');
 
                         $input.nextAll('.error').remove();
                     } else {
+                        if($input.data('checked') && $input.data('saved-value')) {
+                            $input.val($input.data('saved-value'));
+                            $input.removeData('checked');
+                            $input.removeData('saved-value');
+                        }
                         $input.attr('required', 'required');
                         $input.attr('aria-required', 'true');
+                        $input.parent().removeClass('labelHidden');
                     }
                 }
             });
         }
-        updWorkPlace();
 
+        function onInputClick() {
+            const isPensioner = profSelect.val() === 'пенсионер';
+            const isSelfEmployed = profSelect.val() === 'самозанятость';
+            const isNotEmployed = profSelect.val() === 'не работаю';
+            const checked = (isPensioner || isSelfEmployed || isNotEmployed);
+            if (checked) {
+                inputNames.forEach(function (name) {
+                    const $input = $(`[name="${name}"]`);
+                    profSelect.val('');
+                    $input.attr('required', 'required');
+                    $input.attr('aria-required', 'true');
+                });
+            }
+        }
+
+        inputNames.forEach(function (name) {
+            const $input = $(`[name="${name}"]`);
+            $input.on('click', onInputClick);
+        });
+        updProfession();
         // work_scope checkbox toggle
-        $('.work_scope_checkbox').change(updWorkPlace);
+        profSelect.change(updProfession);
     });
 </script>
 {/literal}
 {/if}
+
+{literal}
+<script>
+    $(document).ready(function () {
+        const noWorkProfessions = ['не работаю', 'пенсионер', 'студент', 'самозанятость'];
+        const workFieldNames = ['workplace', 'work_full_address'];
+
+        function updProfessionRequired() {
+            const profVal = $('[name="profession"]').val();
+            const isNoWork = noWorkProfessions.indexOf(profVal) !== -1;
+
+            workFieldNames.forEach(function (name) {
+                const $input = $('[name="' + name + '"]');
+                if (!$input.length) return;
+
+                if (isNoWork) {
+                    $input.removeAttr('required').removeAttr('aria-invalid').removeAttr('aria-describedby');
+                    $input.attr('aria-required', 'false');
+                    $input.closest('label').removeClass('error');
+                    $input.nextAll('.error').remove();
+                } else {
+                    $input.attr('required', 'required');
+                    $input.attr('aria-required', 'true');
+                }
+            });
+        }
+
+        $('[name="profession"]').on('change', updProfessionRequired);
+        updProfessionRequired();
+    });
+</script>
+{/literal}
 
 {if !empty($check_scorings_nk)}
     <script>

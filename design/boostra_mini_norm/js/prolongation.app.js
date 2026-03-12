@@ -163,12 +163,21 @@ function initialize() {
         })
     }
 
-    const elementNumber = document.querySelector("#prolongation_confirm_form [name='number']");
+    // Ищем элемент number - он может быть в основном DOM или внутри #ajax_prolongation__content
+    let elementNumber = document.querySelector("#prolongation_confirm_form [name='number']");
+    if (!elementNumber) {
+        const ajaxContent = document.getElementById('ajax_prolongation__content');
+        if (ajaxContent) {
+            elementNumber = ajaxContent.querySelector("#prolongation_confirm_form [name='number']");
+        }
+    }
+    
     if (elementNumber) {
         const number = elementNumber.value;
         prolongationRefreshAmount(number);
     } else {
-        console.warn("Element '#prolongation_confirm_form [name=\"number\"]' not found");
+        // Элемент может быть еще не загружен через AJAX, это нормально
+        // console.warn("Element '#prolongation_confirm_form [name=\"number\"]' not found");
     }
 
     class ProlongationApp {
@@ -466,6 +475,26 @@ function initialize() {
         }
 
         async getDocuments(event) {
+
+            const documentsElement = document.getElementById('prolongation_documents');
+
+            if (documentsElement) {
+                documentsElement.innerHTML = '';
+
+                let listItem = document.createElement('li');
+                const span = document.createElement('span');
+                span.textContent = 'Заявление о пролонгации договора микрозайма';
+                span.classList.add('js-open-document');
+                span.style.cursor = 'pointer';
+                listItem.appendChild(span);
+                documentsElement.appendChild(listItem);
+            }
+            /*
+                Задача решалась на противоречивых данных. Ниже закомментирован код загрузки списка документов из 1С.
+                По словам 1С-ников, метод нерабочий, ничего полезного не делает. Решил не убирать, а просто закомментировать.
+                Выше захардкодил отображение исключительно заявления о пролонгации.
+             */
+            /*
             const triggerElement = event.currentTarget;
             const number = triggerElement.getAttribute('data-number');
             const url = `ajax/prolongation.php?action=get_documents&number=${number}`;
@@ -496,11 +525,12 @@ function initialize() {
                     if (result.documents && Array.isArray(result.documents)) {
                         for (let item of result.documents) {
                             let listItem = document.createElement('li');
-                            let anchor = document.createElement('a');
-                            anchor.href = item.file;
-                            anchor.classList.add('js-open-document');
-                            anchor.textContent = item.name;
-                            listItem.appendChild(anchor);
+                            const span = document.createElement('span');
+                            span.textContent = item.name;
+                            span.classList.add('js-prolongation-open-modal', 'js-open-document');
+                            span.style.cursor = 'pointer';
+                            span.setAttribute('data-file', item.file);
+                            listItem.appendChild(span);
                             documentsElement.appendChild(listItem);
 
                             let documentFrame = document.getElementById('document_frame');
@@ -518,6 +548,8 @@ function initialize() {
             } catch (error) {
                 console.warn("An error occurred:", error);
             }
+            */
+            this.openInfoModal();
         }
 
 

@@ -3,28 +3,35 @@
 use api\asp\AspHelper;
 use api\helpers\BalanceHelper;
 use api\services\OrderService;
+use api\traits\JWTAuthTrait;
 use App\Core\Application\Application;
+use App\Modules\Marketing\Services\FindzenBannerService;
+use App\Modules\NewYearPromotion\Services\NewYearPromotionService;
 use App\Modules\ShortLink\Services\ShortLinkService;
 use App\Modules\Referral\Services\ReferralService;
 use App\Services\User\ZeroDiscountService;
 use App\Services\ReturnExtraService;
+use App\Services\ReturnCoefficientService;
 
 require_once dirname(__DIR__) . '/api/addons/FinancialDoctorApi.php';
 require_once dirname(__DIR__) . '/app/Modules/ShortLink/Services/ShortLinkService.php';
 require_once dirname(__DIR__) . '/app/Modules/Referral/Services/ReferralService.php';
+require_once dirname(__DIR__) . '/app/Modules/Marketing/Services/FindzenBannerService.php';
 
 require_once('api/Scorings.php');
+require_once('api/helpers/OrderStatusHelper.php');
 require_once('View.php');
 
 class UserView extends View
 {
-    use \api\traits\JWTAuthTrait;
+    use JWTAuthTrait;
 
     const PAGE_ACTION_HISTORY = 'history';
 
     /** @var array Список первичных проверок для заявки НК или НК повторника (``have_close_credits`` = 0) */
     const SCORINGS_LIST_NK = [
         Scorings::TYPE_BLACKLIST,
+        Scorings::TYPE_TERRORIST_CHECK,
         Scorings::TYPE_AXILINK_2,
         Scorings::TYPE_REPORT,
         Scorings::TYPE_UPRID,
@@ -33,6 +40,7 @@ class UserView extends View
     /** @var array Список первичных проверок для заявки ПК (``have_close_credits`` = 1) */
     const SCORINGS_LIST_PK = [
         Scorings::TYPE_BLACKLIST,
+        Scorings::TYPE_TERRORIST_CHECK,
         Scorings::TYPE_AXILINK_2,
         Scorings::TYPE_REPORT,
         Scorings::TYPE_UPRID,
@@ -60,6 +68,8 @@ class UserView extends View
 
     private ShortLinkService $shortLinkService;
     private ReferralService $referralService;
+    private FindzenBannerService $findzenBannerService;
+    private NewYearPromotionService $promoService;
 
     private const LOG_FILE = 'user_view.txt';
 
@@ -68,6 +78,8 @@ class UserView extends View
         $app = Application::getInstance();
         $this->shortLinkService = $app->make(ShortLinkService::class);
         $this->referralService = $app->make(ReferralService::class);
+        $this->findzenBannerService = $app->make(FindzenBannerService::class);
+        $this->promoService = $app->make(NewYearPromotionService::class);
         parent::__construct();
     }
 
@@ -89,13 +101,16 @@ class UserView extends View
         $this->jwtAuthValidate();
 
         $this->sms_auth_validate_sms->delete($this->user->phone_mobile);
-        $this->design->assign('is_virtual_card_checkbox', isset($_COOKIE['utm_campaign']) && $_COOKIE['utm_campaign'] === 'vctest');
 
         if (!empty($this->user->blocked)) {
             unset($_SESSION['user_id']);
             header('Location: ' . $this->config->root_url);
             exit();
         }
+
+        $bki_consent = $this->user_data->read($this->user->id, 'bki_consent');
+        $this->design->assign('bki_consent', $bki_consent);
+
 
         if ($this->request->get('delete_account')) {
             $this->soap->delete_user($this->user->uid);
@@ -212,6 +227,8 @@ class UserView extends View
                 $this->request->json_output(['error' => 'fail_status']);
             }
 
+            $old_amount = $last_order->amount;
+            $old_loan_type = $last_order->loan_type;
             $last_order->amount = $edit_amount;
             $last_order->period = $edit_period;
 
@@ -225,8 +242,8 @@ class UserView extends View
                 'manager_id' => 0,
                 'created' => date('Y-m-d H:i:s'),
                 'type' => 'edit_amount',
-                'old_values' => serialize(['amount' => $last_order->amount]),
-                'new_values' => serialize(['amount' => $calculatePdlPriceOnDangerousFlowResult['amount']]),
+                'old_values' => serialize(['amount' => $old_amount, 'request_amount' => $edit_amount, 'loan_type' => $old_loan_type]),
+                'new_values' => serialize(['amount' => $calculatePdlPriceOnDangerousFlowResult['amount'], 'loan_type' => $loan_type]),
                 'order_id' => $last_order->id,
                 'user_id' => $last_order->user_id,
             ]);
@@ -459,10 +476,17 @@ class UserView extends View
             $this->design->assign('redirect', $redirect);
         }
 
-        $need_add_fields = $this->check_need_add_fields();
+        // Если есть закрытые займы или отказные, проверку игнорируем https://tracker.yandex.ru/MARK-817
+        $hasRejectOrIssuedOrders = $this->orders->hasRejectOrIssuedOrders($this->user->id);
+        $need_add_fields = [];
+
+        if (!$hasRejectOrIssuedOrders) {
+            $need_add_fields = $this->check_need_add_fields();
+        }
+
         $this->design->assign('need_add_fields', $need_add_fields);
 
-        if ($issued_loans = $this->soap1c->DebtForFIO((array)$this->user)) {
+        if ($issued_loans = $this->soap->DebtForFIO((array)$this->user)) {
             $issued_loans = array_filter($issued_loans, function ($var) {
                 return $var->ОстатокОД > 0;
             });
@@ -602,18 +626,24 @@ class UserView extends View
         $graceAmount =  !empty($balance->sum_od_with_grace) || !empty($balance->sum_percent_with_grace);
         $this->design->assign('graceAmount', $graceAmount);
         $this->design->assign('balance', $balance);
+        $restricted_mode = ($_SESSION['restricted_mode'] ?? 0) == 1;
+        $friend_restricted_mode = ($_SESSION['friend_restricted_mode'] ?? 0) == 1;
         $busy_cards = [];
-        $orders = $this->orders->get_orders([
-            'user_id' => $this->user->id,
-            'limit' => 1000,
-        ]);
-        foreach ($orders as $order) {
-            if (!$order->status_1c
-                || in_array($order->status_1c, $this->orders::IN_PROGRESS_STATUSES)
-                || ($order->status_1c == '5.Выдан'
-                    && $order->id_1c == $balance->zayavka
-                    && $balance->ostatok_od + $balance->ostatok_percents + $balance->ostatok_peni > 0)) {
-                $busy_cards[$order->card_id] = true;
+        if ($restricted_mode) {
+            $orders = [];
+        } else {
+            $orders = $this->orders->get_orders([
+                'user_id' => $this->user->id,
+                'limit' => 1000,
+            ]);
+            foreach ($orders as $order) {
+                if (!$order->status_1c
+                    || in_array($order->status_1c, $this->orders::IN_PROGRESS_STATUSES)
+                    || ($order->status_1c == '5.Выдан'
+                        && $order->id_1c == $balance->zayavka
+                        && $balance->ostatok_od + $balance->ostatok_percents + $balance->ostatok_peni > 0)) {
+                    $busy_cards[$order->card_id] = true;
+                }
             }
         }
         $this->design->assign('busy_cards', $busy_cards);
@@ -630,17 +660,7 @@ class UserView extends View
             $this->design->assign('action', 'user');
         }
 
-
         if (!empty($this->user->id)) {
-
-            /*$response = $this->soap->get_user_history($this->user->uid);
-            if (!empty($response))
-            {
-                $last_loans = end($response);
-                if ($last_loans->СтатусЗаявки === 'Отказ') {
-                    $this->design->assign('redirect', 'https://kreditoff-net.ru/');
-                }
-            }*/
 
             $restricted_mode = $_SESSION['restricted_mode'] == 1;
 
@@ -709,6 +729,11 @@ class UserView extends View
 
             $last_order = (array)$this->orders->get_last_order($this->user->id);
 
+            $this->design->assign(
+                'friend_payment_enabled',
+                (int) $this->order_data->read((int) $last_order['id'], 'friend_payment_enabled')
+            );
+
             if (!empty($useragent) && !empty($last_order))
             {
                 $this->order_data->set(
@@ -737,15 +762,6 @@ class UserView extends View
                     $this->design->assign('show_rating_banner', 1);
                 }
 
-                $reject_statuses = [
-                    $this->orders::ORDER_1C_STATUS_REJECTED,
-                    $this->orders::ORDER_1C_STATUS_REJECTED_TECH,
-                ];
-                if ($last_order['status'] == $this->orders::STATUS_REJECTED || in_array($last_order['1c_status'], $reject_statuses)) {
-                    if (empty($has_loans) || (!empty($reason) && $reason->maratory)) {
-                        $this->design->assign('collapse_rating_banner', 1);
-                    }
-                }
             }
 
             // повторная заявка
@@ -789,32 +805,41 @@ class UserView extends View
                 $sms = $this->request->post('sms', 'string');
                 $bank_id = $this->request->post('bank_id', 'integer');
 
+                if ($this->request->hasPost('virtual_card')) {
+                    $isVirtualCardConsent = $this->request->post('virtual_card', 'integer');
+                    $this->user_data->set($this->user->id, "is_virtual_card_consent", (int)$isVirtualCardConsent);
+                } else {
+                    $isVirtualCardConsent = (int)$this->user_data->read($this->user->id, "is_virtual_card_consent") === 1;
+                }
+
+                $isVirtualCardEnabled = $this->settings->vc_enabled
+                    && isset($_COOKIE['utm_campaign'])
+                    && $_COOKIE['utm_campaign'] === 'vctest'
+                    && $isVirtualCardConsent;
+
+                if ($isVirtualCardEnabled) {
+                    $this->virtualCard->forUser($this->user->id)->create();
+                }
+
                 // проверим пользователя на наличие условий и выключим допы
                 $notOverdueLoan = \api\helpers\UserHelper::hasNotOverdueLoan($this, $this->user);
                 if (!$notOverdueLoan) {
                     $is_user_credit_doctor = 0;
                 }
 
-                // формирование фейковой заявки
-                $user_approved = $this->users->getUserApprove($this->user->id);
+                // ШКД (Штрафной Кредитный Доктор): форс КД на dangerous PDL flow.
+                // Намеренно переопределяет hasNotOverdueLoan выше — на dangerous flow
+                // КД включается принудительно как штрафная услуга (is_penalty=1),
+                // независимо от overdue-статуса. Исключение: whitelist-пользователи.
+                // См. accept_credit.php → is_penalty, createPenaltyCreditDoctorDocument()
+                $currentLoanType = $this->installments->get_loan_type($period);
+                $tempOrder = ['amount' => $amount, 'loan_type' => $currentLoanType];
+                $isPdlOnDangerousFlow = $this->orders->isPdlOnDangerousFlow($tempOrder, $this->user);
+                $allowedByWhitelist = $this->users->allowedByWhitelist((int)$this->user->id);
 
-                if ($last_order['1c_status'] == '2.Отказано') {
-                    if (!empty($reason) && $reason->maratory > 0) {
-                        if ($reason->maratory == 999) {
-                            $reason_block = 999;
-                        } else {
-                            if (time() < strtotime($last_order['date']) + 86400 * $reason->maratory)
-                                $reason_block = date('Y-m-d H:i:s', strtotime($last_order['date']) + 86400 * $reason->maratory);
-                        }
-                        if (!empty($reason_block)) {
-                            //тут ставим блокаду если это отказник и не отправляем дальше заявку
-                            if (!$user_approved) {
-                                $this->users->updateNoApprovedUserMoratorium($this->user->id);
-                                header('Location: ' . $this->config->root_url . '/user');
-                                exit;
-                            }
-                        }
-                    }
+                if ($isPdlOnDangerousFlow && !$allowedByWhitelist) {
+                    $is_user_credit_doctor = 1;
+                    $service_doctor = 1;
                 }
 
                 $this->users->update_user($this->user->id, array(
@@ -875,11 +900,13 @@ class UserView extends View
                 }
 
                 $order_uid = exec($this->config->root_dir . 'generic/uidgen');
-	            $originalCardId = $cardId;
 
                 // Если пользователь выбрал банк И НЕ выбрал СБП счет,
                 // то принудительно устанавливаем $cardId = 0 и $cardType = $this->orders::CARD_TYPE_SBP
-                if (!empty($bank_id) && (empty($cardId) || $cardType === $this->orders::CARD_TYPE_CARD)) {
+                if (
+                    !empty($bank_id)
+                    && (empty($cardId) || $cardType === $this->orders::CARD_TYPE_CARD)
+                ) {
 	                $cardId = 0;
                     $cardType = $this->orders::CARD_TYPE_SBP;
 
@@ -892,6 +919,10 @@ class UserView extends View
                         $this->logging(__METHOD__, '', 'Некорректный банк', ['user' => $this->user, 'bank_id' => $bank_id, 'selected_bank' => $selectedBank], 'user_view.txt');
                         return false;
                     }
+                }
+
+                if ($isVirtualCardEnabled) {
+                    $cardType = $this->orders::CARD_TYPE_VIRT;
                 }
 
                 $order = array(
@@ -921,10 +952,17 @@ class UserView extends View
 
                     'autoretry' => 0,
                     'loan_type' => $this->installments->get_loan_type($period),
-                    'organization_id' => $this->organizations->get_base_organization_id(['organization_id' => $last_order['organization_id']]),
+                    'organization_id' => $this->organizations->get_base_organization_id(['check_last_report_date' => 1, 'order_id' => $last_order['id']]),
                 );
                 $order_id = $this->orders->add_order($order);
 
+                if (!empty($_SESSION['vid'])) {
+                    $this->order_data->set(
+                        $order_id,
+                        $this->order_data::VISITOR_ID,
+                        $_SESSION['vid']
+                    );
+                }
                 $this->logging(__METHOD__, '', 'Создана заявка из ЛК', ['order' => $order, 'order_id' => $order_id, 'bank_id' => $bank_id], 'user_view.txt');
 
                 $this->user_data->set($this->user->id, 'bonon_wait_order_decision', $order_id);
@@ -934,8 +972,9 @@ class UserView extends View
                     $this->order_data->set($order_id, $this->order_data::BANK_ID_FOR_SBP_ISSUANCE, $bank_id);
                 }
 
-	            // Временно, пока занято card_id поле в _orders
-	            $this->order_data->set($order_id, 'card_id', $originalCardId);
+                if ($isVirtualCardEnabled) {
+                    $this->order_data->set($order_id, $this->order_data::CREATED_AT_VIRTUAL_CARD_TIMESTAMP, time());
+                }
 
                 $this->orders->saveFinkartaFp($order_id, $this->request->post('finkarta_fp'));
                 $this->events->add_event(array(
@@ -984,12 +1023,13 @@ class UserView extends View
                     $this->orders->update_order($order_id, array('status' => 3, 'note' => strval($soap_zayavka->return->Error)));
 
 	                $savedOrder = $this->orders->get_order($order_id);
-	                $deleteAction = new \lib\VirtualCard\DeleteVirtualCardAction($this->config);
-	                $deleteAction->execute((object)$savedOrder);
+                    $this->virtualCard->forUser($this->user->id)->delete();
                 }
                 else {
                     if (!empty($sms)) {
-                        $this->order_data->set($order_id, $this->order_data::AUTOCONFIRM_ASP, $sms);
+                        if (!$this->order_data->read($order_id, $this->order_data::RCL_LOAN)) {
+                            $this->order_data->set($order_id, $this->order_data::AUTOCONFIRM_ASP, $sms);
+                        }
                     }
 
                     if (!empty($autoretry)) {
@@ -1133,15 +1173,7 @@ class UserView extends View
                 exit;
             }
 
-	        $vcService = new \lib\VirtualCard\VirtualCardService($this->config, $this->user->id, 0);
-	        $cardData  = $vcService->getCardStatus();
-
-	        $cardStatus = $cardData['status'] ?? null;
-
-	        $isVirtualCardConsent = $cardStatus === 'pending' || $cardStatus === 'active';
-
-			$this->design->assign('isVirtualCardConsent', $isVirtualCardConsent);
-	        $this->user_data->set($this->user->id, "is_virtual_card_consent", $isVirtualCardConsent);
+            $this->enableVirtualCard();
 
             if ($page_action == self::PAGE_ACTION_HISTORY) {
                 $user_id = $this->user->id;
@@ -1179,7 +1211,7 @@ class UserView extends View
                  */
 
                 // Если получили баланс клиента и есть дата возврата
-                $response_balances = $this->soap->get_user_balances_array_1c($this->user->uid);
+                $response_balances = $this->soap->get_user_balances_array_1c($this->user->uid) ?? [];
 
                 $current_loan = array_filter($response_balances, function($item) use ($user) {
                     return $item['НомерЗайма'] == $user->balance->zaim_number;
@@ -1237,7 +1269,24 @@ class UserView extends View
                 #echo __FILE__.' '.__LINE__.'<br /><pre>';var_dump($testCollection);echo '</pre><hr />';
 
 
-                $prolongation_available = $user->balance->prolongation_count < 5;
+                // Определяем ВКЛ-транш
+                $zaim_order = null;
+                $is_rcl = false;
+                if (!empty($user->balance->zayavka)) {
+                    $zaim_order = $this->orders->get_order_by_1c($user->balance->zayavka);
+                    if ($zaim_order) {
+                        $is_rcl = $this->rcl->isRclTranche($zaim_order->id);
+                    }
+                }
+                $this->design->assign('is_rcl', $is_rcl);
+
+                if ($is_rcl) {
+                    $prolongation_available = $this->rcl->isProlongationAvailable(
+                        $user->balance->zaim_date
+                    ) && ($user->balance->ostatok_percents + $user->balance->ostatok_peni) > 0;
+                } else {
+                    $prolongation_available = $user->balance->prolongation_count < 5;
+                }
                 // Настройки с https://manager.boostra.ru/prolongation_settings
                 if ($prolongation_available) {
                     $prolongation_visible_settings = $this->settings->prolongation_visible;
@@ -1264,6 +1313,9 @@ class UserView extends View
                 $this->design->assign('prolongation_amount', strval($user->balance->prolongation_amount));
                 $this->design->assign('prolongation_available', $prolongation_available);
                 $this->design->assign('due_days', strval($due_days));
+                // Чистые дни просрочки для Findzen
+                $clear_due_days = $this->findzenBannerService->getClearDueDays($response_balances, (string)$user->balance->zaim_number);
+                $this->design->assign('clear_due_days', strval($clear_due_days));
 
                 $today = strtotime(date('Y-m-d 00:00:00'));
                 if (strtotime($user->balance->payment_date) >= $today)
@@ -1285,15 +1337,14 @@ class UserView extends View
 
                 $this->design->assign('overdue', $overdue);
 
-                $user->balance->calc_percents = $this->users->calc_percents($user->balance);
+                $user->balance->calc_percents = $is_rcl ? 0 : $this->users->calc_percents($user->balance);
 
                 if ($user->balance->sale_info == 'Договор продан' && !in_array($user->balance->buyer, ['Правовая защита', 'Правовая защита ООО', 'БИКЭШ'])) {
                     $user->balance->sale_info = 'Договор перепродан';
                     $user->balance->sale_number = $user->balance->zaim_number;
                     $user->balance->zaim_number = '';
                 }
-                if (!empty($user->balance->zayavka)) {
-                    $zaim_order = $this->orders->get_order_by_1c($user->balance->zayavka);
+                if ($zaim_order) {
                     $this->design->assign('zaim_order', $zaim_order);
                 }
 
@@ -1395,7 +1446,7 @@ class UserView extends View
                                         $last_order['user_amount'] = max(4000, $last_order['approve_max_amount'] - 1000);
                                     }
 
-                                    $showExtraService = $this->credit_doctor->isVisible($this->user->id);
+                                    $showExtraService = $this->credit_doctor->isVisible($this->user->id, (int)$last_order['id']);
                                     $this->design->assign('showExtraService', $showExtraService);
                                     $this->logging('Show extra service', 'User: ' . $this->user->id, $showExtraService, $this->user, 'dop.txt');
 
@@ -1405,6 +1456,8 @@ class UserView extends View
                                     $this->design->assign('credit_doctor_tariffs', $credit_doctor_tariffs);
 
                                     $star_oracle = $this->star_oracle->getStarOracle((int)$last_order['id'], $this->user->id);
+                                    $tv_medical = $this->tv_medical->getVItaMedPrice((int)$last_order['amount'], empty($credits_history));
+                                    $tv_medical_price = $this->tv_medical::ISSUANCE_AMOUNT;
 
                                     try {
                                         $app = \App\Core\Application\Application::getInstance();
@@ -1423,9 +1476,9 @@ class UserView extends View
                                     if (!empty($showExtraService['financial_doctor']['enable']) && !empty($credit_doctor->price)) {
                                         $last_order['dop_sum'] += (int) $credit_doctor->price;
                                     }
-
-                                    if (!empty($showExtraService['star_oracle']['enable'])) {
-                                        $last_order['dop_sum'] += $this->star_oracle::AMOUNT;
+                                    
+                                    if (!empty($showExtraService['tv_medical']['enable']) && $tv_medical_price > 0) {
+                                        $last_order['dop_sum'] += $tv_medical_price;
                                     }
 
                                     // Отнимаем доп ТОЛЬКО если:
@@ -1448,6 +1501,25 @@ class UserView extends View
                                     } else {
                                         // иначе показываем обычную сумму
                                         $last_order['display_amount'] = $approve;
+                                    }
+
+                                    if ($this->order_data->read($last_order['id'], $this->order_data::RCL_LOAN)) {
+                                        $rcl_amount = $this->order_data->read($last_order['id'], $this->order_data::RCL_AMOUNT);
+                                        $amount_string = $this->documents->convertAmountToString($last_order['display_amount']);
+                                        $rcl_amount_string = $this->documents->convertAmountToString($rcl_amount);
+                                        $rcl_max_amount = $this->order_data->read($last_order['id'], $this->order_data::RCL_MAX_AMOUNT);
+                                        $rcl_max_amount_string = $this->documents->convertAmountToString($rcl_max_amount);
+                                        $this->design->assignBulk([
+                                            'rcl_loan' => $last_order['id'],
+                                            'has_closed_tranche' => $this->rcl->hasClosedTranche($last_order['user_id']),
+                                            'amount' => $last_order['display_amount'],
+                                            'rcl_amount' => $rcl_amount,
+                                            'amount_string' => $amount_string,
+                                            'rcl_amount_string' => $rcl_amount_string,
+                                            'rcl_max_amount' => $rcl_max_amount,
+                                            'rcl_max_amount_string' => $rcl_max_amount_string,
+                                            'rcl_order_id' => $last_order['id'],
+                                        ]);
                                     }
 
                                     break;
@@ -1538,15 +1610,13 @@ class UserView extends View
                             }
                         }
 
-                        if (!empty($reason_block) || (time() - (86400 * 7) < $last_order_time))
-                            $user->order = $last_order;
-
                         // если это автоодобрение получим информацию по нему
                         if ($last_order['utm_source'] == 'crm_auto_approve') {
                             $user->auto_approve_order = $this->orders->getAutoApproveOrderByOrderId((int)$last_order['id']);
                         }
 
                         if ($date_5days_maratorium = $this->users->check_5days_maratorium($this->user->id)) {
+                            $new_order_maratorium = $date_5days_maratorium;
                             $this->design->assign('new_order_maratorium', $date_5days_maratorium);
                         }
                     }
@@ -1561,6 +1631,7 @@ class UserView extends View
                 } while ($last_order['utm_source'] == 'cross_order');
 
                 $partner_postfix = $this->user->phone_mobile ? "&p={$this->user->phone_mobile}" : '';
+                $partner_postfix .= "&utm_source2={$this->user->utm_source}";
                 $user_scorista = $this->scorings->get_scorings([
                     'type' => $this->scorings::TYPE_SCORISTA,
                     'status' => $this->scorings::STATUS_COMPLETED,
@@ -1571,8 +1642,14 @@ class UserView extends View
                     $partner_postfix .= "&sc={$user_scorista[0]->scorista_ball}";
                 }
 
+                $reason_block = null;
+                $repeat_loan_block = null;
+                $next_loan_mandatory = null;
+                $new_order_maratorium = $new_order_maratorium ?? null;
+
                 /** Блок по отказу на 12 часов*/
-                if (isset($last_order) && $last_order['1c_status'] == '2.Отказано' || $last_order['status'] == $this->orders::STATUS_NOT_ISSUED) {
+                if ((isset($last_order) && $last_order['1c_status'] == '2.Отказано')
+                    || $last_order['status'] == $this->orders::STATUS_NOT_ISSUED) {
                     $reason = $this->reasons->get_reason($last_order['reason_id']);
                     if (!empty($reason) && $reason->maratory > 0) {
                         if ($reason->maratory == 999) {
@@ -1602,15 +1679,47 @@ class UserView extends View
                         $promoCode = $this->promocodes->getLastUnusedPromoCode($user->phone_mobile);
                         
                         if ($promoCode && $promoCode->is_mandatory_issue) {
+                            $next_loan_mandatory = true;
                             $this->design->assign('next_loan_mandatory', true);
                         }
                     } elseif (time() - (43200) < $last_order_time) {
                         $next_loan_time = $last_order_time + 43200;
                         $next_loan_date = date('Y-m-d H:i:s', $next_loan_time);
 
+                        $repeat_loan_block = $next_loan_date;
                         $this->design->assign('repeat_loan_block', $next_loan_date);
                     }
                 }
+
+                $reasonForFlags = $reason ?? $this->reasons->get_reason($last_order['reason_id'] ?? 0);
+
+                if (empty($reason_block) && !empty($last_order['reason_id'])) {
+                    $reason_block = OrderStatusHelper::calculateReasonBlockDate(
+                        $reasonForFlags,
+                        $last_order['date'] ?? ''
+                    );
+                    if ($reason_block) {
+                        $this->design->assign('reason_block', $reason_block);
+                    }
+                }
+                $orderForForm = !empty($user->order) ? $user->order : $last_order;
+                $order1cStatus = $orderForForm['1c_status'] ?? ($orderForForm['status_1c'] ?? '');
+                $filesOk = $user->file_uploaded || Helpers::isFilesRequired($user);
+
+                $flags = OrderStatusHelper::getNewOrderFormFlags([
+                    'last_order' => $last_order,
+                    'user' => $user,
+                    'reason' => $reasonForFlags,
+                    'reason_block' => $reason_block ?? null,
+                    'repeat_loan_block' => $repeat_loan_block ?? null,
+                    'next_loan_mandatory' => $next_loan_mandatory ?? null,
+                    'new_order_maratorium' => $new_order_maratorium ?? null,
+                    'order1c_status' => (string)$order1cStatus,
+                    'files_ok' => $filesOk,
+                ]);
+
+                $this->design->assign('show_moratorium_only', $flags['show_moratorium_only']);
+                $this->design->assign('can_show_new_order_form', $flags['can_show_new_order_form']);
 
                 $loans_count = empty($last_order) ? 0 : \api\helpers\UserHelper::userLoansCount($this, $this->user->id, new DateTime($last_order['date']));
                 if ($this->request->get('action') == 'verify_card') {
@@ -1692,6 +1801,12 @@ class UserView extends View
                         return $order['status'] == $this->orders::STATUS_WAIT_CARD;
                     })) > 0;
 
+                    foreach ($cross_orders as &$co) {
+                        $coReason = !empty($co['reason_id']) ? $this->reasons->get_reason($co['reason_id']) : null;
+                        $co['_flags'] = OrderStatusHelper::getViewFlags($co, $coReason, $last_order);
+                    }
+                    unset($co);
+
                     $this->design->assign('totalApproveAmount', $totalApproveAmount);
                     $this->design->assign('isAutoAcceptCrossOrders', $isAutoAcceptCrossOrders);
                 }
@@ -1721,20 +1836,14 @@ class UserView extends View
                     $user->not_rating_maratorium_valid = $this->users->getNoApprovedUserNotMoratorium($this->user->id);
                 }
 
-                if (empty($user->order)) {
-                    if (!empty($user->balance->zayavka)) {
-                        $user->order = (array)$this->orders->get_order_by_1c($user->balance->zayavka);
-                    } elseif (0 && !empty($user->balance->zaim_number)) {
-                        if ($contract = $this->contracts->get_contract_by_params(['number'=>$user->balance->zaim_number])) {
-                            $user->order = (array)$this->orders->get_order($contract->order_id);
-                        }
-                    }
-
-                }
+                $user->order = $last_order;
 
                 if (!empty($user->order)) {
                     $user->order['payment_refuser'] = $this->order_data->read($user->order['id'], $this->order_data::PAYMENT_REFUSER);
                     $user->order['is_new_card_linked'] = $this->order_data->read($user->order['id'], $this->order_data::IS_NEW_CARD_LINKED);
+
+                    $orderReason = !empty($user->order['reason_id']) ? $this->reasons->get_reason($user->order['reason_id']) : null;
+                    $user->order['_flags'] = OrderStatusHelper::getViewFlags($user->order, $orderReason);
                 }
 
                 $this->design->assign('use_b2p', (int)($this->settings->b2p_enabled || $user->use_b2p));
@@ -1792,6 +1901,16 @@ class UserView extends View
                         }
                     }
                 }
+
+                // Финансовый консультант - показываем ссылку если есть лицензия ФД с ключом и был возврат CD в текущем займе
+                if (!empty($last_order['id']) && $this->credit_doctor->hasReturnByOrderId((int)$last_order['id'])) {
+                    $fdLicenseKey = $this->credit_doctor->getLicenseKeyByOrderId((int)$last_order['id']);
+                    if ($fdLicenseKey) {
+                        $this->design->assign('show_chat_dop', true);
+                        $this->design->assign('fd_license_key', $fdLicenseKey);
+                    }
+                }
+
                 if(!empty($_SESSION['full_payment_amount_done']) && empty($this->credit_doctor->getLicenseByUserId($this->user->id))){
                     $this->design->assign('full_payment_amount_done', $_SESSION['full_payment_amount_done']);
                 }
@@ -1928,15 +2047,7 @@ class UserView extends View
                     $this->design->assign('likezaim', $likezaim);
                 }
 
-
-
-                $loan_buyers = $this->parseLoanBuyers( $response_balances );
-
-                $vsev_debt_notification_disabled = $this->user_data->read($this->user->id, $this->user_data::VSEV_DEBT_NOTIFICATIONS_DISABLED);
-                $this->design->assign($this->user_data::VSEV_DEBT_NOTIFICATIONS_DISABLED, $vsev_debt_notification_disabled);
-
-
-                $loan_buyers && $this->design->assign( 'loan_buyers', $loan_buyers );
+                $this->design->assign('loan_buyers', $this->parseLoanBuyers($response_balances));
 
                 if ($divide_order_data = $this->orders->getDivideOrders($filter_divide_order, false)) {
 
@@ -2002,22 +2113,45 @@ class UserView extends View
                     $all_orders->orders[$order->order_uid]= $order_data;
                 }
 
-                $set_balance = function ($order_array) use ($response_balances, $all_orders, $user) {
+                // СРКВ: проверка блокировки допов на оплате (история возвратов)
+                $srkvTvMedBlocked = false;
+                $srkvConciergeBlocked = false;
+                try {
+                    $srkv = Application::getInstance()->make(ReturnCoefficientService::class);
+                    $srkvTvMedBlocked    = $srkv->shouldBlockService((int)$this->user->id, ReturnCoefficientService::SERVICE_TV_MEDICAL, ReturnCoefficientService::STAGE_PAYMENT);
+                    $srkvConciergeBlocked = $srkv->shouldBlockService((int)$this->user->id, ReturnCoefficientService::SERVICE_MULTIPOLIS, ReturnCoefficientService::STAGE_PAYMENT);
+                } catch (Throwable $e) {
+                    log_warning('SRKV: payment block check failed', ['error' => $e->getMessage()]);
+                }
+
+                $set_balance = function ($order_array) use ($response_balances, $all_orders, $user, $srkvConciergeBlocked) {
                     $order_balance = array_filter($response_balances, function ($item) use ($order_array) {
                         return $item['Заявка'] == $order_array->order->{'id_1c'};
                     });
                     $balance_1c = (object)array_shift($order_balance);
                     $order_array->balance = $this->users->make_up_user_balance($this->user->id, $balance_1c);
-                    $order_array->balance->calc_percents = $this->users->calc_percents($order_array->balance);
+                    $order_id = $order_array->order->id ?? $order_array->order->order_id ?? null;
+                    $order_array->is_rcl = $order_id ? $this->rcl->isRclTranche((int)$order_id) : false;
+                    $order_array->balance->calc_percents = $order_array->is_rcl ? 0 : $this->users->calc_percents($order_array->balance);
                     $order_array->multipolis_amount = $this->multipolis->getMultipolisAmount($order_array,$this->multipolis::DEFAULT_PROLONGATION_DAY,(int)$order_array->order->order_id);
-                    $order_array->due_days = OrderService::calculateDueDays($balance_1c->{'ПланДата'} ?? null);
+                    $order_array->due_days = OrderService::calculateDueDays(
+                        $balance_1c->{'ПланДата'} ?? null
+                    );
+                    $this->design->assign('contract_number', $order_array->balance->zaim_number);
+                    // Чистые дни просрочки для Findzen по конкретному договору
+                    $order_array->clear_due_days = $this->findzenBannerService->getClearDueDays(
+                        $response_balances, $order_array->balance->zaim_number
+                    );
+
                     $order_array->wheel_available = in_array($order_array->order->organization_id, [
                         $this->organizations::LORD_ID,
                         $this->organizations::FINLAB_ID,
                         $this->organizations::RZS_ID,
                         $this->organizations::MOREDENEG_ID,
                         $this->organizations::FRIDA_ID,
+                        $this->organizations::FASTFINANCE_ID,
                     ]);
+                    $order_array->newyear_promo = $this->getNewYearPromo($order_array);
 
                     // проверяем возможность рефинансирования
                     $order_array->refinance = $this->refinance->checkOrganizationRefinanceAvailable($order_array->order->organization_id)
@@ -2034,7 +2168,7 @@ class UserView extends View
                         $order_array->balance->need_accept = $this->installments->check_accept($order_array->balance->zaim_date);
 
                         $order_array->balance->details['multipolis_amount'] = 0;
-                        if ($p2pcredits) {
+                        if ($p2pcredits && !$srkvConciergeBlocked) {
                             $order_array->balance->details['multipolis_amount'] = (int)($zaim_summ / ($order_array->balance->details['КоличествоПлатежей']) * $this->multipolis::IL_DOP_RATE * (int)$order_array->order->additional_service_multipolis);
                         }
 
@@ -2124,7 +2258,7 @@ class UserView extends View
                     $order->vitamed_disabled = $this->orders->shouldDisableVitamed($order->balance->zaim_number);
                     // Проверяем scorista_ball для prolongation_tv_medical_price
                     $order->prolongation_tv_medical_price = $vitaMedTariffs[1]->price;
-                    if ($order->order->scorista_ball >= $this->tv_medical::SCORISTA_BALL_FREE_THRESHOLD || $order->vitamed_disabled) {
+                    if ($order->order->scorista_ball >= $this->tv_medical::SCORISTA_BALL_FREE_THRESHOLD || $order->vitamed_disabled || $srkvTvMedBlocked) {
                         $order->prolongation_tv_medical_price = 0;
                     }
                 }
@@ -2148,6 +2282,14 @@ class UserView extends View
 
                 $vitaMedPrice = $this->tv_medical->getVItaMedPrice($amount);
                 $tv_medical_tariffs = $this->tv_medical->getAllTariffs();
+
+                // СРКВ: блокировка ВМ — обнуляем цены, передаём флаг в шаблон
+                if ($srkvTvMedBlocked) {
+                    if ($vitaMedPrice) {
+                        $vitaMedPrice->price = 0;
+                    }
+                    $tv_medical_price = 0;
+                }
 
                 $starOraclePrice = $this->star_oracle->getStarOraclePrice($amount);
                 $star_oracle_tariffs = $this->star_oracle->getAllTariffs();
@@ -2215,10 +2357,12 @@ class UserView extends View
                 $this->design->assign('asp_contract_delete_user_link', $asp_contract_delete_user_link);
                 $this->design->assign('vita_med', $vitaMedPrice);
                 $this->design->assign('star_oracle', $starOraclePrice);
-                $this->design->assign('tv_medical_price', $vitaMedTariffs[1]->price);
+                $this->design->assign('tv_medical_price', $tv_medical_price ?? $vitaMedTariffs[1]->price);
                 $this->design->assign('multipolis_amount', $multipolis_amount);
                 $this->design->assign('tv_medical_id', $vitaMedTariffs[1]->id);
                 $this->design->assign('tv_medical_tariffs', $tv_medical_tariffs);
+                $this->design->assign('srkv_tv_med_blocked', $srkvTvMedBlocked);
+                $this->design->assign('srkv_concierge_blocked', $srkvConciergeBlocked);
                 $this->design->assign('star_oracle_tariffs', $star_oracle_tariffs);
                 $this->design->assign('divide_order', $divide_order);
                 $this->design->assign('all_orders', $all_orders);
@@ -2247,6 +2391,14 @@ class UserView extends View
                 $this->design->assign('canShowRefererBanner', $canShowRefererBanner);
                 $this->design->assign('referer_url', $canShowRefererBanner ? $this->referralService->getRefererUrl($this->user) : null);
 
+                /** баннер на ФинДзен */
+                $this->design->assign('findzen_overdue_days', $this->findzenBannerService->getOverdueDays());
+                $this->design->assign('findzen_url', $this->findzenBannerService->getUniqueTargetUrl(
+                    $this->settings->url_findzen,
+                    $this->user->uid ?? '',
+                    $this->users->isSafetyFlow($this->user)
+                ));
+
                 $mfoParams['params'] = (array) $this->organizations->get_organization($organization_id);
                 $userRecurrentData = [
                     'lastname'  => $this->user->lastname,
@@ -2267,6 +2419,7 @@ class UserView extends View
                 $this->organizations->assign_to_design();
 
                 $this->design->assign('restricted_mode', (int)$restricted_mode);
+                $this->design->assign('friend_restricted_mode', (int)$friend_restricted_mode);
 
                 $restricted_mode_logout_hint = $restricted_mode
                     && ($user->balance->zaim_number === 'Нет открытых договоров'
@@ -2328,6 +2481,9 @@ class UserView extends View
                 if (!empty($last_order)) {
                     $this->design->assign('last_order_data', $this->order_data->readAll($last_order['id']));
                 }
+
+                // Логируем вход в ЛК для новогодней акции
+                $this->logNewYearLkOpen();
 
                 $centrifugo_jwt_token = \api\helpers\JWTHelper::generateToken($this->config->CENTRIFUGO['hmac_secret_key'], (int)$this->user->id);
                 $this->design->assign('centrifugo_jwt_token', $centrifugo_jwt_token);
@@ -2392,10 +2548,44 @@ class UserView extends View
                 }
 
                 $this->design->assign('individual_max_amount_doc_url', $this->getIndividualMaxAmountDocUrl());
-                $this->design->assign('individual_url', $this->getIndividualWithoutAmountDocUrl());
+                if (!empty($last_order) && $this->order_data->read($last_order['id'], $this->order_data::RCL_LOAN)) {
+                    $rcl_ind_params = [
+                        'params' => [
+                            'percent' => $last_order['percent'],
+                            'period' => $last_order['period'],
+                            'amount' => $last_order['amount'],
+                        ],
+                        'user_id' => $this->user->id,
+                        'organization_id' => $last_order['organization_id'],
+                    ];
+                    $rcl_ind_params['params']['rcl_amount'] =
+                        $this->order_data->read($last_order['id'], $this->order_data::RCL_AMOUNT) ?: $last_order['amount'];
+                    $rcl_ind_params['params']['amount_string'] = $this->documents->convertAmountToString($rcl_ind_params['params']['amount']);
+                    $rcl_ind_params['params']['rcl_amount_string'] = $this->documents->convertAmountToString($rcl_ind_params['params']['rcl_amount']);
+                    $rcl_ind_params['params']['amount_string'] = $this->documents->convertAmountToString($last_order['amount']);
+                    $this->design->assign('individual_url', $this->config->root_url . '/preview/rcl_ind_usloviya?' . http_build_query($rcl_ind_params));
+                }
+                else {
+                    $this->design->assign('individual_url', $this->getIndividualWithoutAmountDocUrl());
+                }
 
                 if($this->settings->zero_discount_enabled){
                     $this->design->assign('zeroDiscount', ZeroDiscountService::handle($orders));
+                }
+
+                if ($this->showPopupToRepeatIssuanceOrder()) {
+                    $this->design->assign('show_popup_to_repeat_issuance_order', true);
+                }
+
+                // Скрываем блок нет карт если попал под фитчу (MARK-585) + выбрал банк
+                if ($this->users->skipSelectCardStep($this->user)) {
+                    $bankIdForSbpIssuance = $this->order_data->read($last_order['id'], $this->order_data::BANK_ID_FOR_SBP_ISSUANCE);
+                    $this->design->assign('hide_no_card_block', $bankIdForSbpIssuance);
+                }
+
+                // Сделаем проверку на то, нужно ли добавлять карту под ручеек, (MARK-864) пока только ПК
+                if ($last_order['have_close_credits'] == 1 && ($organization_id_for_river = $this->organizations->getOrganizationIdForRiver($this->user))) {
+                    $this->design->assign('organization_id_for_river', $organization_id_for_river);
                 }
 
                 return $this->design->fetch('user.tpl');
@@ -2403,6 +2593,29 @@ class UserView extends View
         }
 
         return false;
+    }
+
+    private function enableVirtualCard() {
+        $isVirtualCardConsent = (int)$this->user_data->read($this->user->id, "is_virtual_card_consent") === 1;
+        $this->design->assign('is_virtual_card_consent', $isVirtualCardConsent);
+
+        $cardData = $this->virtualCard->forUser($this->user->id)->status();
+        $cardStatus = $cardData['status'] ?? null;
+
+        $this->design->assign('is_virtual_card_active', in_array($cardStatus, ['pending', 'active']));
+
+        $isVirtualCardEnabled = $this->settings->vc_enabled
+            && isset($_COOKIE['utm_campaign'])
+            && $_COOKIE['utm_campaign'] === 'vctest';
+
+        $this->design->assign('is_virtual_card_enabled', (bool)$isVirtualCardEnabled);
+
+        if ($isVirtualCardEnabled) {
+            $userCards = $this->best2pay->get_cards(array('user_id' => $this->user->id));
+
+            $this->design->assign('virtual_card_data', $cardData);
+            $this->design->assign('user_cards', $userCards);
+        }
     }
 
     /**
@@ -2547,67 +2760,59 @@ class UserView extends View
     }
 
     /**
-     * Parse data from balances and returns loan buyers
+     * Извлекает информацию о переданных долгах (цессии/агенты) из балансов от 1С.
      *
-     * @param $response_balances array response from soap::get_user_balances_array_1c() method
+     * Строка портфеля вида "Агент 01.01.2024" парсится для получения наименования агента и даты передачи.
      *
-     * @return array
+     * @param array<int|string, array<string, mixed>> $responseBalances Массив балансов пользователя от 1С.
+     *
+     * @return array<int, array<string, string>> Массив с разобранными данными агентских договоров.
      */
-    private function parseLoanBuyers(array $response_balances): array
+    private function parseLoanBuyers(array $responseBalances): array
     {
-        $loan_buyers = [];
+        $loanBuyers = [];
 
-        foreach ($response_balances as $response_balance) {
-
-            if (empty($response_balance['Портфель'])) {
+        foreach ($responseBalances as $responseBalance) {
+            if (
+                empty($responseBalance['Портфель']) ||
+                empty($responseBalance['НомерЗайма']) ||
+                empty($responseBalance['ДатаЗайма'])
+            ) {
                 continue;
             }
 
-            foreach ((array)$response_balance['Портфель'] as $buyer_data) {
-                /**
-                 * Convert input data: 'Портфель' => 'МБА 24.07.2023',
-                 * To output:
-                 * [
-                 *      'loan_number'     => Б23-1239783, // Берется из данных на уровень выше
-                 *      'loan_date'       => 06.05.2023,  // Берется из данных на уровень выше
-                 *      'loan_buy_date'   => 24.07.2023,
-                 *      'loan_buyer_name' => ООО "М.Б.А. ФИНАНСЫ",
-                 * ]
-                 */
-                preg_match('@^(.+?)\s(\d{2}\.\d{2}\.\d{2,4})$@', $buyer_data, $matches);
-
-                $buyer_organization = $matches[1]          ?: null;
-                $buy_date           = isset( $matches[2] ) ? date( 'd.m.Y', strtotime( $matches[2] ) ) : null;
-
-                switch( $buyer_organization ){
-                    // You can add another organization here
-                    case 'МБА':
-                        $loan_buyer_organization = 'ООО "М.Б.А. ФИНАНСЫ"';
-                        break;
-                    case 'Boostra':
-                        $loan_buyer_organization = 'ООО "БИКЭШ"';
-                        break;
-                    case 'СКА':
-                        $loan_buyer_organization = 'ООО "Сибирское коллекторское агентство" 88006008384';
-                        break;
-                    default:
-                        $loan_buyer_organization = $matches[1];
-                }
-
-                if( ! isset( $response_balance['НомерЗайма'], $response_balance['ДатаЗайма'], $buyer_organization, $buy_date ) ){
+            foreach ((array)$responseBalance['Портфель'] as $buyerData) {
+                if (!is_string($buyerData) || !preg_match('@^(.+?)\s(\d{2}\.\d{2}\.\d{2,4})$@', trim($buyerData), $matches)) {
                     continue;
                 }
 
-                $loan_buyers[] = [
-                    'loan_number'     => $response_balance['НомерЗайма'],
-                    'loan_date'       => date( 'd.m.Y', strtotime( $response_balance['ДатаЗайма'] ) ),
-                    'loan_buy_date'   => $buy_date,
-                    'loan_buyer_name' => $loan_buyer_organization,
+                $buyerOrganization = $matches[1];
+                $buyDate = date('d.m.Y', strtotime($matches[2]));
+
+                switch ($buyerOrganization) {
+                    case 'МБА':
+                        $loanBuyerName = 'ООО "М.Б.А. ФИНАНСЫ"';
+                        break;
+                    case 'Boostra':
+                        $loanBuyerName = 'ООО "БИКЭШ"';
+                        break;
+                    case 'СКА':
+                        $loanBuyerName = 'ООО "Сибирское коллекторское агентство" 88006008384';
+                        break;
+                    default:
+                        $loanBuyerName = $buyerOrganization;
+                }
+
+                $loanBuyers[] = [
+                    'loan_number' => (string)$responseBalance['НомерЗайма'],
+                    'loan_date' => date('d.m.Y', strtotime((string)$responseBalance['ДатаЗайма'])),
+                    'loan_buy_date' => $buyDate,
+                    'loan_buyer_name' => $loanBuyerName,
                 ];
             }
         }
 
-        return $loan_buyers;
+        return $loanBuyers;
     }
 
     private function check_need_add_fields()
@@ -2920,6 +3125,10 @@ class UserView extends View
         $d_order->order = (object)$d_order->order;
 
         $resp = $this->check_order_1c($d_order->order->id_1c);
+        if (empty($resp)) {
+            return;
+        }
+
         $d_order->approved_file = $this->documents->save_pdf($resp->return->{'ФайлBase64'}, $resp->return->{'НомерЗаявки'}, 'Preview_Contracts');
 
         $order_id = isset($d_order->order->id) ? $d_order->order->id : (isset($d_order->order->order_id) ? $d_order->order->order_id : null);
@@ -2960,5 +3169,222 @@ class UserView extends View
         }
         fclose($fh);
         exit;
+    }
+
+    /**
+     * Проверяем, нужно ли показывать попап с просьбой выбрать другой банк или привязать другой СБП счет при неуспешной выдаче для автоматический перевыдачи
+     */
+    private function showPopupToRepeatIssuanceOrder(): bool
+    {
+        $ordersToCheck = [];
+
+        // Для возможности перевыдачи проверяется последняя заявка клиента
+        $lastOrder = $this->orders->get_last_order((int)$this->user->id);
+
+        if (empty($lastOrder)) {
+            return false;
+        }
+
+        $ordersToCheck[] = $lastOrder;
+
+        // Если последняя заявка кросс-ордер, то проверяем также по его основной заявке
+        if ($this->orders->isCrossOrder($lastOrder)) {
+            $mainOrder = $this->orders->get_order($lastOrder->utm_medium);
+
+            if (!empty($mainOrder)) {
+                $ordersToCheck[] = $mainOrder;
+            }
+        }
+
+        foreach ($ordersToCheck as $order) {
+            if ($this->orders->canRepeatIssuanceNotIssuedOrder($order)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * Обработка новогодней акции
+     *
+     * @param object $all_orders
+     * @param object|null $divide_order
+     * @return object|null
+     */
+    private function getNewYearPromo($order): ?object
+    {
+        // Проверяем, включена ли новогодняя акция в настройках
+        if (empty((int)$this->settings->newyear_promotion_enabled)) {
+            logger('newyear_promo_check')->warning('Новогодняя акция отключена в настройках');
+            return null;
+        }
+
+        if ((empty($order->order->order_id) && empty($order->order->id)) || empty($order->balance)) {
+            logger('newyear_promo_check')->warning('Не полные данные заявки/пользователя для Новогодней акции', [
+                'user_id' => $this->user->id ?? null,
+                'order' => $order,
+            ]);
+            return null;
+        }
+
+        if (!$this->user_data->read($this->user->id, $this->user_data::TEST_USER)) {
+            return null;
+        }
+
+        $userId = $this->user->id ?? null;
+        $orderId = $order->order->order_id ?? $order->order->id ?? null;
+
+        if (empty($userId) || empty($orderId)) {
+            logger('newyear_promo_check')->warning('Не полные данные заявки/пользователя для Новогодней акции', [
+                'user_id' => $userId,
+                'order_id' => $orderId,
+            ]);
+            return null;
+        }
+
+        // Проверяем, участвует ли пользователь в акции (единственный источник истины - баланс из 1С)
+        logger('newyear_promo_check')->info('Проверка isUserInPromo', [
+            'user_id' => $userId,
+            'order_id' => $orderId,
+            'balance_exists' => !empty($order->balance),
+            'discount_date' => $order->balance->discount_date ?? null,
+            'sum_with_grace' => $order->balance->sum_with_grace ?? null,
+            'ostatok_od' => $order->balance->ostatok_od ?? null,
+            'ostatok_percents' => $order->balance->ostatok_percents ?? null,
+        ]);
+
+        if (!$this->promoService->isUserInPromo($userId, $orderId, $order->balance)) {
+            logger('newyear_promo_check')->warning('Пользователь не участвует в Новогодней акции', [
+                'user_id' => $userId,
+                'order_id' => $orderId,
+                'discount_date' => $order->balance->discount_date ?? null,
+                'sum_with_grace' => $order->balance->sum_with_grace ?? null,
+                'ostatok_od' => $order->balance->ostatok_od ?? null,
+                'ostatok_percents' => $order->balance->ostatok_percents ?? null,
+            ]);
+            return null;
+        }
+
+        // Проверяем, активна ли скидка (использует discount_date из 1С как единственный источник истины)
+        $remainingTime = $this->promoService->getRemainingTime($order->balance);
+        $isDiscountActive = $this->promoService->isDiscountActive($order->balance);
+
+        logger('newyear_promo_check')->info('Проверка isDiscountActive', [
+            'user_id' => $userId,
+            'order_id' => $orderId,
+            'discount_date' => $order->balance->discount_date ?? null,
+            'remaining_time' => $remainingTime,
+            'is_discount_active' => $isDiscountActive,
+        ]);
+
+        // Если время акции недействительно - не показываем баннер вообще
+        if (!$isDiscountActive) {
+            logger('newyear_promo_check')->info('Новогодняя акция не активна для пользователя', [
+                'user_id' => $userId,
+                'order_id' => $orderId,
+                'discount_date' => $order->balance->discount_date ?? null,
+                'remaining_time' => $remainingTime,
+            ]);
+            return null;
+        }
+
+        // Проверяем, была ли активирована скидка (для отображения состояния баннера)
+        $discountActivated = $this->promoService->hasEvent($userId, $orderId, $this->promoService::EVENT_DISCOUNT_BUTTON_CLICKED);
+
+        // Рассчитываем скидку и сумму со скидкой
+        // Единственный источник истины - баланс из 1С
+        $totalDebt = (float)($order->balance->ostatok_od ?? 0)
+            + (float)($order->balance->ostatok_percents ?? 0)
+            + (float)($order->balance->ostatok_peni ?? 0)
+            + (float)($order->balance->penalty ?? 0);
+
+        // Получаем скидку из баланса (sum_percent_with_grace)
+        $discountAmount = $this->promoService->getDiscountAmount($order->balance);
+
+        // Получаем сумму со скидкой из баланса (sum_with_grace)
+        $discountCalculation = $this->promoService->calculateTotalWithDiscount($order->balance);
+        $totalWithDiscount = $discountCalculation['total_with_discount'];
+
+        // Получаем оставшееся время (использует discount_date из 1С, если есть, иначе возвращает 0)
+        $remainingTime = $this->promoService->getRemainingTime($order->balance);
+
+        // Получаем время активации скидки
+        $discountStartedAt = null;
+        $activationEvent = $this->promoService->getLastEvent($userId, $orderId, $this->promoService::EVENT_DISCOUNT_BUTTON_CLICKED);
+        $discountStartedAt = $activationEvent ? $activationEvent->created_at : null;
+
+        // Определяем ссылку на PDF файл в зависимости от организации
+        $pdfUrl = null;
+        $organizationId = (int)($order->order->organization_id ?? 0);
+
+        switch ($organizationId) {
+            case $this->organizations::AKVARIUS_ID:
+                $pdfUrl = '/files/docs/newyear_promo/Условия акции_Аквариус_2025.pdf';
+                break;
+            case $this->organizations::LORD_ID:
+                $pdfUrl = '/files/docs/newyear_promo/Условия акции_Лорд_2025.pdf';
+                break;
+            case $this->organizations::RZS_ID:
+                $pdfUrl = '/files/docs/newyear_promo/Условия акции_РЗС_2025.pdf';
+                break;
+            case $this->organizations::FINLAB_ID:
+                $pdfUrl = '/files/docs/newyear_promo/Условия акции_Финлаб_2025.pdf';
+                break;
+        }
+
+        logger('newyear_promo_check')->info('Новогодняя акция активна для пользователя', [
+            'user_id' => $userId,
+            'order_id' => $orderId,
+            'is_discount_active' => $isDiscountActive,
+            'discount_activated' => $discountActivated,
+            'discount_amount' => $discountAmount,
+            'total_debt' => $totalDebt,
+            'total_with_discount' => $totalWithDiscount,
+            'remaining_time' => $remainingTime,
+            'discount_started_at' => $discountStartedAt,
+            'pdf_url' => $pdfUrl,
+            'discount_date' => $order->balance->discount_date ?? null
+        ]);
+
+        // Передаем данные в шаблон
+        return (object)[
+            'is_active' => $isDiscountActive,
+            'discount_amount' => $discountAmount,
+            'total_debt' => $totalDebt,
+            'total_with_discount' => $totalWithDiscount,
+            'remaining_time' => $remainingTime,
+            'discount_activated' => $discountActivated,
+            'discount_started_at' => $discountStartedAt,
+            'pdf_url' => $pdfUrl,
+        ];
+    }
+
+    /**
+     * Логирует вход в ЛК для новогодней акции
+     *
+     * @return void
+     */
+    private function logNewYearLkOpen(): void
+    {
+        try {
+            // Получаем все заказы пользователя
+            $orders = $this->orders->get_orders([
+                'user_id' => $this->user->id,
+                'limit' => 2,
+            ]);
+
+            foreach ($orders as $order) {
+                if ($this->promoService->isUserInPromo($this->user->id, $order->id)) {
+                    $this->promoService->logLkOpen($this->user->id, $order->id);
+                    break;
+                }
+            }
+        } catch (\Throwable $e) {
+            logger('newyear_promo')->error('Error logging LK open', [
+                'user_id' => $this->user->id ?? null,
+                'error' => $e->getMessage(),
+            ]);
+        }
     }
 }

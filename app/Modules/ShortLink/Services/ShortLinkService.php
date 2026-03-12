@@ -39,26 +39,27 @@ class ShortLinkService
         }
     }
 
-    public function getFriendPaymentLink(int $userId, string $uid, string $contractNumber): string
-    {
+    public function getFriendPaymentLink(
+        int $userId,
+        string $uid,
+        int $overdueDays,
+        string $phone,
+        int $order_id
+    ): string {
         try {
             $url = $this->ncService->getUrl() . static::GENERATE_FRIEND_PAYMENT_LINK_API;
 
             $response = $this->ncService->post([
-                'external_id' => $userId,
-                'uid' => $uid,
-                'contract_number' => $contractNumber,
+                'external_id'  => $userId,
+                'uid'          => $uid,
+                'order_id'     => $order_id,
+                'phone'        => $phone,
+                'overdue_days' => $overdueDays,
             ], $url);
 
             return $response['short_link'] ?? '';
-        } catch (\Throwable $e) {
-            logger('friend_payment_link')->error(
-                __METHOD__ . PHP_EOL
-                . $e->getFile() . PHP_EOL
-                . $e->getLine() . PHP_EOL
-                . $e->getMessage() . PHP_EOL
-            );
-
+        } catch (Exception $e) {
+            logger('friend_payment_link')->error($e->getMessage());
             return '';
         }
     }

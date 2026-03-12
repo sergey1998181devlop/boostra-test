@@ -41,7 +41,7 @@
 						</label>
 
 						<label>
-							<input type="email" ata-format="email" name="email" placeholder="" required="" value="{$email|escape}"  maxlength="255"/>
+							<input type="email" autocomplete="email" ata-format="email" name="email" placeholder="" required="" value="{$email|escape}"  maxlength="255"/>
 							{if $error=='empty_email'}
 							<small class="err error" id="err-email">Введите email</small>
 							{/if}

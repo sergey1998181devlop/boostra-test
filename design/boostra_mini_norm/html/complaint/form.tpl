@@ -1,4 +1,9 @@
 <form id="complaint" class="complaint-container">
+    <input type="hidden" name="complaint_csrf" value="{$complaint_csrf|escape}" />
+    <div style="position:absolute;left:-10000px;top:auto;width:1px;height:1px;overflow:hidden;">
+        <label for="complaint_hp">Не заполняйте это поле</label>
+        <input id="complaint_hp" name="complaint_hp" type="text" value="" tabindex="-1" autocomplete="off" />
+    </div>
     <div class="btns">
         <div class="header">
             <h4>Приемная финансового омбудсмена по правам заемщиков МФО</h4>
@@ -19,6 +24,7 @@
                    name="complaint_name"
                    class="complaint_name"
                    type="text"
+                   required
                    placeholder="Иванов Иван Иванович"
                    pattern="^[А-ЯЁа-яё]+\s[А-ЯЁа-яё]+\s[А-ЯЁа-яё]+$"
                    title="Введите фамилию, имя и отчество, разделенные пробелами (только русские буквы)"
@@ -30,6 +36,8 @@
                 <input id="complaint_phone"
                        name="complaint_phone"
                        type="tel"
+                       inputmode="tel"
+                       required
                        placeholder="+7 (900) 000-00-00"
                        pattern="{literal}\+\d\s\(\d{3}\)\s\d{3}-\d{2}-\d{2}{/literal}"
                        title="Введите корректный номер телефона"
@@ -40,26 +48,30 @@
                 <input id="complaint_email"
                        name="complaint_email"
                        type="email"
+                       required
                        placeholder="example@mail.com"
                        pattern=".+@.+\..+"
                        title="Введите корректную электронную почту"
                        value="{$user->email}" />
             </div>
             <div class="input-control">
-                <label for="complaint_birth">Дата рождения</label>
+                <label for="complaint_birth">Дата рождения<span class="required">*</span></label>
                 <input id="complaint_birth"
                        name="complaint_birth"
                        type="date"
+                       required
                        placeholder="дд.мм.гггг"
                        title="Введите дату рождения"
                        value="{$user->birth|date_format:'%Y-%m-%d'}"
+                       min="1920-01-01"
                        max="{$eighteen_years_birthdate|date_format:'%Y-%m-%d'}"/>
             </div>
             <div class="input-control">
-                <label for="complaint_topic">Тема обращения</label>
+                <label for="complaint_topic">Тема обращения<span class="required">*</span></label>
                 <select id="complaint_topic"
                         name="complaint_topic"
-                        class="complaint_topic">
+                        class="complaint_topic"
+                        required>
                     <option value="" disabled selected>Выберите тему обращения</option>
                     {foreach $complaint_topics as $topic}
                         <option value="{$topic.id}" data-yandex-goal-id="{$topic.yandex_goal_id}">{$topic.name}</option>
@@ -68,11 +80,12 @@
             </div>
         </div>
         <div class="input-control">
-            <label for="complaint_text">Текст обращения</label>
+            <label for="complaint_text">Текст обращения<span class="required">*</span></label>
             <textarea id="complaint_text"
                       name="complaint_text"
                       placeholder="Введите текст обращения"
                       class="complaint_text form-control"
+                      required
                       maxlength="300"
                       rows="10"></textarea>
             <span id="count_message"></span>
@@ -89,6 +102,8 @@
 
         <ul id="complaint_file_list" style="display: none;"></ul>
     </div>
+
+    <div id="smart-captcha-complaint-container" class="smart-captcha" data-sitekey="{$config->smart_captcha_client_key}"></div>
 
     <div class="form-check form-check__label">
         <input

@@ -23,6 +23,7 @@
             <div class="input-control">
                 <input name="feedback_phone"
                        type="tel"
+                       inputmode="tel"
                        placeholder="Номер телефона*"
                        pattern="{literal}\+\d\s\(\d{3}\)\s\d{3}-\d{2}-\d{2}{/literal}"
                        title="Введите корректный номер телефона"

@@ -123,9 +123,29 @@ class View extends Simpla
             $this->design->assign('config',		$this->config);
 			$this->design->assign('settings',	$this->settings);
 
+            $usedesk = $this->parseUsedeskSettings();
+            $usedeskConfig = [
+                'operatorAvatar' => $usedesk['operator_avatar'],
+                'customIconEnabled' => $usedesk['custom_icon_enabled'],
+            ];
+            $this->design->assignBulk([
+                'usedesk_config' => $usedeskConfig,
+                'usedesk_config_json' => json_encode($usedeskConfig, JSON_UNESCAPED_UNICODE),
+            ]);
+
             $this->design->assign('is_developer', $this->is_developer);
             $this->design->assign('is_admin', $this->is_admin);
             $this->design->assign('is_looker', $this->is_looker);
+
+            $organizationId = $this->organizations->get_base_organization_id();
+
+            $pixelConfig = null;
+
+            if (!empty($organizationId)) {
+                $pixelConfig = $this->organizations_data->getPixelConfig($organizationId);
+            }
+
+            $this->design->assign('pixelConfig', $pixelConfig);
 
 //			// Настраиваем плагины для смарти
 //			$this->design->smarty->registerPlugin("function", "get_posts",					array($this, 'get_posts_plugin'));
@@ -136,6 +156,36 @@ class View extends Simpla
 //			$this->design->smarty->registerPlugin("function", "get_discounted_products",	array($this, 'get_discounted_products_plugin'));
 		}
 	}
+
+
+    /**
+     * Парсит usedesk_settings для шаблонов.
+     *
+     * @return array
+     */
+    private function parseUsedeskSettings(): array
+    {
+        $settings = $this->settings->usedesk_settings;
+
+        if (is_string($settings) && !empty($settings)) {
+            $settings = json_decode($settings, true);
+        }
+
+        if (!is_array($settings)) {
+            return [
+                'operator_avatar' => '',
+                'custom_icon_enabled' => true
+            ];
+        }
+
+        $enabled = !isset($settings['custom_icon_enabled']) || $settings['custom_icon_enabled'];
+        $avatar = isset($settings['operator_avatar']) ? (string)$settings['operator_avatar'] : '';
+
+        return [
+            'operator_avatar'     => $enabled ? $avatar : '',
+            'custom_icon_enabled' => $enabled,
+        ];
+    }
 
 	/**
 	 *
@@ -174,6 +224,8 @@ class View extends Simpla
             '/info_partners',
             '/contacts',
             '/best2pay_callback/payment',
+            '/newyear_promo',
+            '/user/tickets',
         ];
 
         if (!in_array($required_route, $allowed_routes)) {

@@ -1,0 +1,374 @@
+
+.view_order {
+    display: flex;
+    justify-content: center;
+    flex-direction: column;
+    max-width: 512px;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.view_order .modal {
+    display: none;
+    position: fixed;
+    z-index: 1;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    overflow: auto;
+    background-color: rgba(0,0,0,0.4);
+}
+
+.view_order .modal-content {
+    width: 320px;
+    height: 240px;
+    background-color: #FFFFFF;
+    border-radius: 12px;
+    padding: 6px;
+    margin: 56px auto 0;
+    text-align: center;
+    border: 1px solid #888;
+    position: relative;
+}
+
+.view_order .btn-modal {
+    display: block;
+    padding: 5px;
+    width: 258px;
+    margin-top: 35px;
+    margin-left: 10px;
+    background-color: #0997ff;
+    color: #fff;
+    text-decoration: none;
+    border-radius: 5px;
+    font-size: 15px;
+}
+
+.view_order .btn-modal:hover {
+    background-color: #0080ff;
+    text-decoration: none;
+}
+
+.view_order .close {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    font-size: 28px;
+    font-weight: bold;
+    color: #aaa;
+    cursor: pointer;
+}
+
+.view_order .modal .modal-content h2 {
+    font-size: 20px;
+    font-weight: 600;
+    margin-top: 10px;
+}
+
+#private .tabs .content .modal-text {
+    margin: 18px;
+    font-size: 14px;
+    line-height: 1.7;
+}
+
+
+.timer-wrapper {
+    margin: 20px 0;
+}
+
+.timer__text {
+    font-size: 16px;
+    margin-bottom: 10px;
+}
+
+#countdown-container {
+    display: flex;
+    align-items: center;
+}
+
+.countdown-item {
+    text-align: center;
+    margin: 0 15px;
+}
+
+.countdown-item span {
+    display: block;
+    font-size: 48px;
+    color: #333;
+    font-weight: 600;
+}
+
+.countdown-item p {
+    margin: 0 !important;
+    font-size: 18px;
+    color: #666;
+}
+
+#separator {
+    font-size: 48px;
+    color: #333;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 35px;
+}
+
+.loan-review-status {
+    margin: 20px 0;
+    padding: 16px 24px;
+    border-radius: 12px;
+    background: #E3F2FD;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    transition: all 0.3s ease;
+    width: 20rem;
+    border: 1px solid #038AEE;
+}
+
+.status-content {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.status-icon {
+    width: 24px;
+    height: 24px;
+    padding: 6px;
+    border-radius: 50%;
+    background: #2196F3;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.status-icon svg {
+    width: 16px;
+    height: 16px;
+    fill: white;
+}
+
+.status-text {
+    font-size: 16px;
+    font-weight: 500;
+    color: #333333;
+    line-height: 1.4;
+}
+
+#quick-approval-modal {
+    background: #fff;
+    max-width: 600px;
+    border-radius: 20px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+#quick-approval-modal .modal-body {
+    margin: 20px 0;
+}
+
+#quick-approval-modal .modal-title {
+    font-weight: 700;
+}
+
+.payment-block-error {
+    display: none;
+    background: #fff url('../img/payment_error.png') center no-repeat;
+    opacity: 1;
+    z-index: 10;
+    color: #f44336;
+    align-items: center;
+    justify-content: space-around;
+    flex-direction: column;
+}
+
+.confirm-card-form .card-confirm {
+    margin: 20px 0;
+}
+
+.confirm-card-form .error-block {
+    color: #d22;
+    margin-bottom: 15px;
+}
+
+.confirm-card-form .error-block p {
+    margin: 5px 0;
+}
+
+.confirm-card-form .confirm-button {
+    padding: 10px 20px;
+    background-color: #0997ff;
+    color: #fff;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+}
+
+.confirm-card-form .confirm-button:hover {
+    background-color: #0080ff;
+}
+
+.warning-credit-text {
+    color: #d22;
+    margin: 1rem 0;
+}
+
+.status-box {
+    display: flex;
+    align-items: flex-start;
+    gap: 16px;
+    padding: 20px 24px;
+    border-radius: 12px;
+    margin: 20px 0;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.status-box__icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.status-box__icon svg {
+    width: 20px;
+    height: 20px;
+    fill: white;
+}
+
+.status-box__content {
+    flex: 1;
+    min-width: 0;
+}
+
+.status-box__title {
+    font-size: 18px;
+    font-weight: 600;
+    margin: 0 0 8px 0;
+    line-height: 1.3;
+}
+
+.status-box__text {
+    font-size: 14px;
+    line-height: 1.5;
+    margin: 0;
+    color: #555;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+}
+
+.status-box__text + .status-box__text {
+    margin-top: 6px;
+}
+
+.status-box--success {
+    background: linear-gradient(135deg, #E8F5E9 0%, #C8E6C9 100%);
+    border: 1px solid #4CAF50;
+}
+
+.status-box--success .status-box__icon {
+    background: #4CAF50;
+}
+
+.status-box--success .status-box__title {
+    color: #2E7D32;
+}
+
+.status-box--info {
+    background: linear-gradient(135deg, #E3F2FD 0%, #BBDEFB 100%);
+    border: 1px solid #2196F3;
+}
+
+.status-box--info .status-box__icon {
+    background: #2196F3;
+}
+
+.status-box--info .status-box__title {
+    color: #1565C0;
+}
+
+.status-box--warning {
+    background: linear-gradient(135deg, #FFF3E0 0%, #FFE0B2 100%);
+    border: 1px solid #FF9800;
+}
+
+.status-box--warning .status-box__icon {
+    background: #FF9800;
+}
+
+.status-box--warning .status-box__title {
+    color: #E65100;
+}
+
+.status-box--error {
+    background: linear-gradient(135deg, #FFEBEE 0%, #FFCDD2 100%);
+    border: 1px solid #F44336;
+}
+
+.status-box--error .status-box__icon {
+    background: #F44336;
+}
+
+.status-box--error .status-box__title {
+    color: #C62828;
+}
+
+@media (max-width: 480px) {
+    .status-box {
+        padding: 16px;
+        gap: 12px;
+    }
+
+    .status-box__icon {
+        width: 32px;
+        height: 32px;
+    }
+
+    .status-box__icon svg {
+        width: 16px;
+        height: 16px;
+    }
+
+    .status-box__title {
+        font-size: 16px;
+    }
+}
+
+@media (max-width: 406px) {
+    .view_order {
+        padding: 0 8px;
+    }
+
+    .status-box {
+        padding: 12px;
+        gap: 10px;
+        margin: 16px 0;
+    }
+
+    .status-box__icon {
+        width: 28px;
+        height: 28px;
+        flex-shrink: 0;
+    }
+
+    .status-box__icon svg {
+        width: 14px;
+        height: 14px;
+    }
+
+    .status-box__title {
+        font-size: 15px;
+        line-height: 1.2;
+    }
+
+    .status-box__text {
+        font-size: 13px;
+        line-height: 1.4;
+    }
+}

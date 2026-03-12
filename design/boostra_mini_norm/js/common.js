@@ -199,6 +199,25 @@ $(document).ready(function () {
             event.target.style.display = 'none';
         }
     });
+
+    $('.js-bki-consent-checkbox').on('change', function() {
+        var consent = $(this).is(':checked') ? 1 : 0;
+        $.ajax({
+            url: 'ajax/user.php?action=bki_consent',
+            method: 'POST',
+            data: { consent: consent },
+            dataType: 'json',
+            success: function(response) {
+                if (!response.success) {
+                    console.error('Failed to save BKI consent:', response.error);
+                }
+            },
+            error: function() {
+                console.error('AJAX error while saving BKI consent.');
+            }
+        });
+    });
+
 });
 
 $(document).on('click', '[data-modal_mf]', function (e) {

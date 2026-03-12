@@ -93,7 +93,7 @@ class FileHandler extends ajaxController{
         if( $files && count( $files ) > 1 ){
             $this->users->update_user( $this->user->id, [ 'file_uploaded' => 1 ] );
         }
-        if (empty($cardPan) && $this->type=="passport4") {
+        if (!empty($this->cardPan) && $this->type=="passport4") {
             $this->best2pay->update_card_file($this->user->id,$this->cardPan,$file_id);
         }
         return [

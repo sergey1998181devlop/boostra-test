@@ -290,7 +290,6 @@ $(document).ready(function(){
             action: 'check_autoconfirm',
             phone: $('.js-autoconfirm-block').data('phone'),
             code: $('.js-autoconfirm-sms').val(),
-            is_virtual_card_consent: $('[name="virtual_card"]').prop('checked') ? 1 : 0,
         };
         $.ajax({
             url: 'ajax/sms.php',

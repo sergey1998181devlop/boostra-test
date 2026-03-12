@@ -31,6 +31,26 @@ class GetReferences extends Simpla
         $referenceType = (in_array($referenceType, ['SPRAVKA_O_ZADOLZHENNOSTI', 'SPRAVKA_O_ZAKRITII'])) ? $referenceType : '';
 
         if ($loanId && $referenceType) {
+            // Проверяем, не продан ли договор (цессия)
+            $balance = $this->users->get_user_balance(null, ['zaim_number' => $loanId]);
+
+            if ($balance && $balance->sale_info == 'Договор продан') {
+                // Договор продан, не формируем справку, возвращаем информацию о покупателе
+                $response['status'] = 'sold';
+                $response['is_sold'] = true;
+                $response['buyer'] = $balance->buyer ?? 'агенту';
+                $response['buyer_phone'] = $balance->buyer_phone ?? '';
+                $response['loan_number'] = $loanId;
+                $response['message'] = sprintf(
+                    'Договор займа № %s продан %s. Для получения справки обратитесь по номеру: %s',
+                    $loanId,
+                    $balance->buyer ?? 'агенту',
+                    $balance->buyer_phone ?? 'не указан'
+                );
+                echo json_encode($response);
+                exit;
+            }
+
             $request = [
                 'НомерЗайма' => $loanId,
                 'ВидСправки' => $referenceType,

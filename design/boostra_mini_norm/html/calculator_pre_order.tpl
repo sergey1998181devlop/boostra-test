@@ -132,7 +132,7 @@
 
             <div class="accept_credit_actions">
                 <div>
-                    <input type="text" inputmode="numeric" name="sms_code" id="sms_code" value="" placeholder="Код из СМС" />
+                    <input type="text" inputmode="numeric" autocomplete="one-time-code" name="sms_code" id="sms_code" value="" placeholder="Код из СМС" />
                     <div class="sms-code-error"></div>
                     <a href="javascript:void(0);" id="repeat_sms" data-phone="{$user->phone_mobile}">отправить код еще раз</a>
                 </div>

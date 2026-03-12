@@ -91,7 +91,51 @@
 
 /*бургер меню с лендоса*/
 .header {
-    position: relative
+    position: relative;
+    z-index: 1000
+}
+
+.logo-additional-text-delimiter {
+    font-size: 35px;
+}
+
+.logo-additional-text {
+    white-space: nowrap;
+    line-height: 100%;
+    font-size: 16px;
+}
+
+.top_menu__logo {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    z-index: 3;
+
+    a img {
+        width: 100px;
+        height: 25px;
+        padding-top: 3px;
+    }
+}
+
+@media screen and (min-width: 1600px) {
+    .logo-additional-text {
+        font-size: 16px;
+    }
+}
+
+@media screen and (max-width: 400px) {
+    .top_menu__logo {
+        .logo-additional-text {
+            font-size: 14px;
+            padding-top: 3px;
+        }
+
+        a img {
+            width: 100px;
+            padding-top: 5px;
+        }
+    }
 }
 
 .header__wrap {

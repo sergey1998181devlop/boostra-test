@@ -1,7 +1,7 @@
 <div id="accept_block_{$user_order['id']}" data-order="{$user_order['id']}" class="{if $user_order['utm_source'] == 'cross_order'}cross_order_accept{/if}">
 
     <p class="accept_message">
-        {if empty($cards) && empty($sbp_accounts)}
+        {if empty($cards) && empty($sbp_accounts) && empty($hide_no_card_block)}
             {include file='no_cards.tpl' has_approved_order=true}
         {else}
             {if $notOverdueLoan}
@@ -12,7 +12,20 @@
 
             {if $user_order['utm_source'] == 'cross_order'}
                 {if !$isAutoAcceptCrossOrders}
-                Вам дополнительно одобрено {$user_order['approve_max_amount']} руб <br />
+                    {if $rcl_loan}
+                        Вам одобрена ещё одна Кредитная линия с максимальным лимитом.
+                        <span class="rcl_tooltip_wrapper">
+                                <span class="rcl_tooltip">?</span>
+                                <span class="rcl_tooltip_popup">
+                                    - Максимальная сумма Кредитной линии {$rcl_max_amount} рублей
+                                    <br>- Получение денег без лишних проверок
+                                    <br>- Сами выбираете сумму, которая нужна сейчас
+                                </span>
+                        </span>
+                        <br>Получите на руки {$user_order['approve_max_amount']} прямо сейчас.
+                    {else}
+                        Вам дополнительно одобрено {$user_order['approve_max_amount']} руб <br />
+                    {/if}
                 {/if}
                 <button
                         type="button" class="
@@ -28,32 +41,66 @@
                 </button>
 
             {else}
-                Поздравляем! По вашей заявке одобрено <span id="approve_max_amount">
-                {if $divide_pre_order}
-                    {$divide_pre_order->amount + $user_order['amount']}
-                {else}
-                    {if $isAutoAcceptCrossOrders}
-                        {$totalApproveAmount}
+                {if $rcl_loan && $user_order['id'] == $rcl_loan}
+                    {* RCL *}
+                    Поздравляем! По вашей заявке одобрена Кредитная линия с максимальным лимитом.
+                    <span class="rcl_tooltip_wrapper">
+                        <span class="rcl_tooltip">?</span>
+                        <span class="rcl_tooltip_popup">
+                            - Максимальная сумма Кредитной линии {$rcl_max_amount} рублей
+                            <br>- Получение денег без лишних проверок
+                            <br>- Сами выбираете сумму, которая нужна сейчас
+                        </span>
+                    </span>
+                    <br>Получите {$user_order['approve_max_amount']} руб. прямо сейчас.
+                    <br>
+                    <br>
+                    {if 0 && $user_discount}
+                        Вы можете принять решение до {$user_discount->end_date|date}.
                     {else}
-                        {$user_order['display_amount']|default:$user_order['approve_max_amount']}
+                        Вы можете принять решение до {$user_order['approved_period']}.
                     {/if}
-                {/if}
-                </span> руб.
-                {if $autoapprove_other_org}
-                    на карту<br><span style="color: #FF0000">{$last_order_card->pan}</span>
-                {/if}
-                <br />
-                {if 0 && $user_discount}
-                Вы можете принять решение до {$user_discount->end_date|date}.
                 {else}
-                Вы можете принять решение до {$user_order['approved_period']}.
+                    {* PDL *}
+                    Поздравляем! По вашей заявке одобрено <span id="approve_max_amount">
+                    {if $divide_pre_order}
+                        {$divide_pre_order->amount + $user_order['amount']}
+                    {else}
+                        {if $isAutoAcceptCrossOrders}
+                            {$totalApproveAmount}
+                        {else}
+                            {$user_order['display_amount']|default:$user_order['approve_max_amount']}
+                        {/if}
+                    {/if}
+                    </span> руб.
+                    {if $autoapprove_other_org}
+                        на карту<br><span style="color: #FF0000">{$last_order_card->pan}</span>
+                    {/if}
+                    <br />
+                    {if 0 && $user_discount}
+                    Вы можете принять решение до {$user_discount->end_date|date}.
+                    {else}
+                    Вы можете принять решение до {$user_order['approved_period']}.
+                    {/if}
                 {/if}
                 <br />
                 {if !$divide_pre_order}
-                    <button type="button"
-                            {if $can_add_sbp_account && empty($b2p_sbp_banks) && !$last_order_data['bank_id_for_sbp_issuance']} onclick="generateAndOpenSbpLink(event)"{/if}
-                            class="get_money_btn button big {if $config->snow}snow-relative primary{else}green{/if}"
-                        id="{if $autoapprove_card_reassign}autoapprove_card_reassign{elseif $autoapprove_wrong_card}autoapprove_card_modal_btn{else}open_accept_modal{/if}">
+                    <button class="get_money_btn button big {if $config->snow}snow-relative primary{else}green{/if} {if $organization_id_for_river}js-card_add_btn{/if}"
+                            {if !$organization_id_for_river}
+                                {if $is_virtual_card_consent }
+                                    {if $virtual_card_data.status === 'pending' }
+                                        disabled="disabled"
+                                    {/if}
+                                {elseif $can_add_sbp_account && empty($b2p_sbp_banks) && !$last_order_data['bank_id_for_sbp_issuance']}
+                                    onclick="generateAndOpenSbpLink(event)"
+                                {/if}
+                                id="{if $autoapprove_card_reassign}autoapprove_card_reassign{elseif $autoapprove_wrong_card}autoapprove_card_modal_btn{else}open_accept_modal{/if}"
+                            {/if}
+                            {if $organization_id_for_river}
+                                data-organization_id="{$organization_id_for_river}"
+                            {/if}
+                            type="button"
+                    >
                         {if $config->snow}
                             <img class="snow-man" src="design/orange_theme/img/holidays/snow/snow_man.png?v=2" alt="Получить деньги"/>
                         {/if}
@@ -151,12 +198,12 @@
 {*            <input type="hidden" name="sms_code" id="sms_code" />*}
 
             {if $applied_promocode->disable_additional_services || (!empty($last_order_data) && isset($last_order_data['disable_additional_service_on_issue']) && $last_order_data['disable_additional_service_on_issue'] == 1)}
-                <input type="hidden" value="0" name="is_user_credit_doctor" id="credit_doctor_hidden{$user_order['id']}"/>
+                <input type="hidden" value="0" data-allowed="0" name="is_user_credit_doctor" id="credit_doctor_hidden{$user_order['id']}"/>
             {else}
-                <input type="hidden" value="{if $showExtraService['financial_doctor']['enable']}1{else}0{/if}" name="is_user_credit_doctor" id="credit_doctor_hidden{$user_order['id']}"/>
+                <input type="hidden" value="{if $showExtraService['financial_doctor']['enable']}1{else}0{/if}" data-allowed="{if $showExtraService['financial_doctor']['show'] || $showExtraService['financial_doctor']['enable']}1{else}0{/if}" name="is_user_credit_doctor" id="credit_doctor_hidden{$user_order['id']}"/>
             {/if}
 
-            <input type="hidden" value="{if $showExtraService['star_oracle']['enable']}1{else}0{/if}" name="is_star_oracle" id="star_oracle_hidden{$user_order['id']}"/>
+            <input type="hidden" value="{if $showExtraService['tv_medical']['enable']}1{else}0{/if}" data-allowed="{if $showExtraService['tv_medical']['show'] || $showExtraService['tv_medical']['enable']}1{else}0{/if}" name="is_tv_medical" id="tv_medical_hidden{$user_order['id']}"/>
 
             <h2>
                 К получению
@@ -171,7 +218,7 @@
     
             <div class="accept_credit_actions">
                 <div>
-                    <input type="text" inputmode="numeric" id="sms_code" name="sms_code" class="sms_code accept_credit_code" placeholder="Код из СМС" />
+                    <input type="text" inputmode="numeric" autocomplete="one-time-code" id="sms_code" name="sms_code" class="sms_code accept_credit_code" placeholder="Код из СМС" />
                     <div class="sms-code-error"></div>
                     <a href="javascript:void(0);" id="repeat_sms" class="repeat_sms" data-phone="{$user->phone_mobile}">отправить код еще раз</a>
                 </div>
@@ -266,3 +313,85 @@
     });
 
 </script>
+
+{if $rcl_loan}
+    <style>
+        .rcl_tooltip_wrapper { position: relative; display: inline-block; }
+        .rcl_tooltip {
+            cursor: pointer;
+            border: 2px solid #038aee;
+            color: #038aee;
+            font-weight: bold;
+            width: 20px;
+            height: 20px;
+            line-height: 20px;
+            display: inline-block;
+            text-align: center;
+            border-radius: 100%;
+            box-shadow: -5px 5px 1rem rgba(0, 0, 0, .2);
+        }
+        .rcl_tooltip_popup {
+            position: absolute;
+            top: 100%;
+            margin-top: 5px;
+            z-index: 1000;
+            background: #fff;
+            border: 2px dashed #038aee;
+            color: #038aee;
+            padding: 10px;
+            width: max-content;
+            border-radius: 20px;
+            box-shadow: -5px 5px 1rem rgba(0, 0, 0, .2);
+            transition: all ease-out .25s;
+        }
+
+        .rcl_tooltip_popup:not(.active) {
+            visibility: hidden;
+            opacity: 0;
+        }
+        .rcl_tooltip_popup.active {
+            visibility: visible;
+            opacity: 1;
+        }
+    </style>
+{literal}
+    <script>
+        $(function() {
+            var $tooltip = $('.rcl_tooltip');
+            var $popup = $('.rcl_tooltip_popup');
+            var $siteSection = $('section#private');
+
+            function getOverflowRightPx(el, container) {
+                const elRect = el.getBoundingClientRect();
+                const cRect = container.getBoundingClientRect();
+
+                return Math.max(0, elRect.right - cRect.right);
+            }
+
+            function adjustPopupPosition() {
+                $popup.css('left', '');
+                var overflow = getOverflowRightPx($popup[0], $siteSection[0]);
+                if (overflow > 0) {
+                    $popup.css('left', -overflow - 15 + 'px');
+                }
+            }
+
+            $tooltip.on('mouseenter click', function(e) {
+                e.stopPropagation();
+                $popup.addClass('active');
+                adjustPopupPosition();
+            });
+            $tooltip.on('mouseleave', function() {
+                $popup.removeClass('active')
+            });
+            $(document).on('click', function() {
+                $popup.removeClass('active');
+            });
+
+            $(window).resize(function() {
+                adjustPopupPosition();
+            });
+        });
+    </script>
+{/literal}
+{/if}

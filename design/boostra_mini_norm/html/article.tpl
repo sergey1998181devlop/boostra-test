@@ -72,7 +72,7 @@
           </div>
         </div>
         <div>Телефон: <a href="tel:88003333073"> 8 800 333 30 73</a></div>
-        {*}
+        {*
                 <br />
         <div>
           <div style="display: flex; align-items: center;">
@@ -88,7 +88,7 @@
           </div>
 
         </div>
-                {*}
+                *}
       </div>
     </div>
   </div>

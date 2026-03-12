@@ -24,6 +24,11 @@ class SmsAuthValidate extends Simpla
     public const TYPE_AUTOCONFIRM = 'autoconfirm';
 
     /**
+     * Автоподтверждение кросс-ордера
+     */
+    public const TYPE_AUTOCONFIRM_CROSS = 'autoconfirm_cross';
+
+    /**
      * Добавление данных о проверки кода
      *
      * @param string $phone

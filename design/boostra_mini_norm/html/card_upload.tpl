@@ -294,13 +294,13 @@ new UploadApp();
                         </style>
                         
                         <p
-                                class="form-help mobile-green-bg"
+                                class="form-help"
                                 style="font-weight: bold; text-align: left;"
                         >
                             Сделайте качественные фото, <span
                                     style="color: red;">и вероятность одобрения повысится!</span>
                         <ul
-                                class="mobile-green-bg"
+                                class=""
                                 style="font-weight: bold; text-align: left;"
                         >
                             <li>располагайте документы так, чтобы они полностью помещались на фотографии;</li>

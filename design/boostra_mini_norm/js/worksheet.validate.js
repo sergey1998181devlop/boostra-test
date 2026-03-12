@@ -119,6 +119,13 @@ $(document).ready(function () {
         let _current = $(this).val().toLowerCase();
         $(this).val(_current.charAt(0).toUpperCase() + _current.slice(1));
     });
+
+    $('.js-camelcase-two-words').on('keyup input', function(){
+        let _current = $(this).val().toLowerCase();
+        let withoutSpaces = _current.split(' ');
+        const capitalized = withoutSpaces.map((el) => el.charAt(0).toUpperCase() + el.slice(1))
+        $(this).val(capitalized.join(' '));
+    });
     /*
     $('.js-code').change(function(){
         var codes = [846, 848, 900, 901, 902, 903, 904, 905, 906, 908, 909, 910, 911, 912, 913, 914, 915, 916, 917, 918, 919, 920, 921, 922, 923, 924, 925, 926, 927, 928, 929, 930, 931, 932, 933, 934, 936, 937, 938, 939, 941, 950, 951, 952, 953, 954, 955, 956, 958, 960, 961, 962, 963, 964, 965, 966, 967, 968, 969, 970, 971, 977, 978, 980, 981, 982, 983, 984, 985, 986, 987, 988, 989, 991, 992, 993, 994, 995, 996, 997, 999];
@@ -229,6 +236,14 @@ $(document).ready(function () {
         return /^\d{2} \d{2} \d{6}$/.test(val);
     }, "Заполните корректно поле");
 
+    $.validator.addMethod("passportNotAllZeros", function(val, elem, c) {
+        if (val === "00 00 000000") {
+            return false;
+        }
+
+        return true;
+    }, "Неверный код или серия паспорта"); 
+
     $.validator.addMethod("Birth", function() {
         var choiseDate = $('input[name="birthday"]').val();
         console.log(choiseDate);
@@ -264,6 +279,12 @@ $(document).ready(function () {
     $.validator.addMethod("russianFullName", function(value, element) {
         return this.optional(element) || /^[а-яА-ЯёЁ]+(-[а-яА-ЯёЁ]+)*$/.test(value);
     }, "Допускается ввод только русских букв и одного дефиса между словами");
+    $.validator.addMethod("russianFamilyAndGivenNames", function(value, element) {
+        if (value.startsWith('-') || value.endsWith('-')) return false;
+        if(value.split(' ').length > 2) return false
+        if (value.includes('--')) return false;
+        return this.optional(element) || /^[а-яА-ЯёЁ\s]+(-[а-яА-ЯёЁ\s]+)?$/.test(value);
+    }, "Допускается ввод только русских букв, одного дефиса между словами, одного пробела");
 
     $.validator.addMethod("PassportDate", function(value, element) {
         var birthDateString = localStorage.getItem('birthDate');

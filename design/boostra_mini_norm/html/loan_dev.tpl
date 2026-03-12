@@ -6,7 +6,7 @@
     <script src="design/{$settings->theme}/js/jquery.inputmask.min.js" type="text/javascript"></script>
     <script src="design/{$settings->theme}/js/jquery.magnific-popup.min.js" type="text/javascript"></script>
     <script src="design/{$settings->theme}/js/jquery.validate.min.js?v=2.10" type="text/javascript"></script>
-    <script src="design/{$settings->theme}/js/worksheet.validate.js?v=1.7.5" type="text/javascript"></script>
+    <script src="design/{$settings->theme}/js/worksheet.validate.js?v=1.8.0" type="text/javascript"></script>
     <script src="design/{$settings->theme}/js/loan.app.dev.js?v=1.65" type="text/javascript"></script>
 {/capture}
 
@@ -91,7 +91,7 @@
                                 <label class="big js-send-text">На Ваш телефон <span class="js-phone-number"></span> отправлено СМС-сообщение с кодом.</label>
     
                                 <label class="js-code-block {if $error=='error_code'}error{/if}" >
-        							<input autofocus class="js-input-code" type="text" name="code" id="code" placeholder="" value="" required="" aria-required="true">
+        							<input autofocus inputmode="numeric" autocomplete="one-time-code" class="js-input-code" type="text" name="code" id="code" placeholder="" value="" required="" aria-required="true">
         							<small class="err error" id="err-code">{if $error=='error_code'}Код не верный{/if}</small>
         							<span class="floating-label">Код из СМС</span>
         						</label>

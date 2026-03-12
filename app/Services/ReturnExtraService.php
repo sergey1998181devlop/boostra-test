@@ -6,12 +6,12 @@ use App\Core\Application\Session\Session as AppSession;
 use App\Dto\ExtraServiceVisibilityDto;
 use App\Repositories\DoctorConditionRepository;
 use App\Repositories\DoctorReturnLogRepository;
-use App\Repositories\OracleReturnLogRepository;
 use App\Contracts\ExtraServiceInterface;
-use App\Repositories\ReturnRepository;
+use App\Repositories\OrderRepository;
 use Exception;
 use Settings;
 use Refinance;
+use Throwable;
 use UserData;
 use Users;
 
@@ -19,128 +19,82 @@ class ReturnExtraService implements ExtraServiceInterface
 {
     private AppSession $session;
     private Users $users;
-    private SafetyFlowService $safetyFlowService;
     private DoctorReturnLogRepository $doctorRepo;
-    private OracleReturnLogRepository $oracleRepo;
     private DoctorConditionRepository $conditionRepo;
-    private RiskGroupService $riskGroupService;
     private Settings $settings;
     private UserData $userData;
-    private ScoringService $scoringService;
-    private ReturnRepository $returnRepository;
+    private ReturnCoefficientService $coefficientService;
 
-    /**
-     * @param AppSession $session
-     * @param Users $users
-     * @param UserData $userData
-     * @param SafetyFlowService $safetyFlowService
-     * @param DoctorReturnLogRepository $doctorRepo
-     * @param OracleReturnLogRepository $oracleRepo
-     * @param DoctorConditionRepository $conditionRepo
-     * @param RiskGroupService $riskGroupService
-     * @param ScoringService $scoringService
-     * @param Settings $settings
-     * @param ReturnRepository $returnRepository;
-     */
     public function __construct(
         AppSession                $session,
-        Users $users,
-        UserData $userData,
-        SafetyFlowService         $safetyFlowService,
+        Users                     $users,
+        UserData                  $userData,
         DoctorReturnLogRepository $doctorRepo,
-        OracleReturnLogRepository $oracleRepo,
         DoctorConditionRepository $conditionRepo,
-        RiskGroupService          $riskGroupService,
-        ScoringService $scoringService,
-        Settings $settings,
-        ReturnRepository $returnRepository
+        Settings                  $settings,
+        ReturnCoefficientService  $coefficientService
     ) {
-        $this->session = $session;
-        $this->users = $users;
-        $this->userData = $userData;
-        $this->safetyFlowService = $safetyFlowService;
-        $this->doctorRepo = $doctorRepo;
-        $this->oracleRepo = $oracleRepo;
-        $this->conditionRepo = $conditionRepo;
-        $this->riskGroupService = $riskGroupService;
-        $this->scoringService = $scoringService;
-        $this->settings = $settings;
-        $this->returnRepository = $returnRepository;
+        $this->session             = $session;
+        $this->users               = $users;
+        $this->userData            = $userData;
+        $this->doctorRepo          = $doctorRepo;
+        $this->conditionRepo       = $conditionRepo;
+        $this->settings            = $settings;
+        $this->coefficientService  = $coefficientService;
     }
 
     /**
      * @inheritDoc
      * @throws Exception
      */
-    public function checkVisibility(int $user_id): array
+    public function checkVisibility(int $user_id, ?int $orderId = null): array
     {
-        $userId = $user_id ?? ($this->session->isActive() ? (int)$this->session->get('user_id') : null);
-
-        $user = $this->users->get_user($userId);
+        $user = $this->users->get_user($user_id);
         if (!$user) {
             return $this->createVisibilityDto(false, false)->toArray();
         }
 
-        $hasRefinanceOrder = $this->hasRefinanceOrder($user_id);
+        $userId         = (int)$user->id;
+        $whitelistValue = $this->userData->read($user_id, $this->userData::WHITELIST_DOP);
 
-        if (($this->settings->whitelist_dop && $this->userData->read($user_id, $this->userData::WHITELIST_DOP)) || $hasRefinanceOrder) {
-            log_info($user_id, ['whitelist_dop' => $this->settings->whitelist_dop, 'user_data_dop' => $this->userData->read($user_id, $this->userData::WHITELIST_DOP)]);
+        if (($this->settings->whitelist_dop && $whitelistValue) || $this->hasRefinanceOrder($user_id)) {
             return $this->createVisibilityDto(false, false, false, false)->toArray();
         }
 
-        $cfg = config('services.extra_service');
+        // СРКВ: ФД — история возвратов + коэффициент; ВМ — только история возвратов
+        $order            = $this->resolveOrder($orderId, $userId);
+        $doctorBlocked    = $this->coefficientService->shouldBlockService(
+            $userId,
+            ReturnCoefficientService::SERVICE_CREDIT_DOCTOR,
+            ReturnCoefficientService::STAGE_ISSUANCE,
+            $user,
+            $order
+        );
+        $tvMedicalBlocked = $this->coefficientService->shouldBlockService(
+            $userId,
+            ReturnCoefficientService::SERVICE_TV_MEDICAL,
+            ReturnCoefficientService::STAGE_ISSUANCE
+        );
 
-        $isNew = empty($user->loan_history);
-
-        $isFirstLoanSafe = $this->safetyFlowService->isFirstLoanSafeFlow($user);
-        $isUnderSafePeriod = $this->users->isSafetyFlow($user);
-
-        $thresholdZODays = (int)($this->settings->return_threshold_days_zo ?? $cfg['return_threshold_days']['star_oracle']);
-        $thresholdFDDays = (int)($this->settings->return_threshold_days_fd ?? $cfg['return_threshold_days']['financial_doctor']);
-
-        $returnsZO = $this->oracleRepo->countByUser($userId, $thresholdZODays);
-        $returnsFD = $this->doctorRepo->countByUser($userId, $thresholdFDDays);
-
-        // Новый клиент
-        if ($isNew) {
-            if (!$isUnderSafePeriod) {
-                log_info('new_client not safe', ['user_id' => $userId, 'is_under_safe_period' => $isUnderSafePeriod]);
-                return $this->createVisibilityDto(false, false)->toArray();
-            }
-            log_info('new_client safe', ['user_id' => $userId, 'is_under_safe_period' => $isUnderSafePeriod]);
-            return $this->createVisibilityDto(true, true)->toArray();
+        // Safe flow: показываем допы, но чекбоксы выключены — клиент включает сам
+        // Если СРКВ заблокировала доп — не показываем даже в safe flow
+        if ($this->users->isSafetyFlow($user)) {
+            return $this->createVisibilityDto(!$doctorBlocked, !$tvMedicalBlocked, false, false)->toArray();
         }
 
-        // Возвраты по любой услуге за 30 дней (ФД или Оракул)
-        if ($returnsZO > 0 or $returnsFD > 0) {
-            log_info('old_client', ['returnZO' => (int)$returnsZO, 'returnFD' => (int)$returnsFD, 'user_id' => $userId]);
-            return $this->createVisibilityDto(true, false)->toArray();
-        }
-
-        // Первый займ по опасному флоу (ПК)
-        if (!$isFirstLoanSafe) {
-            log_info('old_client first loan not safe', ['isFirstLoanSafe' => false, 'user_id' => $userId]);
-            return $this->createVisibilityDto(false, false)->toArray();
-        }
-
-        // Первый займ по безопасному флоу (ПК)
-        if ($isUnderSafePeriod) {
-            log_info('old_client safe', ['isFirstLoanSafe' => $isUnderSafePeriod, 'user_id' => $userId]);
-            return $this->createVisibilityDto(false, true)->toArray();
-        }
-
-        log_info('old_client not safe', ['isFirstLoanSafe' => $isUnderSafePeriod, 'user_id' => $userId]);
-        return $this->createVisibilityDto(false, false)->toArray();
+        // Опасный флоу: блок всегда скрыт (show=false),
+        // enable зависит от СРКВ — если не заблокирован, доп автоматически включается
+        return $this->createVisibilityDto(false, false, !$doctorBlocked, !$tvMedicalBlocked)->toArray();
     }
 
 
     /**
-     * Выбор цены по ТЗ.
+     * Выбор цены ФД по СРКВ.
      *
      * @inheritDoc
      * @throws Exception
      */
-    public function getServicePrice(int $amount, bool $isNewClient = true, $user_id = null): ?object
+    public function getServicePrice(int $amount, bool $isNewClient = true, $user_id = null, $order_id = null): ?object
     {
         $userId = $user_id ?? ($this->session->isActive() ? (int)$this->session->get('user_id') : null);
 
@@ -149,40 +103,18 @@ class ReturnExtraService implements ExtraServiceInterface
         }
 
         $user = $this->users->get_user($userId);
-
-        $isUnderSafePeriod = $this->users->isSafetyFlow($user);
-
-        // новый клиент
-        if ($isNewClient) {
-            if ($this->scoringService->isUserScoreSufficient($user->id)) {
-                return $this->conditionRepo->getCreditDoctorByPriceGroup($amount, 'discount');
-            }
-            
-            return $this->conditionRepo->getCreditDoctor($amount, true);
+        if (!$user) {
+            return $this->conditionRepo->getCreditDoctor($amount, $isNewClient);
         }
 
-        if (
-            $this->scoringService->isUserScoreSufficient($user->id)
-            && (
-                $this->returnRepository->getProlongationCount($user->id) > 1
-                || !$this->returnRepository->checkIsLastOrderOverdue($user->id)
-            )
-        ) {
-            return $this->conditionRepo->getCreditDoctorByPriceGroup($amount, 'discount');
-        }
-        
-        // группа риска, цены из risk_group_prices
-        if ($this->riskGroupService->isInRiskGroup($user)) {
-            return $this->conditionRepo->getCreditDoctorByPriceGroup($amount, 'risk_group_prices');
+        // СРКВ: динамическое ценообразование
+        if ($this->coefficientService->isStageActive(ReturnCoefficientService::STAGE_ISSUANCE)) {
+            $order = $this->resolveOrder($order_id, (int)$user->id);
+            return $this->getPriceBySrkv($amount, $user, $isNewClient, $order);
         }
 
-        // постоянный клиент, первый займ по безопасному флоу, цены из safety_flow_prices
-        if ($isUnderSafePeriod && $this->safetyFlowService->isFirstLoanSafeFlow($user)) {
-            return $this->conditionRepo->getCreditDoctorByPriceGroup($amount, 'safety_flow_prices');
-        }
-
-        // остальные пк
-        return $this->conditionRepo->getCreditDoctor($amount, false);
+        // Fallback: базовая сетка (СРКВ неактивна)
+        return $this->conditionRepo->getCreditDoctor($amount, $isNewClient);
     }
 
     /**
@@ -193,27 +125,87 @@ class ReturnExtraService implements ExtraServiceInterface
     {
         try {
             return $this->doctorRepo->countByUser($userId, $days) > 0;
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             return false;
         }
     }
 
+    // ─── Private ────────────────────────────────────────────────────────
+
+    /**
+     * Ценообразование ФД через СРКВ.
+     */
+    private function getPriceBySrkv(int $amount, object $user, bool $isNewClient, ?object $order): ?object
+    {
+        try {
+            if (!$order) {
+                log_warning('SRKV: no order found, fallback to base price', ['user_id' => $user->id]);
+                return $this->conditionRepo->getCreditDoctor($amount, $isNewClient);
+            }
+
+            $coefficient = $this->coefficientService->calculateReturnCoefficient($user, $order);
+            $thresholds  = config('services.srkv.coefficient_thresholds', [
+                'no_sale'  => 0.4,
+                'discount' => 0.1,
+            ]);
+
+            log_info('SRKV: coefficient calculated', [
+                'user_id'     => $user->id,
+                'coefficient' => $coefficient,
+                'is_new'      => $isNewClient,
+            ]);
+
+            // Коэффициент >= 0.4 → не продаём ФД
+            if ($coefficient >= (float)$thresholds['no_sale']) {
+                return null;
+            }
+
+            // Коэффициент > 0.1 → скидочная сетка (0.1 включительно — базовая)
+            if ($coefficient > (float)$thresholds['discount']) {
+                return $this->conditionRepo->getCreditDoctorByPriceGroup($amount, 'discount');
+            }
+
+            // Коэффициент <= 0.1 → базовая сетка
+            return $this->conditionRepo->getCreditDoctor($amount, $isNewClient);
+
+        } catch (Throwable $e) {
+            log_error('SRKV: pricing failed, fallback to base', [
+                'user_id' => $user->id ?? null,
+                'error'   => $e->getMessage(),
+            ]);
+            return $this->conditionRepo->getCreditDoctor($amount, $isNewClient);
+        }
+    }
+
+    /**
+     * Получить заявку: по order_id или последнюю одобренную.
+     */
+    private function resolveOrder(?int $orderId, int $userId): ?object
+    {
+        $orderRepo = new OrderRepository();
+
+        if ($orderId) {
+            return $orderRepo->getOrderById($orderId);
+        }
+
+        return $orderRepo->getLatestOrderByUserId($userId);
+    }
+
     /**
      * @param bool $doctorShow
-     * @param bool $oracleShow
+     * @param bool $tvMedicalShow
      * @param ?bool $doctorChecked
-     * @param ?bool $oracleChecked
+     * @param ?bool $tvMedicalChecked
      * @return ExtraServiceVisibilityDto
      */
-    private function createVisibilityDto(bool $doctorShow, bool $oracleShow, bool $doctorChecked = null, bool $oracleChecked = null): ExtraServiceVisibilityDto
+    private function createVisibilityDto(bool $doctorShow, bool $tvMedicalShow, bool $doctorChecked = null, bool $tvMedicalChecked = null): ExtraServiceVisibilityDto
     {
-        return new ExtraServiceVisibilityDto($doctorShow, $oracleShow, $doctorChecked, $oracleChecked);
+        return new ExtraServiceVisibilityDto($doctorShow, $tvMedicalShow, $doctorChecked, $tvMedicalChecked);
     }
 
     private function hasRefinanceOrder($user_id): bool
     {
         $refinance = new Refinance();
-        // Проверяем, что есть заявка на рефинанс со статусом NEW
         return (bool)$refinance->getRefinanceOrder($user_id);
     }
 }

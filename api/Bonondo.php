@@ -460,6 +460,7 @@ class Bonondo extends Simpla
             'utm_campaign'             => $order->utm_campaign ?? '',
             'wm_id'                    => $order->webmaster_id ?? '',
             'click_id'                 => $order->click_hash ?? '',
+            'juicy_id'                 => $order->juicescore_session_id ?? '',
             'guru_id'                  => '',
             'guru_data'                => '',
             'referer'                  => $referer ?? '',

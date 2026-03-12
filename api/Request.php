@@ -134,6 +134,14 @@ class Request extends Simpla
     	return $val;
     }
 
+    /**
+     * Проверяет, существует ли POST-переменная с указанным именем
+     */
+    public function hasPost($name)
+    {
+        return isset($_POST[$name]);
+    }
+
 	/**
 	* Возвращает переменную _FILES
 	* Обычно переменные _FILES являются двухмерными массивами, поэтому можно указать второй параметр,

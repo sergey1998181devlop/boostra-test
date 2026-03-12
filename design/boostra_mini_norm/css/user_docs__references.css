@@ -1,0 +1,178 @@
+#references_wrapper .tab_wrapper {
+    height: auto!important;
+    margin-left: 60px;
+}
+.table-references td {
+    text-align: left;
+    padding-top: 10px;
+}
+.alert-reference {
+    padding: 5px 10px!important;
+    font-size: 13px;
+    margin: 8px 0!important;
+    max-width: 600px;
+}
+@media only screen and (max-width: 900px) {
+    #references_wrapper .tab_wrapper {
+        margin-left: 0;
+    }
+    .alert-reference {
+        font-size: inherit;
+        max-width: 100%;
+    }
+}
+
+/* Стили для модального окна о проданном договоре */
+.sold-loan-modal-overlay {
+    display: none;
+    position: fixed;
+    z-index: 9999;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    animation: fadeIn 0.3s;
+}
+
+.sold-loan-modal {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: white;
+    border-radius: 12px;
+    width: 90%;
+    max-width: 500px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+    animation: slideIn 0.3s;
+}
+
+.sold-loan-modal-header {
+    padding: 20px 25px;
+    border-bottom: 1px solid #e0e0e0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.sold-loan-modal-header h3 {
+    margin: 0;
+    font-size: 20px;
+    color: #d32f2f;
+    font-weight: 600;
+}
+
+.sold-loan-modal-close {
+    background: none;
+    border: none;
+    font-size: 28px;
+    color: #999;
+    cursor: pointer;
+    padding: 0;
+    width: 30px;
+    height: 30px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: color 0.2s;
+}
+
+.sold-loan-modal-close:hover {
+    color: #d32f2f;
+    background: none !important;
+}
+
+.sold-loan-modal-body {
+    padding: 25px;
+}
+
+.sold-loan-modal-body p {
+    margin: 0 0 15px 0;
+    font-size: 16px;
+    line-height: 1.5;
+    color: #333;
+}
+
+#soldLoanContact {
+    margin-top: 20px;
+    padding: 15px;
+    background-color: #fff3cd;
+    border-left: 4px solid #ffc107;
+    border-radius: 4px;
+}
+
+#soldLoanContact strong {
+    display: block;
+    margin-bottom: 8px;
+    color: #856404;
+    font-size: 15px;
+}
+
+#soldLoanContact a {
+    color: #d32f2f;
+    text-decoration: none;
+    font-weight: bold;
+    font-size: 18px;
+}
+
+#soldLoanContact a:hover {
+    text-decoration: underline;
+}
+
+.sold-loan-modal-footer {
+    padding: 15px 25px;
+    border-top: 1px solid #e0e0e0;
+    display: flex;
+    justify-content: flex-end;
+}
+
+.sold-loan-modal-btn {
+    padding: 10px 30px;
+    background-color: #4CAF50;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    font-size: 16px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+}
+
+.sold-loan-modal-btn:hover {
+    background-color: #45a049;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+@keyframes slideIn {
+    from {
+        transform: translate(-50%, -60%);
+        opacity: 0;
+    }
+    to {
+        transform: translate(-50%, -50%);
+        opacity: 1;
+    }
+}
+
+@media only screen and (max-width: 600px) {
+    .sold-loan-modal {
+        width: 95%;
+        max-width: none;
+    }
+
+    .sold-loan-modal-header h3 {
+        font-size: 18px;
+    }
+
+    .sold-loan-modal-body p {
+        font-size: 14px;
+    }
+
+    #soldLoanContact a {
+        font-size: 16px;
+    }
+}

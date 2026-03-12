@@ -87,22 +87,22 @@ class OpenSearchLogger extends Simpla
                 ]
             );
         } catch (\Exception $e) {
-            // Логируем ошибку OpenSearch
-            $this->logger->error("OpenSearch Error", [
-                'exception' => [
-                    'message' => $e->getMessage(),
-                    'code' => $e->getCode(),
-                    'file' => $e->getFile(),
-                    'line' => $e->getLine(),
-                    'trace' => $e->getTraceAsString()
-                ],
-                'index' => $index,
-                'original_message' => $message,
-                'tag' => $tag
-            ]);
-
             // Резервное сохранение самого лога в файл
             $this->saveToBackupLog($data, $body, $index, $tag, $service_name);
+
+//            // Логируем ошибку OpenSearch
+//            $this->logger->error("OpenSearch Error", [
+//                'exception' => [
+//                    'message' => $e->getMessage(),
+//                    'code' => $e->getCode(),
+//                    'file' => $e->getFile(),
+//                    'line' => $e->getLine(),
+//                    'trace' => $e->getTraceAsString()
+//                ],
+//                'index' => $index,
+//                'original_message' => $message,
+//                'tag' => $tag
+//            ]);
         }
     }
 
@@ -111,13 +111,13 @@ class OpenSearchLogger extends Simpla
      */
     private function saveToBackupLog(array $data, array $body, string $index, string $tag, string $service_name): void
     {
-        // Создаем логгер с динамическим именем файла
-        $filename = $this->getBackupFilename($service_name, $tag);
-        $backupLogger = new Logger('open_search_backup');
-        $backupLogger->pushHandler(new StreamHandler($filename, Logger::INFO));
-
-        // Сохраняем в JSON формате для удобства чтения
-        $backupLogger->info("BACKUP_LOG", array_merge($data, $body));
+//        // Создаем логгер с динамическим именем файла
+//        $filename = $this->getBackupFilename($service_name, $tag);
+//        $backupLogger = new Logger('open_search_backup');
+//        $backupLogger->pushHandler(new StreamHandler($filename, Logger::INFO));
+//
+//        // Сохраняем в JSON формате для удобства чтения
+//        $backupLogger->info("BACKUP_LOG", array_merge($data, $body));
 
         // Отправим в openSearch, резервную копию сырыми данными (строкой)
         $requestData = array_merge(['rawData' => json_encode($data, JSON_UNESCAPED_UNICODE)], $body);
@@ -131,15 +131,15 @@ class OpenSearchLogger extends Simpla
             );
         } catch (\Exception $e) {
             // Логируем ошибку OpenSearch
-            $this->logger->error("OpenSearch send backup error", [
-                'exception' => [
-                    'message' => $e->getMessage(),
-                    'code' => $e->getCode(),
-                    'file' => $e->getFile(),
-                    'line' => $e->getLine(),
-                    'trace' => $e->getTraceAsString()
-                ],
-            ]);
+//            $this->logger->error("OpenSearch send backup error", [
+//                'exception' => [
+//                    'message' => $e->getMessage(),
+//                    'code' => $e->getCode(),
+//                    'file' => $e->getFile(),
+//                    'line' => $e->getLine(),
+//                    'trace' => $e->getTraceAsString()
+//                ],
+//            ]);
         }
     }
 

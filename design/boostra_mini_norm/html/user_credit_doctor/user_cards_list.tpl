@@ -5,7 +5,7 @@
             <li>
                 <input type="radio" name="card_id" id="card_{$key}" value="{$card->CardId}"
                        {if ($card->checked)}checked{/if} />
-                <label for="card_{$key}"><span>{$card->Pan}</span><span>{$card->expdate_formated}</span></label>
+                <label for="card_{$key}"><span>{$card->Pan|regex_replace:'/^(\d{4})\d{2}(\*{6})(\d{4})$/':'$1********$3'}</span><span>{$card->expdate_formated}</span></label>
             </li>
         {/foreach}
     </ul>

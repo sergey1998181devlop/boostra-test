@@ -1,161 +1,173 @@
-section{
-    display: block !important;
+section {
+  display: block !important;
 }
+
+.wrap {
+  padding: 0 !important;
+}
+
 /* Общий контейнер */
 .unq-company-page {
-    width: 100%;
-    margin: 0;
-    padding: 20px;
-    background: #f0f7ff;
-    box-sizing: border-box;
+  width: 100%;
+  margin: 0;
+  padding: 20px;
+  background: #f0f7ff;
+  box-sizing: border-box;
 }
 
 /* Карточки */
 .unq-card {
-    background: #fff;
-    border-radius: 20px;
-    box-shadow: 0 4px 20px rgba(0,0,0,0.1);
-    box-sizing: border-box;
-    max-width: 1400px;
-    margin: 0 auto 40px auto;
+  background: #fff;
+  border-radius: 20px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+  box-sizing: border-box;
+  max-width: 1400px;
+  margin: 0 auto 40px auto;
 }
 
-.unq-card:first-child{
-    padding: 5% 12% 5% 12%;
+.unq-card:first-child {
+  padding: 5% 12% 5% 12%;
 }
+
 /* Убираем лишний отступ у последней карточки */
 .unq-card:last-child {
-    padding: 1% 2% 1% 2%;
-    margin-bottom: 0;
+  padding: 1% 2% 1% 2%;
+  margin-bottom: 0;
 }
 
 
 /* Заголовки секций */
 .unq-section-title {
-    font-size: 2rem;
-    color: #1a73e8;
-    text-align: center;
-    margin-bottom: 20px;
+  font-size: 2rem;
+  color: #1a73e8;
+  text-align: center;
+  margin-bottom: 20px;
 }
 
 /* Заголовки внутри */
 h2 {
-    color: #1a73e8;
-    margin-top: 20px;
+  color: #1a73e8;
+  margin-top: 20px;
 }
 
 /* Текст */
 p {
-    font-size: 1rem;
-    margin-bottom: 15px;
+  font-size: 1rem;
+  margin-bottom: 15px;
 }
 
 /* Выделенные абзацы */
 .unq-highlight {
-    font-weight: bold;
-    color: #333;
+  font-weight: bold;
+  color: #333;
 }
 
 /* Маркированные списки */
 .unq-list-bullets {
-    list-style: none;
-    padding-left: 0;
-    margin-bottom: 20px;
+  list-style: none;
+  padding-left: 0;
+  margin-bottom: 20px;
 }
 
 .unq-list-bullets li {
-    margin-bottom: 10px;
-    line-height: 1.4;
+  margin-bottom: 10px;
+  line-height: 1.4;
 }
 
 .unq-list-bullets li::before {
-    content: "•";
-    color: #1a73e8;
-    margin-right: 8px;
+  content: "•";
+  color: #1a73e8;
+  margin-right: 8px;
 }
 
-.unq-link{
-    color: #1a73e8;
+.unq-link {
+  color: #1a73e8;
 }
 
 /* Сетка технологий */
 .unq-tech-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
-    gap: 10px;
-    list-style: none;
-    padding: 0;
-    margin-bottom: 20px;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: 10px;
+  list-style: none;
+  padding: 0;
+  margin-bottom: 20px;
 }
 
 .unq-tech-grid li {
-    background: #e8f4ff;
-    padding: 10px;
-    border-radius: 10px;
-    text-align: center;
+  background: #e8f4ff;
+  padding: 10px;
+  border-radius: 10px;
+  text-align: center;
 }
 
 /* Контейнер для продуктов */
 .unq-products-wrapper {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 20px;
-    align-items: stretch; /* растягиваем по высоте */
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20px;
+  align-items: stretch;
+  /* растягиваем по высоте */
 }
 
 /* Продукты */
 .unq-product-card {
-    background: #f9fcff;
-    border-radius: 15px;
-    padding: 20px;
-    box-shadow: 0 2px 10px rgba(0,0,0,0.05);
-    box-sizing: border-box;
-    flex: 1 1 calc(33.333% - 20px); /* три в ряд */
-    display: flex;
-    flex-direction: column; /* чтобы кнопки/ссылки оставались внизу */
+  background: #f9fcff;
+  border-radius: 15px;
+  padding: 20px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+  box-sizing: border-box;
+  flex: 1 1 calc(33.333% - 20px);
+  /* три в ряд */
+  display: flex;
+  flex-direction: column;
+  /* чтобы кнопки/ссылки оставались внизу */
 }
 
 .unq-product-card h2 {
-    margin-bottom: 2%;
+  margin-bottom: 2%;
 }
 
 /* Ссылки в списках документов */
 .unq-docs-list {
-    list-style: none;
-    padding: 0;
-    margin: 0;
+  list-style: none;
+  padding: 0;
+  margin: 0;
 }
 
 .unq-docs-list li {
-    margin-bottom: 10px;
+  margin-bottom: 10px;
 }
 
 .unq-docs-list a {
-    color: #1a73e8;
-    text-decoration: none;
-    transition: color 0.3s ease;
+  color: #1a73e8;
+  text-decoration: none;
+  transition: color 0.3s ease;
 }
 
 .unq-docs-list .extensions {
-    color: #ff0000;
+  color: #ff0000;
 }
 
 .unq-docs-list a:hover {
-    color: #0c56c1;
+  color: #0c56c1;
 }
 
 /* Адаптивность */
 @media (max-width: 768px) {
-    .unq-section-title {
-        font-size: 1.5rem;
-    }
-    p {
-        font-size: 0.95rem;
-    }
-    .unq-card {
-        padding: 20px;
-    }
-    .unq-product-card {
-        padding: 15px;
-    }
+  .unq-section-title {
+    font-size: 1.5rem;
+  }
+
+  p {
+    font-size: 0.95rem;
+  }
+
+  .unq-card {
+    padding: 20px;
+  }
+
+  .unq-product-card {
+    padding: 15px;
+  }
 }

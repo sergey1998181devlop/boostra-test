@@ -24,7 +24,7 @@
                 {/if}
                 <label>
 					<span>Авторизация производится с помощью<br/> мобильного телефона, который Вы указывали<br/> при получении займа</span>
-					<div><input type="tel" name="phone" placeholder="Номер телефона" required="" {if $phone}value="{$phone}"{/if}/></div>
+					<div><input type="tel" autocomplete="tel" inputmode="tel" name="phone" placeholder="Номер телефона" required="" {if $phone}value="{$phone}"{/if}/></div>
 				</label>
 
                 {* recaptcha

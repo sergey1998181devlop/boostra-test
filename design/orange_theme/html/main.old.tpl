@@ -634,7 +634,7 @@
 </div>
 
 {include file="design/boostra_mini_norm/html/modals/new_year_modal.tpl"}
-<script src="design/{$settings->theme}/js/login.app.js?v=2.51" type="text/javascript"></script>
+<script src="design/{$settings->theme}/js/login.app.js?v=2.55" type="text/javascript"></script>
 <script src="design/{$settings->theme}/js/jquery.inputmask.min.js" type="text/javascript"></script>
 <script src="design/{$settings->theme}/js/jquery.validate.min.js?v=2.01" type="text/javascript"></script>
 <script src="design/orange_theme/js/calculate.js?v=1.008" type="text/javascript"></script>

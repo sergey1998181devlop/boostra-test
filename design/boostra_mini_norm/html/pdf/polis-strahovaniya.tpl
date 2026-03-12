@@ -70,7 +70,7 @@
         <td align="left" style="width: 40%">Код подразделения <strong style="color: darkcyan;">{$subdivision_code|escape}</strong>
         </td>
     </tr><br />    
-    {*}
+    {*
     <tr style="font-size: 9px;">
         <td width="100%">
             Кем выдан <strong style="color: darkcyan;">{$passport_issued|escape} {$passport_code|escape}</strong>
@@ -88,7 +88,7 @@
             </strong>
         </td>
     </tr><br />
-    {*}
+    *}
     <tr style="font-size: 9px;">
         <td width="100%">Номер телефона <strong style="color: darkcyan;">{$phone_mobile|escape}</strong></td>
     </tr>

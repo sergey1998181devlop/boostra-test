@@ -458,8 +458,11 @@ class Soap1c extends Simpla
         }
 
         $this->logging(__METHOD__, $this->config->url_1c . $this->config->work_1c_db . '/ws/WebZayavki.1cws?wsdl GetStateApplication', (array)$z, (array)$returned, 'state.txt');
-        
-		return $returned->return;
+
+        $trace = debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS, 10);
+        $this->logging(__METHOD__, $this->config->url_1c . $this->config->work_1c_db . '/ws/WebZayavki.1cws?wsdl GetStateApplication - Trace', $trace, '', 'state.txt');
+
+        return $returned->return;
     }
 
     public function get_strah_summ($ip_name)
@@ -523,31 +526,36 @@ class Soap1c extends Simpla
             $item->ИННОрагнизации = $organization->inn;
             
             if (!empty($payment->multipolis)) {
+                $organizationMP = $this->organizations->get_organization($payment->multipolis->organization_id);
                 $item->Мультиполис = (object)[
                     'СуммаСтраховки' => $payment->multipolis->amount,
                     'НомерСтраховки' => $payment->multipolis->number,
-                    'Organization' => $payment->organization ? $payment->organization->onec_code : '000000005', 
+                    'Organization' => $organizationMP->onec_code ?: '000000005', 
+                    'ИННОрганизацииВладельцаУслуги' => $organizationMP->inn,
                 ];
                 $item->СуммаОплаты -= $payment->multipolis->amount; // (тут без мультиполиса)
             }
 
             if (!empty($payment->tv_medical)) {
+                $organizationTM = $this->organizations->get_organization($payment->tv_medical->organization_id);
                 $item->Телемедицина = (object)[
                     'ID_ВитаМед' => 'ID_'. $payment->tv_medical->tv_medical_id,
                     'Сумма' => $payment->tv_medical->amount,
                     'НомерПолиса' => $payment->tv_medical->id,
                     'insurer' => '',
-                    'Organization' => $payment->organization ? $payment->organization->onec_code : '000000005',
+                    'Organization' => $organizationTM->onec_code ?: '000000005',
+                    'ИННОрганизацииВладельцаУслуги' => $organizationTM->inn,
                 ];
                 $item->СуммаОплаты -= $payment->tv_medical->amount; // (тут без телемедицины)
             }
 
             if (!empty($payment->star_oracle)) {
+                $organizationSO = $this->organizations->get_organization($payment->star_oracle->organization_id);
                 $item->ЗвездныйОракул = (object)[
-//                    'ID_ЗвездныйОракул' => 'ID_' . $payment->star_oracle->id,
                     'Сумма' => $payment->star_oracle->amount,
                     'НомерПолиса' => $payment->star_oracle->id,
-                    'Organization' => $this->organizations->get_organization($payment->star_oracle->organization_id)->onec_code ?: '000000005',
+                    'Organization' => $organizationSO->onec_code ?: '000000005',
+                    'ИННОрганизацииВладельцаУслуги' => $organizationSO->inn,
                 ];
                 $item->СуммаОплаты -= $payment->star_oracle->amount; // (тут без телемедицины)
             }
@@ -2533,7 +2541,7 @@ class Soap1c extends Simpla
             ]
         );
 
-        $result = $this->requestSoap($object, 'WebLK', 'GetLKMass', 'get_lk_mass.txt');
+        $result = $this->requestSoap($object, 'WebLK', 'GetLKMassINN', 'get_lk_mass.txt');
         return $result['response'] ?? $result;
     }
 
@@ -2878,5 +2886,39 @@ class Soap1c extends Simpla
         } else {
             return false;
         }
+    }
+
+    /**
+     * Отправляет комментарий в 1С
+     *
+     * @param array $comments
+     * @return StdClass
+     */
+    public function sendComment(array $comments): StdClass
+    {
+        $items = [];
+
+        if (!is_array(reset($comments))) {
+            $comments = [$comments];
+        }
+        foreach ($comments as $comment) {
+            $item = new StdClass();
+            $item->НомерЗайма = $comment['number'] ?? '';
+            $item->ИдентификаторКлиента = $comment['user_uid'] ?? '';
+            $item->Дата = date('YmdHis', strtotime($comment['created']));
+            $item->Комментарий = 'Boostra: ' . ($comment['text'] ?? '');
+            $item->Ответственный = $comment['manager'] ?? '';
+
+            $items[] = $item;
+        }
+        $request = new StdClass();
+        $request->TextJson = json_encode($items, JSON_UNESCAPED_UNICODE);
+        $request->Partner = 'Boostra';
+
+        $result = $this->requestSoap($request, 'WebLK', 'Comments', 'soap_comments.txt');
+
+        $returned = new StdClass();
+        $returned->return = $result['response'] ?? ($result['errors'] ?? '');
+        return $returned;
     }
 }

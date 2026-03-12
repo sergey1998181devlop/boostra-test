@@ -18,6 +18,7 @@ class Receipts extends Simpla implements BaseModel
     public const ORGANIZATION_LORD = 15;
     public const ORGANIZATION_MOREDENEG = 17;
     public const ORGANIZATION_FRIDA = 20;
+    public const ORGANIZATION_FASTFINANCE = 22;
 
     /**
      * Штрафной КД

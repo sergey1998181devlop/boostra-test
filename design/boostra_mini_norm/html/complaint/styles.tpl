@@ -9,6 +9,7 @@
             padding: 30px;
             margin: 40px auto;
             position: relative;
+            box-sizing: border-box;
         }
 
         #complaint .btns {
@@ -68,7 +69,7 @@
             border-radius: 5px;
             padding: 0 15px;
             font-family: 'Manrope', sans-serif;
-            font-size: 14px;
+            font-size: 16px;
             line-height: 130%;
             color: #606060;
             box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
@@ -171,6 +172,10 @@
             font-weight: bold;
             font-size: 1em;
             margin-left: 2px;
+        }
+
+        #smart-captcha-complaint-container {
+            margin: 20px 0;
         }
 
         #complaint .footer {

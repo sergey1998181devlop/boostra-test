@@ -4,7 +4,7 @@
             text-decoration: none;
         }
         .promocodes {
-            min-height: 31px;
+            min-height: 48px;
             .promo_code_alert {
                 color: #0a3622;
                 background: #d1e7dd;
@@ -24,7 +24,7 @@
                 {/if}
             </div>
         {else}
-            <div>
+            <div style="display: flex; margin: 15px 0 0;">
                 <a
                     href="#"
                     id="promo-title-link"
@@ -36,7 +36,12 @@
                             border: 2px #038AEE solid;
                             box-sizing: border-box;
                             border-radius: 232px;
-                            padding: 12px 42px;"
+                            min-width: clamp(220px, -146.5px + 111.111vw, 320px);
+                            display: inline-block;
+                            text-align: center;
+                            padding: .95rem 2.8rem;
+                            line-height: 1;
+                        "
                 >У меня есть промокод</a>
             </div>
             <div id="promocode-applied" style="font-style: normal; color: #959595; display: none;">

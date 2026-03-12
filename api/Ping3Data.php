@@ -75,4 +75,30 @@ class Ping3Data extends Simpla
         $this->db->query($sql);
         return $this->db->result('value');
     }
+
+    /**
+     * Возвращает utm партнера, если заявка cross_order или crm_auto_approve от ping3
+     *
+     * @param int $order_id
+     * @return false|string
+     */
+    public function getPing3AutoOrderUtmSource(int $order_id)
+    {
+        $utm_source = $this->order_data->read($order_id, $this->order_data::ORDER_FROM_PARTNER);
+        if ($utm_source) {
+            // Проверим и обработаем процесс изменения автозаявки ping3
+            $crm_auto_approve_order_id = $this->order_data->read($order_id, self::PING3_CRM_AUTO_APPROVE);
+            if (!empty($crm_auto_approve_order_id)) {
+                return $utm_source;
+            }
+
+            // Проверим и обработаем процесс изменения cross_order ping3
+            $cross_order_order_id = $this->order_data->read($order_id, self::PING3_CRM_CROSS_ORDER);
+            if (!empty($cross_order_order_id)) {
+                return $utm_source;
+            }
+        }
+
+        return false;
+    }
 }

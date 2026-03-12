@@ -4,7 +4,7 @@
 {*$add_order_css_js = true scope=parent*}
 
 {capture name=page_scripts}
-	<script src="design/{$settings->theme}/js/files_data.app.js?v=1.65" type="text/javascript"></script>
+	<script src="design/{$settings->theme}/js/files_data.app.js?v=1.68" type="text/javascript"></script>
 {/capture}
 
 <section id="worksheet">

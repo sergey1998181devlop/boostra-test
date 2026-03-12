@@ -1,12 +1,11 @@
 <div class="cards">
     <div class="about">
-        <a href="javascript:void(0);" class="js-toggle-cards toggle-cards underline">Мои
-            реквизиты</a>
+        <a href="javascript:void(0);" class="js-toggle-cards toggle-cards underline">Способы получения</a>
     </div>
     <div class="js-cards " style="display:none">
         <div class="split">
             <input type="hidden" class="card-user-id" value="{$user->id}">
-            <ul id="card_list">
+            <ul id="card_list" class="card_list-flex">
                 {if (!empty($selected_bank))}
                     <div class="selected_bank_block">
                         <p class="selected_bank">
@@ -24,7 +23,7 @@
                         {if ((!$user->use_b2p && $card->rebill_id) || $user->use_b2p)}
                             <li data-card-id="{$card->id}">
                                 <div>
-                                    Номер карты: {$card->pan}
+                                    Номер карты: {$card->pan|regex_replace:'/^(\d{4})\d{2}(\*{6})(\d{4})$/':'$1********$3'}
 
                                     {if (!empty($order_for_choosing_card) && $order_for_choosing_card['card_id'] !== $card->id &&
                                     $cards|@count > 1 && !empty($order_for_choosing_card['have_close_credits']) &&
@@ -63,7 +62,7 @@
                             </li>
                         {else}
                             <li style="color:red">
-                                <div>Номер карты: {$card->pan}
+                                <div>Номер карты: {$card->pan|regex_replace:'/^(\d{4})\d{2}(\*{6})(\d{4})$/':'$1********$3'}
                                     <div style="font-size:1rem;">Ошибка привязки карты. Пожалуйста привяжите карту
                                         повторно.
                                     </div>
@@ -80,11 +79,11 @@
                         <strong style="color:#f11">Вы должны согласиться с договором и нажать "Добавить карту"</strong>
                     </div>
                     <div class="docs_wrapper docs_wrapper_card_list">
-                        <div class="conditions" style="max-width: none;">
+                        <div class="conditions conditions_cards" style="max-width: none;">
                             <h3>Я согласен со следующим</h3>
                             <div style="max-width: none;">
                                 <label class="spec_size">
-                                    <div class="checkbox" style="border-width:1px;width:10px!important;height:10px!important;">
+                                    <div class="checkbox" style="border-width:1px;width:16px!important;height:16px!important;">
                                         <input id="recurrent_card_list" type="checkbox"
                                             name="recurring_consent_card_list" value="1" checked="checked"/>
                                         <span style="margin:0;width:100%;height:100%;top:0;left:0;"></span>
@@ -94,7 +93,7 @@
                             </div>
                             <div id="b2pay_card_list" style="max-width: none;">
                                 <label class="spec_size">
-                                    <div class="checkbox" style="border-width:1px;width:10px!important;height:10px!important;">
+                                    <div class="checkbox" style="border-width:1px;width:16px!important;height:16px!important;">
                                         <input class="js-need-verify-card-list js-agree-claim-value-card-list" type="checkbox"
                                             name="agree_claim_value_card_list" value="0" checked="checked"/>
                                         <span style="margin:0;width:100%;height:100%;top:0;left:0;"></span>
@@ -104,8 +103,8 @@
                             </div>
                         </div>
                     </div>
-                    <button id="myBtn" class="button medium" data-organization_id="{$organization_id}"
-                            style="margin-top:5px;">Добавить карту
+                    <button id="card_add_btn" class="button" data-organization_id="{$organization_id}"
+                            style="box-shadow: none">Добавить карту
                     </button>
                 {/if}
 
@@ -135,7 +134,7 @@
                     <strong style="color:#f11">Вы должны согласиться с договором и нажать "Добавить СБП счет"</strong>
                 </div>
                 <div class="docs_wrapper docs_wrapper_sbp_list">
-                    <div class="conditions" style="max-width: none;">
+                    <div class="conditions conditions_cards" style="max-width: none;">
                         <h3>Я согласен со следующим</h3>
                         <div style="max-width: none;">
                             <label class="spec_size">
@@ -161,9 +160,7 @@
                 </div>
                 {/if}
 
-                <button class="button medium attach_sbp_btn" href="#" data-organization_id="{$organization_id}"
-                        style="margin-top:5px;">Добавить СБП счет
-                </button>
+                <button class="button attach_sbp_btn" href="#" style="box-shadow: none">Добавить СБП счет</button>
             </ul>
         </div>
         <div id="removeCardModal" class="mfp-hide">

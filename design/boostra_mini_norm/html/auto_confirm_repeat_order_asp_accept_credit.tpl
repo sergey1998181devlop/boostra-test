@@ -143,9 +143,7 @@
                 }
             }
         }
-        .promocodes {
-            text-align: center;
-        }
+
         .promo-block {
             padding: 15px;
             border: 1px black dashed;
@@ -193,7 +191,7 @@
                 <span class="info" id="accept_info">На Ваш телефон {$user->phone_mobile} было отправлено СМС-сообщение с кодом для подтверждения.</span>
                 <div id="autoconfirm_sms">
                     <div>
-                        <input type="text" inputmode="numeric" class="sms_code_modal" id="sms_code_modal" placeholder="Код из СМС" maxlength="4" />
+                        <input type="text" inputmode="numeric" autocomplete="one-time-code" class="sms_code_modal" id="sms_code_modal" placeholder="Код из СМС" maxlength="4" />
                         <div class="sms-code-error"></div>
                         <div id="not_checked_info_modal" style="display:none">
                             <strong style="color:#f11">Вы должны согласиться со всеми условиями и ввести СМС-код</strong>
@@ -414,9 +412,9 @@
 
             if (uncheckedVerifyCheckboxes.length === $block.find('.js-need-verify').length) {
                 $block.find('input[name="credit_doctor_check"]').prop('checked', true);
-                $block.find('input[name="star_oracle_check"]').prop('checked', true)
+                $block.find('input[name="tv_medical_check"]').prop('checked', true)
                 $block.find('input[name="is_user_credit_doctor"]').val('1');
-                $block.find('input[name="is_star_oracle"]').val('1')
+                $block.find('input[name="is_tv_medical"]').val('1')
                 $block.find('input[name="agree_claim_value"]').val('0')
             } else if (uncheckedVerifyCheckboxes.length > 0) {
                 $block.find('#not_checked_info').show();

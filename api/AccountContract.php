@@ -57,21 +57,10 @@ class AccountContract extends Simpla
 
 
             $action_type = $amount == $fullAmount ? $this->star_oracle::ACTION_TYPE_FULL_PAYMENT : $this->star_oracle::ACTION_TYPE_PARTIAL_PAYMENT;
+
+            // star_oracle отключен
+            $oracle_amount = 0;
             
-            $oracle_amount=0;
-            if ($starOracle = $this->star_oracle->getStarOraclePrice($amount)) {
-                if ($amount == $fullAmount) {
-                    if ($order->additional_service_so_repayment) {
-                        $oracle_amount = $starOracle->price;
-                    } elseif ($order->half_additional_service_so_repayment) {
-                        $oracle_amount = round($starOracle->price / 2);
-                    }
-                } elseif ($order->additional_service_so_partial_repayment) {
-                    $oracle_amount = $starOracle->price;
-                } elseif ($order->half_additional_service_so_partial_repayment) {
-                    $oracle_amount = round($starOracle->price / 2);
-                }
-            }
 
             $tv_med_amount=0;
             if ($tv_medical = $this->tv_medical->getVItaMedPrice($amount)) {
@@ -95,7 +84,7 @@ class AccountContract extends Simpla
                 'card_id' => '',
                 'amount' => $amount + $oracle_amount + $tv_med_amount,
                 'insure' => 0,
-                'star_oracle' => (bool)$oracle_amount,
+                'star_oracle' => 0,
                 'star_oracle_amount' => $oracle_amount,
                 'multipolis' => 0,
                 'multipolis_amount' => 0,

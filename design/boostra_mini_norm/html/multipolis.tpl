@@ -35,7 +35,7 @@
                 <input name="patronymic" placeholder="Отчество" value="{$user->patronymic}" />
             </div>
             <div class="form-control-border">
-                <input name="phone_mobile" placeholder="Телефон" value="{$user->phone_mobile|escape}" />
+                <input name="phone_mobile" autocomplete="tel" inputmode="tel" placeholder="Телефон" value="{$user->phone_mobile|escape}" />
             </div>
             <div class="form-control-border">
                 <label for="multipolis_number">Номер полиса</label>

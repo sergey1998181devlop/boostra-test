@@ -1,11 +1,24 @@
 class UsedeskValidator {
     constructor() {
+        // Configuration for widget customizations (extensible)
+        // Read from global config (set in index.tpl): operatorAvatar, customIconEnabled
+        const customIconEnabled = window.usedeskConfig?.customIconEnabled !== false;
+        const operatorAvatar = customIconEnabled
+            ? (window.usedeskConfig?.operatorAvatar || 'https://secure.usedesk.ru/images/icons/chat-svg/operator.svg')
+            : '';
+        this.customizations = {
+            customIconEnabled,
+            operatorAvatar
+            // Future: botAvatar, headerIcon, etc.
+        };
+        this.observer = null;
         this.init();
     }
 
     init() {
         window.__widgetInitCallback = () => {
-            console.log('Usedesk widget initialized');
+            // Apply custom branding
+            this.applyCustomizations();
 
             // делегированная валидация полей
             document.body.addEventListener('input', this.handleInputEvent.bind(this), true);
@@ -14,13 +27,66 @@ class UsedeskValidator {
             // перехват кликов по фоновой области
             document.addEventListener('click', this.handleDocumentClick.bind(this), true);
         };
+
+        // Также пробуем применить кастомизацию сразу и через интервал
+        setTimeout(() => {
+            this.applyCustomizations();
+        }, 2000);
+
+        setTimeout(() => {
+            this.applyCustomizations();
+        }, 5000);
+    }
+
+    applyCustomizations() {
+        if (!this.customizations.customIconEnabled) {
+            return;
+        }
+        this.replaceAvatars();
+        this.observeWidgetChanges();
+    }
+
+    replaceAvatars() {
+        if (!this.customizations.operatorAvatar) {
+            return;
+        }
+
+        // Ищем все контейнеры аватаров (это DIV элементы с классами .uw__avatar)
+        const avatarContainers = document.querySelectorAll('.uw__avatar, .uw__message-avatar, .uw__operator-avatar');
+
+        if (avatarContainers.length === 0) {
+            return;
+        }
+
+        avatarContainers.forEach(container => {
+            const newBg = `url("${this.customizations.operatorAvatar}")`;
+
+            // Устанавливаем background-image через setProperty с !important
+            container.style.setProperty('background-image', newBg, 'important');
+            container.style.setProperty('background-size', 'cover', 'important');
+            container.style.setProperty('background-position', 'center', 'important');
+            container.style.setProperty('background-repeat', 'no-repeat', 'important');
+
+            // Удаляем атрибут href если он есть
+            if (container.hasAttribute('href')) {
+                container.removeAttribute('href');
+            }
+        });
+    }
+
+    observeWidgetChanges() {
+        if (this.observer) return;
+
+        this.observer = new MutationObserver(() => this.replaceAvatars());
+        const container = document.querySelector('#usedesk-messenger') || document.body;
+        this.observer.observe(container, { childList: true, subtree: true });
     }
 
     handleInputEvent(event) {
         const input = event.target;
 
         // валидация email при вводе
-        if (input.matches('input[name="email"]')) {
+        if (input.matches('input[name="email"]') && input.id !== 'email') {
             const rawValue = input.value.trim();
             if (!rawValue) {
                 input.style.border = '';
@@ -149,3 +215,9 @@ class UsedeskValidator {
 document.addEventListener('DOMContentLoaded', () => {
     new UsedeskValidator();
 });
+
+
+// Также создаем экземпляр сразу, если DOM уже загружен
+if (document.readyState !== 'loading') {
+    new UsedeskValidator();
+}

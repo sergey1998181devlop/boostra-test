@@ -13,11 +13,12 @@ class BonondoApi extends Simpla
         parent::__construct();
 
         $baseUrl = $this->config->bonondo_api_url;
+        $site_id = $this->config->site_id;
         if (! $baseUrl) {
             throw new LogicException('Bonondo api url not specified');
         }
 
-        $this->db->query("SELECT token FROM application_tokens WHERE `enabled` > 0 AND `app` = 'bonon-{$postfix}'");
+        $this->db->query("SELECT token FROM application_tokens WHERE `enabled` > 0 AND `app` = 'bonon-{$postfix}' AND site_id = ?", $site_id);
         $tokens = $this->db->results('token');
         if (empty($tokens)) {
             throw new LogicException('Bonondo api token not specified');
@@ -75,6 +76,7 @@ class BonondoApi extends Simpla
             'utm_campaign'             => $params['utm_campaign'],
             'wm_id'                    => $params['wm_id'],
             'click_id'                 => $params['click_id'],
+            'juicy_id'                 => $params['juicy_id'],
             'guru_id'                  => $params['guru_id'],
             'guru_data'                => $params['guru_data'],
             'referer'                  => $params['referer'],

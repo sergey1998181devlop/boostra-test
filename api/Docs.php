@@ -298,13 +298,27 @@ class Docs extends Simpla
     {
         $full_name = $this->helpers::getFIO($user);
         $passport = $this->users::splitPassportSerial($user->passport_serial);
+        $addressReg = $this->formatRegistrationAddress($user);
+
         return [
             'full_name' => $full_name,
+            'lastname' => $user->lastname,
+            'firstname' => $user->firstname,
+            'patronymic' => $user->patronymic,
             'birth' => $user->birth,
+            'birth_date' => $user->birth,
             'passport_serial' => $passport['serial'],
             'passport_number' => $passport['number'],
             'passport_date' => $user->passport_date,
             'passport_issued' => $user->passport_issued,
+            // Ключи для шаблона soglasie_na_bki.tpl (без подчёркивания)
+            'regindex' => $user->Regindex,
+            'regregion' => $user->Regregion,
+            'regcity' => $user->Regcity,
+            'regstreet' => $user->Regstreet,
+            'reghousing' => $user->Reghousing,
+            'regroom' => $user->Regroom,
+            // Ключи legacy (с подчёркиванием) для других шаблонов
             'reg_city' => $user->Regcity,
             'reg_street' => $user->Regstreet,
             'reg_housing' => $user->Reghousing,
@@ -318,7 +332,10 @@ class Docs extends Simpla
             'loan_amount' => $loan_amount,
             'is_user_credit_doctor' => $is_user_credit_doctor,
             'asp' => $asp,
-            'current_date' => date('d.m.Y')
+            'current_date' => date('d.m.Y'),
+            'document_created' => date('d.m.Y'),
+            'sign_date' => date('d.m.Y'),
+            'addressReg' => $addressReg
         ];
     }
 
@@ -328,13 +345,15 @@ class Docs extends Simpla
      * @param int $order_id
      * @param string|null $sms
      * @param string|null $sign_date
+     * @param int|null $crossOrganizationId
      * @return array
      * @throws Exception
      */
-    public function getArbitrationAgreementParams(Object $user, int $order_id, ?string $sms = null, ?string $sign_date = null): array
+    public function getArbitrationAgreementParams(Object $user, int $order_id, ?string $sms = null, ?string $sign_date = null, ?int $crossOrganizationId = null): array
     {
         $order = $this->orders->get_order($order_id);
-        $organization = $this->organizations->get_organization($order->organization_id);
+        $orgId = $crossOrganizationId ?: $order->organization_id;
+        $organization = $this->organizations->get_organization($orgId);
 
         $loan_type = '';
         if ($order->loan_type === 'PDL') {
@@ -343,10 +362,14 @@ class Docs extends Simpla
             $loan_type = 'потребительского займа';
         }
 
+        try {
+            $user_balance = $this->users->get_user_balance_for_order($user->id, $order->id_1c);
+        } catch (Exception $e) {
+            $user_balance = null;
+        }
+
         $user_fakt_address = "{$user->Faktindex} {$user->Faktregion}, {$user->Faktcity}, ".
             "{$user->Faktstreet} ул, д. {$user->Fakthousing}, кв. {$user->Faktroom}";
-        $user_balance =  $this->users->get_user_balance_for_order($user->id, $order->{'1c_id'});
-
         $balance_zaim_date = $user_balance && !empty($user_balance->zaim_date) ? $user_balance->zaim_date : null;
         if (!$sign_date) {
             $sign_date = (in_array($balance_zaim_date, ['0001-01-01T00:00:00', '0001-01-01 00:00:00']) || empty($balance_zaim_date))
@@ -354,14 +377,7 @@ class Docs extends Simpla
                 : $balance_zaim_date;
         }
 
-        $addressReg = '';
-        if ($user->Regindex) $addressReg .= $user->Regindex . ', ';
-        if ($user->Regregion) $addressReg .= $user->Regregion . ', ';
-        if ($user->Regcity) $addressReg .= $user->Regcity . ', ';
-        if ($user->Regstreet) $addressReg .= 'ул. ' . $user->Regstreet . ', ';
-        if ($user->Reghousing) $addressReg .= 'д. ' . $user->Reghousing . ', ';
-        if ($user->Regroom) $addressReg .= 'кв. ' . $user->Regroom;
-        $addressReg = rtrim($addressReg, ', ');
+        $addressReg = $this->formatRegistrationAddress($user);
 
         // Get bank data from params JSON field (fallback to direct properties for backward compatibility)
         $params = $organization->params ?? [];
@@ -393,15 +409,25 @@ class Docs extends Simpla
             'passport_issued' => $user->passport_issued,
             'passport_date' => $user->passport_date,
             'subdivision_code' => $user->subdivision_code,
+
             'organization_name' => $organization->name,
             'organization_short_name' => $organization->short_name,
             'organization_inn' => $organization->inn,
             'organization_kpp' => $organization->kpp ?? 771401001,
             'organization_ogrn' => $organization->ogrn,
             'organization_address' => $organization->address,
+            'organization_address_post' => $postAddress,
             'organization_director' => $organization->director ?? 'Поздняковa С.В.',
             'organization_prefix' => $organization->contract_prefix,
-            'organization_id' => $order->organization_id,
+            'organization_id' => $organization->id,
+            'lenderPhone' => $organization->phone ?? '',
+            'organization_phone' => $organization->phone ?? '',
+            'lenderPostAddress' => $postAddress,
+            'lenderKpp' => $organization->kpp ?? 771401001,
+            'lenderBank' => $bankName,
+            'lenderBankAccount' => $bankAccount,
+            'organization_email' => $organization->email ?? '',
+
             'zaim_date' => $user_balance ? $user_balance->zaim_date : '',
             'sign_date' => !empty($smsArbitrage) ? $smsArbitrage[0]->created : $sign_date,
             'lenderBankInn' => $bankInn,
@@ -415,15 +441,11 @@ class Docs extends Simpla
             'arbiter_inn' => '183309017023',
             'arbiter_address' => 'Россия, 426068, Удмуртская Республика, г. Ижевск, ул. Автозаводская, д.56, кв.14',
             'arbiter_email' => 'mda@rosmail.su',
-            'organization_email' => $organization->email ?? '',
             'order_signed' => $order->status_1c === '5.Выдан',
-            'lenderPhone' => $organization->phone ?? '',
-            'lenderPostAddress' => $postAddress,
-            'lenderKpp' => $organization->kpp ?? 771401001,
-            'lenderBank' => $bankName,
-            'lenderBankAccount' => $bankAccount,
             'passportSeries' => $passportSeries,
+            'passport_series' => $passportSeries,
             'passportNumber' => $passportNumber,
+            'passport_number' => $passportNumber,
         ];
     }
 
@@ -433,12 +455,13 @@ class Docs extends Simpla
      * @param int $order_id
      * @param string|null $sms
      * @param bool $storeToDb
+     * @param int|null $crossOrganizationId
      * @return bool
      * @throws Exception
      */
-    public function getArbitrationAgreementPdf(Object $user, int $order_id, string $sms = null, bool $storeToDb = false): bool
+    public function getArbitrationAgreementPdf(Object $user, int $order_id, string $sms = null, bool $storeToDb = false, ?int $crossOrganizationId = null): bool
     {
-        $params = $this->docs->getArbitrationAgreementParams($user, $order_id, $sms);
+        $params = $this->docs->getArbitrationAgreementParams($user, $order_id, $sms, null, $crossOrganizationId);
 
         if ($storeToDb) {
             return $this->documents->create_document([
@@ -461,23 +484,18 @@ class Docs extends Simpla
      * @param int $order_id
      * @param string|null $sms
      * @param string|null $sign_date
+     * @param int|null $crossOrganizationId
      * @return array
      * @throws Exception
      */
-    public function getAspAgreementParams(Object $user, int $order_id, ?string $sms = null, ?string $sign_date = null): array
+    public function getAspAgreementParams(Object $user, int $order_id, ?string $sms = null, ?string $sign_date = null, ?int $crossOrganizationId = null): array
     {
         $order = $this->orders->get_order($order_id);
-        $organization = $this->organizations->get_organization($order->organization_id);
+        $orgId = $crossOrganizationId ?: $order->organization_id;
+        $organization = $this->organizations->get_organization($orgId);
 
         // Формируем адрес регистрации из отдельных полей
-        $addressReg = '';
-        if ($user->Regindex) $addressReg .= $user->Regindex . ', ';
-        if ($user->Regregion) $addressReg .= $user->Regregion . ', ';
-        if ($user->Regcity) $addressReg .= $user->Regcity . ', ';
-        if ($user->Regstreet) $addressReg .= 'ул. ' . $user->Regstreet . ', ';
-        if ($user->Reghousing) $addressReg .= 'д. ' . $user->Reghousing . ', ';
-        if ($user->Regroom) $addressReg .= 'кв. ' . $user->Regroom;
-        $addressReg = rtrim($addressReg, ', ');
+        $addressReg = $this->formatRegistrationAddress($user);
 
         // Путь к изображению подписи
         $signatureImagePath = $this->config->root_dir . 'design/boostra_mini_norm/html/pdf/i/signature_akvarius.png';
@@ -503,7 +521,11 @@ class Docs extends Simpla
         $passport_split = $this->helpers::splitPassportSerialForDocuments($user->passport_serial);
         $passportSeries = $passport_split['serial'];
         $passportNumber = $passport_split['number'];
-        $user_balance = $this->users->get_user_balance_for_order($user->id, $order->{'1c_id'});
+        try {
+            $user_balance = $this->users->get_user_balance_for_order($user->id, $order->id_1c);
+        } catch (Exception $e) {
+            $user_balance = null;
+        }
 
         $balance_zaim_date = $user_balance && !empty($user_balance->zaim_date) ? $user_balance->zaim_date : null;
         if (!$sign_date) {
@@ -523,8 +545,10 @@ class Docs extends Simpla
             'lenderAddressReg' => $organization->address ?? 'г. Москва',
             'lenderEmail' => $organization->email ?? 'info@boostra.ru',
             'fio' => $this->helpers::getFIO($user),
-            'passportSeries' => $passportSeries ?? '',
-            'passportNumber' => $passportNumber ?? '',
+            'passportSeries' => $passportSeries ?? '', // макросы через snake_case
+            'passport_series' => $passportSeries ?? '',
+            'passportNumber' => $passportNumber ?? '', // макросы через snake_case
+            'passport_number' => $passportNumber ?? '',
             'passportDate' => $user->passport_date ?? '',
             'passportPlace' => $user->passport_issued ?? '',
             'passportCode' => $user->subdivision_code ?? '',
@@ -534,7 +558,7 @@ class Docs extends Simpla
             'birthDate' => $user->birth ?? '',
             'plaintiffName' => 'ООО "ПКО ПЗ"',
             'organization_prefix' => $organization->contract_prefix,
-            'organization_id' => $order->organization_id,
+            'organization_id' => $organization->id,
             'plaintiffSite' => 'pkopz.ru',
             'accept_sms' => $sms ?? $order->accept_sms,
             'sign_date' => $sign_date,
@@ -553,24 +577,26 @@ class Docs extends Simpla
      * @param int $order_id
      * @param string|null $sms
      * @param bool $storeToDb
+     * @param int|null $crossOrganizationId
      * @return bool
      */
-    public function getAspAgreementPdf(Object $user, int $order_id, string $sms = null, bool $storeToDb = false): bool
+    public function getAspAgreementPdf(Object $user, int $order_id, string $sms = null, bool $storeToDb = false, ?int $crossOrganizationId = null): bool
     {
-        $params = $this->getAspAgreementParams($user, $order_id, $sms);
+        $params = $this->getAspAgreementParams($user, $order_id, $sms, null, $crossOrganizationId);
         $order = $this->orders->get_order($order_id);
+        $tpl = ($params['organization_id'] ?? -1) == $this->organizations::FASTFINANCE_ID ? Documents::ASP_AGREEMENT_FASTFINANCE : Documents::ASP_AGREEMENT;
 
         if ($storeToDb) {
             return $this->documents->create_document([
                 'order_id' => $order_id,
                 'user_id' => $user->id,
                 'contract_number' => $order->id,
-                'type' => Documents::ASP_AGREEMENT,
+                'type' => $tpl,
                 'params' => $params,
             ]);
         }
 
-        $this->createDocumentForType($params, Documents::ASP_AGREEMENT);
+        $this->createDocumentForType($params, $tpl);
 
         return true;
     }
@@ -654,12 +680,14 @@ class Docs extends Simpla
      * @param int $order_id
      * @param string|null $sms
      * @param string|null $sign_date
+     * @param int|null $crossOrganizationId
      * @return array
      */
-    public function getOfferAgreementParams(Object $user, int $order_id, ?string $sms = null, ?string $sign_date = null): array
+    public function getOfferAgreementParams(Object $user, int $order_id, ?string $sms = null, ?string $sign_date = null, ?int $crossOrganizationId = null): array
     {
         $order = $this->orders->get_order($order_id);
-        $organisation = $this->organizations->get_organization($order->organization_id);
+        $orgId = $crossOrganizationId ?: $order->organization_id;
+        $organization = $this->organizations->get_organization($orgId);
 
         // Адрес регистрации заемщика
         $addressReg = trim(sprintf(
@@ -672,8 +700,12 @@ class Docs extends Simpla
             $user->Regroom
         ));
 
-        $user_balance = $this->users->get_user_balance_for_order($user->id, $order->{'1c_id'});
         $user_passport_split = $this->helpers::splitPassportSerial($user->passport_serial);
+        try {
+            $user_balance = $this->users->get_user_balance_for_order($user->id, $order->id_1c);
+        } catch (Exception $e) {
+            $user_balance = null;
+        }
 
         if (!$sign_date) {
             $sign_date = $user_balance->zaim_date === '0001-01-01T00:00:00' ? date('Y-m-d H:i:s')
@@ -690,20 +722,20 @@ class Docs extends Simpla
             'passport_issued' => $user->passport_issued,
             'subdivision_code' => $user->subdivision_code,
             'registration_address' => $addressReg,
-            'organization_name' => $organisation->name,
-            'organization_ogrn' => $organisation->ogrn,
+            'organization_name' => $organization->name,
+            'organization_ogrn' => $organization->ogrn,
             'zaim_number' => $user_balance->zaim_number,
             'zaim_date' => $user_balance->zaim_date,
-            'organization_site' => $organisation->site,
-            'organization_address_post' => $organisation->address, //Почтовый
+            'organization_site' => $organization->site,
+            'organization_address_post' => $organization->address, //Почтовый
             'organization_director' => $organization->director ?? 'Поздняковa С.В.',
-            'organization_address_req' => $organisation->address, //Регистрации
-            'organization_email' => $organisation->email,
+            'organization_address_req' => $organization->address, //Регистрации
+            'organization_email' => $organization->email,
             'plaintiff_name' => 'ООО ПКО "ПРАВОВАЯ ЗАЩИТА"',
             'plaintiff_site' => 'https://pravza.com/',
             'accept_sms' => $sms ?? $order->accept_sms,
             'order_signed' => $order->status_1c === '5.Выдан',
-            'organization_id' => $order->organization_id,
+            'organization_id' => $organization->id,
             'sign_date' => $sign_date,
         ];
     }
@@ -713,11 +745,12 @@ class Docs extends Simpla
      * @param int $order_id
      * @param string|null $sms
      * @param bool $storeToDb
+     * @param int|null $crossOrganizationId
      * @return bool
      */
-    public function getOfferAgreementPdf(Object $user, int $order_id, string  $sms = null, bool $storeToDb = false): bool
+    public function getOfferAgreementPdf(Object $user, int $order_id, string  $sms = null, bool $storeToDb = false, ?int $crossOrganizationId = null): bool
     {
-        $params = $this->getOfferAgreementParams($user, $order_id, $sms);
+        $params = $this->getOfferAgreementParams($user, $order_id, $sms, null, $crossOrganizationId);
         if ($storeToDb) {
             return $this->documents->create_document([
                 'order_id' => $order_id,
@@ -743,13 +776,15 @@ class Docs extends Simpla
      * @param string|null $sms
      * @param string|null $sign_date
      * @param string|null $sms_date
+     * @param int|null $crossOrganizationId
      * @return array
      * @throws Exception
      */
-    public function getOfferArbitrationCessionaryParams(Object $user, int $order_id, ?string $sms = null, ?string $sign_date = null, ?string $sms_date = null): array
+    public function getOfferArbitrationCessionaryParams(Object $user, int $order_id, ?string $sms = null, ?string $sign_date = null, ?string $sms_date = null, ?int $crossOrganizationId = null): array
     {
         $order = $this->orders->get_order($order_id);
-        $organization = $this->organizations->get_organization($order->organization_id);
+        $orgId = $crossOrganizationId ?: $order->organization_id;
+        $organization = $this->organizations->get_organization($orgId);
 
         // Адрес регистрации заемщика
         $addressReg = trim(sprintf(
@@ -762,7 +797,11 @@ class Docs extends Simpla
             $user->Regroom
         ));
 
-        $user_balance = $this->users->get_user_balance_for_order($user->id, $order->{'1c_id'});
+        try {
+            $user_balance = $this->users->get_user_balance_for_order($user->id, $order->id_1c);
+        } catch (Exception $e) {
+            $user_balance = null;
+        }
 
         $passport_split = $this->helpers::splitPassportSerialForDocuments($user->passport_serial);
         $passportSeries = $passport_split['serial'];
@@ -786,7 +825,7 @@ class Docs extends Simpla
             'registration_address' => $addressReg,
             'phone_mobile' => $user->phone_mobile,
             'email' => $user->email,
-            'organization_id' => $order->organization_id,
+            'organization_id' => $organization->id,
             'organization_name' => $organization->name ?? 'ООО «ПКО ПЗ»',
             'organization_short_name' => $organization->short_name,
             'organization_inn' => $organization->inn ?? '',
@@ -810,11 +849,13 @@ class Docs extends Simpla
      * @param int $order_id
      * @param string|null $sms
      * @param bool $storeToDb
+     * @param int|null $crossOrganizationId
      * @return bool
+     * @throws Exception
      */
-    public function getOfferArbitrationCessionaryPdf(Object $user, int $order_id, string $sms = null, bool $storeToDb = false): bool
+    public function getOfferArbitrationCessionaryPdf(Object $user, int $order_id, string $sms = null, bool $storeToDb = false, ?int $crossOrganizationId = null): bool
     {
-        $params = $this->getOfferArbitrationCessionaryParams($user, $order_id, $sms);
+        $params = $this->getOfferArbitrationCessionaryParams($user, $order_id, $sms, null, null, $crossOrganizationId);
 
         if ($storeToDb) {
             return $this->documents->create_document([
@@ -829,5 +870,68 @@ class Docs extends Simpla
         $this->createDocumentForType($params, Documents::OFFER_ARBITRATION_CESSIONARY);
 
         return true;
+    }
+
+    public function getBkiAgreementParams(object $user, ?object $order = null): array
+    {
+        $passport_split = $this->helpers::splitPassportSerialForDocuments($user->passport_serial);
+
+        $addressReg = $this->formatRegistrationAddress($user);
+
+        $params = [
+            'full_name' => "{$user->lastname} {$user->firstname} {$user->patronymic}",
+            'birth'                => $user->birth,
+            'passport_serial'      => $passport_split['serial'],
+            'passport_number'      => $passport_split['number'],
+            'passport_date'        => $user->passport_date,
+            'passport_issued'      => $user->passport_issued,
+            'subdivision_code'     => $user->subdivision_code,
+            'birth_place'          => $user->birth_place,
+            'registration_address' => $addressReg,
+        ];
+
+        /**
+         * Данные организации — только если есть $order
+         */
+        if ($order !== null) {
+            $organization = $this->organizations->get_organization($order->organization_id);
+
+            if ($organization) {
+                $params['organization_name']    = $organization->name ?? '';
+                $params['organization_inn']     = $organization->inn ?? '';
+                $params['organization_ogrn']    = $organization->ogrn ?? '';
+                $params['organization_address'] = $organization->address ?? '';
+            }
+
+            /**
+             * Доп. данные — только если есть история займов
+             */
+            if (!empty($user->loan_history) && count($user->loan_history) > 0) {
+                $params['accept_sms'] = $order->accept_sms ?? null;
+                $params['sign_date']  = $order->accept_date ?? null;
+                $params['user_inn']   = $user->inn ?? null;
+                $params['user_snils'] = $user->Snils ?? null;
+            }
+        }
+
+        return $params;
+    }
+
+    /**
+     * Формирует адрес регистрации пользователя из отдельных полей
+     * @param Object $user
+     * @return string
+     */
+    private function formatRegistrationAddress(Object $user): string
+    {
+        $parts = [];
+        if (!empty($user->Regindex))   $parts[] = $user->Regindex;
+        if (!empty($user->Regregion))  $parts[] = $user->Regregion;
+        if (!empty($user->Regcity))    $parts[] = $user->Regcity;
+        if (!empty($user->Regstreet))  $parts[] = 'ул. ' . $user->Regstreet;
+        if (!empty($user->Reghousing)) $parts[] = 'д. ' . $user->Reghousing;
+        if (!empty($user->Regroom))    $parts[] = 'кв. ' . $user->Regroom;
+
+        return implode(', ', $parts);
     }
 }

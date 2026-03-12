@@ -76,6 +76,21 @@ class OrderData extends Simpla
      */
     public const REPEAT_ORDER_AUTO_CONFIRM_ASP = 'repeat_order_auto_confirm_asp';
 
+    /** @var string Результат переключения организации */
+    public const ORDER_ORG_SWITCH_RESULT = 'order_org_switch_result';
+
+    /** @var string order_id исходной заявки при смене организации */
+    public const ORDER_ORG_SWITCH_PARENT_ORDER_ID = 'order_org_switch_parent_order_id';
+
+    /** @var int Флаг, чтобы в акси не запрашивались ССП и КИ отчеты */
+    public const AXI_WITHOUT_CREDIT_REPORTS = 'axi_without_credit_reports';
+
+    public const RCL_LOAN = 'rcl_loan';
+    public const RCL_AMOUNT = 'rcl_amount';
+    public const RCL_MAX_AMOUNT = 'rcl_max_amount';
+    /** @var integer s_visitors айди входа клиента перед подачей заявки */
+    public const VISITOR_ID = 'visitor_id';
+
     public const ADDITIONAL_SERVICES = [
         self::ADDITIONAL_SERVICE_TV_MED,
         self::ADDITIONAL_SERVICE_MULTIPOLIS,
@@ -99,6 +114,20 @@ class OrderData extends Simpla
     public const SELF_DEC_AXI_APPLICATION_ID = 'self_dec_axi_application_id';
     /** @var integer Код АСП для автоподписания */
     public const AUTOCONFIRM_ASP = 'autoconfirm_asp';
+    /** @var integer Код АСП для автоподписания кросс-ордера */
+    public const AUTOCONFIRM_ASP_CROSS = 'autoconfirm_asp_cross';
+    /** @var integer Флаг, указывающий, что выполнилась автовыдача кросс-заявка  */
+    public const IS_AUTOCONFIRM_CROSS = 'is_autoconfirm_cross';
+    /** @var string Флаг "Кредитный доктор" при автоподписании основной заявки */
+    public const AUTOCONFIRM_CREDIT_DOCTOR = 'is_user_credit_doctor_autoconfirm';
+    /** @var string Флаг "Телемедицина" при автоподписании основной заявки */
+    public const AUTOCONFIRM_TV_MEDICAL = 'is_tv_medical_autoconfirm';
+    
+    /** @var string Флаг "Кредитный доктор" при автоподписании кросс-ордера */
+    public const AUTOCONFIRM_CROSS_CREDIT_DOCTOR = 'is_user_credit_doctor_cross_autoconfirm';
+    /** @var string Флаг "Телемедицина" при автоподписании кросс-ордера */
+    public const AUTOCONFIRM_CROSS_TV_MEDICAL = 'is_tv_medical_cross_autoconfirm';
+    
     /** @var integer Сумма запрошенная клиентом при подаче заявки*/
     public const USER_AMOUNT = 'user_amount';
 
@@ -128,6 +157,10 @@ class OrderData extends Simpla
 
     /** @var integer Сумма одобрения из скоринга hyper_c (таблица s_hyper_c.approve_amount) */
     public const HYPER_C_APPROVE_AMOUNT = 'hyper_c_approve_amount';
+    /** @var integer Кол-во попыток перевыдачи заявки (см. Orders.php::canRepeatIssuanceNotIssuedOrder) */
+    public const REPEAT_ISSUANCE_COUNT = 'repeat_issuance_count';
+    /** Время создания виртуальной карты */
+    public const CREATED_AT_VIRTUAL_CARD_TIMESTAMP = 'waiting_virtual_card_created_at_timestamp';
 
     /**
      * Получение доп.поля из заявки.
@@ -218,9 +251,35 @@ class OrderData extends Simpla
         return $this->replace($orderId, $key, $value);
     }
 
+    /**
+     * Поиск OrderData по ключу и значению, может вернуть несколько совпадений.
+     *
+     * @param string $key Ключ, по которому хранятся данные (напр. USERAGENT)
+     * @param mixed $value Не может быть null
+     * @return array
+     * @throws Exception
+     * @see self::get()
+     */
+    public function getByValue(string $key, $value): array
+    {
+        if (is_null($value)) {
+            throw new Exception("Parameter 'value' for getByValue cannot be null.");
+        }
+
+        $this->db->query(
+            "SELECT * FROM __order_data WHERE `key` = ? AND value_hash = UNHEX(MD5(?)) AND `value` = ?",
+            $key,
+            $value, // value_hash с индексом
+            $value  // Повторная фильтрация по value, избегаем коллизий md5 хэша (маловероятное событие)
+        );
+
+        return $this->db->results() ?: [];
+    }
+
     private function replace(int $orderId, string $key, $value)
     {
-        $query = $this->db->placehold("REPLACE INTO __order_data (`order_id`, `key`, `value`) VALUES (?, ?, ?)", $orderId, $key, $value);
+        $valueHash = md5($value, true);
+        $query = $this->db->placehold("REPLACE INTO __order_data (`order_id`, `key`, `value`, `value_hash`) VALUES (?, ?, ?, ?)", $orderId, $key, $value, $valueHash);
         return $this->db->query($query);
     }
 

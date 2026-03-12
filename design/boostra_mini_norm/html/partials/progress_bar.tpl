@@ -1,7 +1,7 @@
 {assign var=od value=$orderData|default:null}
 
 {* стили конкретно прогресс-бара (переопределяют component defaults при необходимости) *}
-<link rel="stylesheet" href="design/{$settings->theme}/css/progress_bar.css?v=1.1" />
+<link rel="stylesheet" href="design/{$settings->theme}/css/progress_bar.css?v=1.2" />
 
 <div class="overdue-progress"
      data-user-id="{$od->order->user_id|default:0}"

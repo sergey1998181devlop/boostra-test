@@ -85,8 +85,9 @@ class Changelogs extends Simpla
                         WHERE lastname LIKE "%'.$this->db->escape($filter['search']['user']).'%"
                         OR firstname LIKE "%'.$this->db->escape($filter['search']['user']).'%"
                         OR patronymic LIKE "%'.$this->db->escape($filter['search']['user']).'%"
+                        AND site_id = ? 
                     )
-                ');            
+                ', $this->config->site_id);
         }
         
         

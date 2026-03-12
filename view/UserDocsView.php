@@ -89,7 +89,14 @@ class UserDocsView extends View {
 
         // Получение документа по микрозайму
         if( $this->request->get( 'action' ) === 'micro_zaim' ){
-            $loan_amount = floatval($this->request->get('loan_amount') ?: 30000);
+            if ($this->request->get('loan_amount')) {
+                $loan_amount = floatval($this->request->get('loan_amount'));
+            } else {
+                $last_order_obj = $this->orders->get_last_order($this->user->id);
+                $last_order = json_decode(json_encode($last_order_obj), true);
+                $loan_amount = $last_order['amount'];
+            }
+
             $credit_doctor = (bool)$this->request->get('credit_doctor');
             $service = $this->docs->getMicroZaimParamsByUser($this->user, $loan_amount, $credit_doctor);
             $service['pdn'] = $this->users->getExcessedPdn($this->user->id);
@@ -103,7 +110,11 @@ class UserDocsView extends View {
                 $this->design->assign($key, $value);
             }
 
-            $tpl = "pdf/micro_zaim_akvarius.tpl";
+            if($organization_id == $this->organizations::FASTFINANCE_ID) {
+                $tpl = 'pdf/fastfinance/micro_zaim.tpl';
+            } else {
+                $tpl = "pdf/micro_zaim_akvarius.tpl";
+            }
             
             $this->pdf->create(
                 $this->design->fetch($tpl),
@@ -156,10 +167,62 @@ class UserDocsView extends View {
             exit;
         }
 
+        if ($this->request->get('action') === 'soglasie_na_bki') {
+            if (empty($this->user)) {
+                http_response_code(403);
+                exit;
+            }
+
+            $this->axi->syncBkiConsent($this->user->id);
+
+            $lastOrder = $this->orders->get_last_order($this->user->id);
+            $organizationId = !empty($lastOrder->organization_id)
+                ? $lastOrder->organization_id
+                : $this->organizations->get_base_organization_id(['user_id' => $this->user->id]);
+            $organization = $this->organizations->get_organization($organizationId);
+
+            $service = $this->docs->getMicroZaimParamsByUser($this->user, 0);
+            $service['user_inn'] = $this->user->inn ?? '';
+            $service['subdivision_code'] = $this->user->subdivision_code ?? '';
+            $service['birth_place'] = $this->user->birth_place ?? '';
+            $service['snils'] = $this->user->Snils ?? '';
+            $service['registration_address'] = $this->user->registration_address ?? '';
+
+            $bkiConsentData = $this->user_data->read($this->user->id, UserData::BKI_CONSENT);
+            $bkiConsent = json_decode((string) $bkiConsentData, true);
+            if (!is_array($bkiConsent)) {
+                $bkiConsent = [];
+            }
+            $service['created'] = $bkiConsent['timestamp'] ?? date('Y-m-d H:i:s');
+
+            if (!empty($lastOrder->accept_sms)) {
+                $service['asp'] = $lastOrder->accept_sms;
+            }
+
+            $this->design->assign('organization', $organization);
+            $this->design->assignBulk($service);
+
+            if ((int) $organizationId === Organizations::FINLAB_ID) {
+                $tpl = 'pdf/soglasie_na_bki_finlab.tpl';
+            } elseif ((int) $organizationId === Organizations::AKVARIUS_ID) {
+                $tpl = 'pdf/soglasie_na_bki.tpl';
+            } else {
+                $tpl = 'pdf/soglasie_na_bki_ftm.tpl';
+            }
+
+            $this->pdf->create(
+                $this->design->fetch($tpl),
+                'Согласие на получение информации из бюро кредитных историй',
+                'Согласие БКИ.pdf'
+            );
+
+            exit;
+        }
+
         // Соглашение о рекуррентных платежах
         if ($this->request->get('action') === 'soglasie_recurrent') {
             // Получаем организацию пользователя
-            $organization_id = $this->organizations->get_base_organization_id(['user_id' => $this->user->id]);
+            $organization_id = $this->request->get('organization_id', 'integer') ?: $this->organizations->get_base_organization_id(['user_id' => $this->user->id]);
             $organization = $this->organizations->get_organization($organization_id);
 
             // Данные клиента
@@ -189,8 +252,11 @@ class UserDocsView extends View {
             }
 
             $this->design->assignBulk($service);
-
-            $tpl = 'pdf/preview/soglasie-recurrent.tpl';
+            if($organization_id == $this->organizations::FASTFINANCE_ID) {
+                $tpl = 'pdf/fastfinance/soglasie_recurrent.tpl';
+            } else {
+                $tpl = 'pdf/preview/soglasie-recurrent.tpl';
+            }
 
             $this->pdf->create(
                 $this->design->fetch($tpl),
@@ -216,6 +282,7 @@ class UserDocsView extends View {
 
             $credit_doctor = $this->credit_doctor->getCreditDoctor((int)$last_order['amount'], empty($credits_history));
             $this->design->assign('credit_doctor_amount', $this->credit_doctor->numberToWords($credit_doctor->price));
+            $this->design->assign('amount', $credit_doctor->price);
 
             $loan_amount = floatval($this->request->get('loan_amount'));
             $credit_doctor = (bool)$this->request->get('credit_doctor');
@@ -223,7 +290,7 @@ class UserDocsView extends View {
             $this->design->assignBulk($service);
 
             $this->pdf->create(
-                $this->design->fetch('pdf/application_for_additional_services.tpl'),
+                $this->design->fetch('pdf/contract_credit_doctor-new.tpl'),
                 'Заявление о предоставлении дополнительных услуг (работ, товаров)',
                 'Заявление о доп услугах.pdf'
             );
@@ -231,22 +298,22 @@ class UserDocsView extends View {
             exit;
         }
 
-        // Получение документа по Звездный оракул
-        if ($this->request->get('action') == 'additional_service_star_oracle') {
+        // Получение документа по ТВ Медицинский
+        if ($this->request->get('action') == 'additional_service_tv_medical') {
             if ((!$user_id = $this->request->get('user_id', 'integer'))) {
                 $user_id = $this->user->id;
             }
 
-
-            $this->design->assign('star_oracle_amount', 'триста пятьдесят');
+            $this->design->assign('tv_medical_amount', 'триста пятьдесят');
+            $this->design->assign('amount', '350');
 
             $service = $this->docs->getMicroZaimParamsByUser($this->user, 0);
             $this->design->assignBulk($service);
 
             $this->pdf->create(
-                $this->design->fetch('pdf/application_for_additional_services_star_oracle.tpl'),
+                $this->design->fetch('pdf/contract_tv_medical.tpl'),
                 'Заявление о предоставлении дополнительных услуг (работ, товаров)',
-                'Заявление о доп услуге ЗО.pdf'
+                'Заявление о доп услуге ТВ Медицинский.pdf'
             );
             exit;
         }
@@ -303,7 +370,8 @@ class UserDocsView extends View {
 
         // Арбитражное соглашение
         if ($this->request->get('action') === 'arbitration_agreement') {
-            $this->docs->getArbitrationAgreementPdf($this->user, $this->request->get('order_id'));
+            $crossOrgId = $this->request->get('cross_organization_id', 'integer') ?: null;
+            $this->docs->getArbitrationAgreementPdf($this->user, $this->request->get('order_id'), null, false, $crossOrgId);
             
 
             exit;
@@ -311,14 +379,16 @@ class UserDocsView extends View {
 
         // АСП соглашение
         if ($this->request->get('action') === 'asp_agreement') {
-            $this->docs->getAspAgreementPdf($this->user, $this->request->get('order_id'));
+            $crossOrgId = $this->request->get('cross_organization_id', 'integer') ?: null;
+            $this->docs->getAspAgreementPdf($this->user, $this->request->get('order_id'), null, false, $crossOrgId);
             
             exit;
         }
 
         // Соглашение об акцепте оферты
         if ($this->request->get('action') === 'offer_agreement') {
-            $this->docs->getOfferAgreementPdf($this->user, $this->request->get('order_id'));
+            $crossOrgId = $this->request->get('cross_organization_id', 'integer') ?: null;
+            $this->docs->getOfferAgreementPdf($this->user, $this->request->get('order_id'), null, false, $crossOrgId);
             
             exit;
         }
@@ -340,7 +410,8 @@ class UserDocsView extends View {
 
         // Оферта о заключении арбитражного соглашения от цессионария
         if ($this->request->get('action') === 'offer_arbitration_cessionary') {
-            $this->docs->getOfferArbitrationCessionaryPdf($this->user, $this->request->get('order_id'));
+            $crossOrgId = $this->request->get('cross_organization_id', 'integer') ?: null;
+            $this->docs->getOfferArbitrationCessionaryPdf($this->user, $this->request->get('order_id'), null, false, $crossOrgId);
             
             exit;
         }
@@ -404,8 +475,11 @@ class UserDocsView extends View {
                 Documents::CREDIT_DOCTOR_POLICY,
                 Documents::ORDER_FOR_EXECUTION_CREDIT_DOCTOR,
                 Documents::ORDER_FOR_EXECUTION_STAR_ORACLE,
+                Documents::ORDER_FOR_EXECUTION_TV_MEDICAL,
                 Documents::CONTRACT_USER_CREDIT_DOCTOR,
                 Documents::CONTRACT_STAR_ORACLE,
+                Documents::CONTRACT_TV_MEDICAL,
+                Documents::CONTRACT_MULTIPOLIS,
                 Documents::STAR_ORACLE_POLICY,
                 Documents::DOC_MULTIPOLIS,
                 Documents::ACCEPT_TELEMEDICINE,
@@ -465,10 +539,29 @@ class UserDocsView extends View {
             return ($first_timestamp < $second_timestamp) ? 1 : -1;
         });
 
-        if($this->user->uid && empty($order_docs)) {
-            $get_contract_bki = $this->soap->get_contract_bki_base64($this->user->uid, $this->user->sms);
-            $doc_bki = $this->config->root_url.'/files/contracts/'.$this->documents->save_pdf($get_contract_bki[0]->{'ФайлBase64'}, $this->user->uid, 'BKI');
-            
+        // Синхронизируем согласие БКИ перед проверкой
+        $this->axi->syncBkiConsent($this->user->id);
+
+        $bkiConsentRaw = $this->user_data->read($this->user->id, UserData::BKI_CONSENT);
+        $bkiConsentArr = json_decode((string) $bkiConsentRaw, true);
+        $hasBkiConsent = is_array($bkiConsentArr) && !empty($bkiConsentArr['consent']);
+
+        // Обратная совместимость: старое значение "1" (не JSON)
+        if (!$hasBkiConsent && !empty($bkiConsentRaw) && !is_array($bkiConsentArr)) {
+            $hasBkiConsent = true;
+        }
+
+        if ($hasBkiConsent) {
+            $lastOrderForBki = $this->orders->get_last_order($this->user->id);
+            $orgId = !empty($lastOrderForBki->organization_id)
+                ? $lastOrderForBki->organization_id
+                : $this->organizations->get_base_organization_id(['user_id' => $this->user->id]);
+
+            $bkiAction = ((int) $orgId === Organizations::FINLAB_ID)
+                ? 'soglasie_na_bki_finlab'
+                : 'soglasie_na_bki';
+
+            $doc_bki = $this->config->root_url . '/user/docs?action=' . $bkiAction;
             $this->design->assign('doc_bki', $doc_bki);
         }
 
@@ -509,7 +602,8 @@ class UserDocsView extends View {
         $is_pcd_enabled = (int)$this->user_data->read($this->user->id, 'IS_ENABLED_PENALTY_CD') ?? 0;
 
         if (array_filter($crm_docs, fn($doc) => $doc->type === Documents::PENALTY_CREDIT_DOCTOR) || ($is_pcd_enabled == 1)){
-            $penaltyCreditDoctor = $this->settings->url_findzen.'/auth.php?fio=Иванов_Иван&app_source=like&external_id='. $this->user->uid;
+            $isSafeFlow = $this->users->isSafetyFlow($this->user);
+            $penaltyCreditDoctor = $this->settings->url_findzen.'/auth.php?fio=Иванов_Иван&app_source=boostra&external_id='. $this->user->uid . '&safe_flow=' . $isSafeFlow;
             $this->design->assign('penaltyCreditDoctorLink', $penaltyCreditDoctor);
         }
 

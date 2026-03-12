@@ -7,7 +7,7 @@
     <script src="design/{$settings->theme}/js/jquery.magnific-popup.min.js" type="text/javascript"></script>
     <script src="design/{$settings->theme}/js/jquery.validate.min.js?v=2.10" type="text/javascript"></script>
     <script src="design/{$settings->theme}/js/worksheet.validate.js?v=1.75" type="text/javascript"></script>
-    <script src="design/{$settings->theme}/js/loan.app.js?v=1.79" type="text/javascript"></script>
+    <script src="design/{$settings->theme}/js/loan.app.js?v=1.81" type="text/javascript"></script>
 {/capture}
 
 <section id="worksheet">
@@ -72,7 +72,7 @@
                             
                             <div class="clearfix">
 								{if $user_modal_phone}
-									<input type="hidden" class="js-input-phone ym-record-keys" name="phone" value="{$user_modal_phone}" />
+									<input type="hidden" class="js-input-phone ym-record-keys" name="phone" autocomplete="tel" inputmode="tel" value="{$user_modal_phone}" />
 								{else}
 									<label class="js-phone-block {if $error=='empty_phone'}error{/if}">
 										<input class="js-input-phone ym-record-keys" type="tel" name="phone" id="phone" placeholder="" value="{$phone|escape}" required="" aria-required="true">
@@ -121,7 +121,7 @@
                                 
     
                                 <label class="js-code-block {if $error=='error_code'}error{/if}" >
-        							<input autofocus autocomplete="one-time-code" class="js-input-code" type="text" name="code" id="code" placeholder="" value="" required="" aria-required="true">
+        							<input autofocus inputmode="numeric" autocomplete="one-time-code" class="js-input-code" type="text" name="code" id="code" placeholder="" value="" required="" aria-required="true">
         							<small class="err error" id="err-code">{if $error=='error_code'}Код не верный{/if}</small>
         							<span class="floating-label">Код из СМС</span>
         						</label>

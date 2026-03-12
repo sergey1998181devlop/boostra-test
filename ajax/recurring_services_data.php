@@ -327,6 +327,7 @@ class ProlongationRecurrentProcess extends Simpla
                     'payment_method' => $this->orders::PAYMENT_METHOD_B2P,
                     'payment_id' => (int)$payment_id,
                     'organization_id' => $payment_data['organization_id'],
+                    'action_type' => $this->payment_data['action_type'] ?? '',
                 ];
 
                 $concierge_id = $this->multipolis->addItem($concierge_data);
@@ -364,6 +365,7 @@ class ProlongationRecurrentProcess extends Simpla
                     'payment_method' => $this->orders::PAYMENT_METHOD_B2P,
                     'payment_id' => (int)$payment_id,
                     'organization_id' => $payment_data['organization_id'],
+                    'action_type' => $this->payment_data['action_type'] ?? '',
                 ];
 
                 $vita_med_id = $this->tv_medical->addPayment($vita_med_data);

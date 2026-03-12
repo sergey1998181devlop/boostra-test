@@ -27,6 +27,7 @@ class RestApiPartner extends Simpla
         Scorings::TYPE_REPORT,
         Scorings::TYPE_UPRID,
         Scorings::TYPE_BLACKLIST,
+        Scorings::TYPE_TERRORIST_CHECK,
     ];
 
     /**
@@ -153,9 +154,9 @@ class RestApiPartner extends Simpla
             $this->open_search_logger->create('Найдено несколько совпадений по разным данным', [
                 'phone_mobile' => $phone_mobile,
                 'passport_serial' => $passport_serial,
-                'userInDbByPhone' => !empty($userInDbByPhone) ? $userInDbByPhone->id : null,
-                'usersInDbByPassport' => !empty($usersInDbByPassport) ? $usersInDbByPassport->id : null,
-                'soapUserUidByPhoneResult' => !empty($soapUserUidByPhoneResult) ? $soapUserUidByPhoneResult->uid : null,
+                'userInDbByPhone' => !empty($userInDbByPhone),
+                'usersInDbByPassport' => !empty($usersInDbByPassport),
+                'soapUserUidByPhoneResult' => !empty($soapUserUidByPhoneResult),
                 'request_uid' => PartnerApi::$request_uid,
             ], self::LOG_TAG, \OpenSearchLogger::LOG_LEVEL_INFO, 'ping3');
             return $this->returnCheckUserResponse(self::CHECK_USER_RESPONSE_CANCEL, $data);
@@ -794,6 +795,12 @@ class RestApiPartner extends Simpla
             return $this->returnAddOrderResponse((int)$orderId);
         }
 
+        $this->open_search_logger->create('Успешное создание новой заявки в AddOrder', [
+            'order_id' => $orderId,
+            'new_order_data' => $data,
+            'request_uid' => PartnerApi::$request_uid,
+        ], self::LOG_TAG, \OpenSearchLogger::LOG_LEVEL_INFO, 'ping3');
+
         $this->order_data->set((int)$orderId, $this->order_data::ORDER_FROM_PARTNER, $partner);
         $order = $this->orders->get_order($orderId);
 
@@ -961,8 +968,7 @@ class RestApiPartner extends Simpla
 
         $this->order_data->set($orderId, $this->order_data::USER_AMOUNT, $user->first_loan_amount ?: $recommendationAmount);
 
-        $organization_id = $this->organizations->get_base_organization_id();
-        $organization = $this->organizations->get_organization($organization_id);
+        $organization = $this->organizations->get_organization($order->organization_id);
         $order_1c = [
             'УИД' => $order->order_uid,
             'ДатаЗаявки' => date('YmdHis', strtotime($order->date)),

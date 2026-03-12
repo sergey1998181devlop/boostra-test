@@ -39,6 +39,7 @@ class Documents extends Simpla
     public const OFFER_FAST_APPROVAL_SERVICE = 'OFFER_FAST_APPROVAL_SERVICE';
     public const ARBITRATION_AGREEMENT = 'ARBITRATION_AGREEMENT';
     public const ASP_AGREEMENT = 'ASP_AGREEMENT';
+    public const ASP_AGREEMENT_FASTFINANCE = 'ASP_AGREEMENT_FASTFINANCE';
     public const PENALTY_CREDIT_DOCTOR = 'PENALTY_CREDIT_DOCTOR';
 
     public const OFFER_AGREEMENT = 'OFFER_AGREEMENT';
@@ -106,6 +107,9 @@ class Documents extends Simpla
 
     public const CONTRACT_STAR_ORACLE = 'CONTRACT_STAR_ORACLE';
 
+    public const CONTRACT_TV_MEDICAL = 'CONTRACT_TV_MEDICAL';
+    public const ORDER_FOR_EXECUTION_TV_MEDICAL = 'ORDER_FOR_EXECUTION_TV_MEDICAL';
+
     /**
      * Поручение на перечисление микрозайма
      * Для заявок ИП и ООО
@@ -113,6 +117,7 @@ class Documents extends Simpla
     public const PREVIEW_PORUCHENIE_NA_PERECHISLENIE_MIKROZAJMA = 'PREVIEW_PORUCHENIE_NA_PERECHISLENIE_MIKROZAJMA';
 
     public const OFFER_ARBITRATION_CESSIONARY = 'OFFER_ARBITRATION_CESSIONARY';
+    public const OFFER_ARBITRATION = 'OFFER_ARBITRATION'; // Соглашение о подписании молчанием
 
     /**
      * @var array $documentParams
@@ -954,9 +959,16 @@ class Documents extends Simpla
         return $this->get_documents($filter);
     }
 
-    public function save_pdf(string $fileBase64, string $baseFilename, string $type): string
+    /**
+     * @param string $fileBase64
+     * @param string $baseFilename
+     * @param string $type
+     * @param bool $rewrite
+     * @return string
+     */
+    public function save_pdf(string $fileBase64, string $baseFilename, string $type, bool $rewrite = false): string
     {
-        if (file_exists($this->config->root_dir . "files/contracts/{$type}/{$baseFilename}.pdf")) {
+        if (!$rewrite && file_exists($this->config->root_dir . "files/contracts/{$type}/{$baseFilename}.pdf")) {
             return "{$type}/{$baseFilename}.pdf";
         }
 

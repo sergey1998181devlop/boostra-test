@@ -158,7 +158,7 @@
         {else}
             <input name="check_user" type="hidden" value="1" />
             <div class="input-inline input-control">
-                <input name="phone" type="tel" value="" />
+                <input name="phone" autocomplete="tel" inputmode="tel" type="tel" value="" />
                 <small>Телефон</small>
             </div>
         {/if}

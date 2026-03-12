@@ -8,7 +8,14 @@
         border-radius: 5px;
         overflow: hidden;
         max-width: 512px;
-        width: fit-content;
+        width: 100%;
+        box-sizing: border-box;
+    }
+
+    #game canvas {
+        max-width: 100%;
+        height: auto;
+        display: block;
     }
 </style>
 

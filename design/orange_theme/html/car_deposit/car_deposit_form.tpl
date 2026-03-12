@@ -9,7 +9,7 @@
             <input  name="phone" type="tel" class="form-control max-w-sm" placeholder="Номер телефона" required>
         </div>
         <div class="mb-3">
-            <input name="email" type="email" class="form-control max-w-sm" placeholder="E-mail (необязательно)">
+            <input name="email" autocomplete="email" type="email" class="form-control max-w-sm" placeholder="E-mail (необязательно)">
         </div>
         <div class="mb-3">
             <input name="car_number" type="text" class="form-control max-w-sm" placeholder="Гос. номер тс" required>

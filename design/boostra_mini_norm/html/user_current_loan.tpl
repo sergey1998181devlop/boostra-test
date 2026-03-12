@@ -13,58 +13,6 @@
         display: none;
     }
 
-    .money-have {
-        margin: 0!important;
-    }
-
-    #countdown-container {
-        display: flex;
-        /*justify-content: center;*/
-        align-items: center;
-        /*margin-top: 20px;*/
-    }
-    .countdown-item {
-        text-align: center;
-        margin: 0 15px;
-    }
-    .countdown-item span {
-        display: block;
-        font-size: 48px;
-        color: #333;
-        font-weight: 600;
-    }
-
-    .countdown-item p {
-        margin: 0!important;
-        font-size: 18px;
-        color: #666;
-    }
-
-    #separator {
-        font-size: 48px;
-        color: #333;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        margin-bottom: 35px;
-    }
-
-    #quick-approval-modal {
-        background: #fff;
-        max-width: 600px;
-        border-radius: 20px;
-        margin: 0 auto;
-        padding: 20px;
-    }
-
-    #quick-approval-modal .modal-body {
-        margin: 20px 0;
-    }
-
-    #quick-approval-modal .modal-title {
-        font-weight: 700;
-    }
-
     .payment-block-error {
         display: none;
         background: #fff url('../img/payment_error.png') center no-repeat;
@@ -260,13 +208,10 @@
         {/foreach}
     {/if}
 
+{/if}
 
-{elseif !in_array($user->balance->buyer, ['Правовая защита', 'БИКЭШ']) && $user->balance->zaim_number =='Нет открытых договоров'}
-    <div class="about">
-{*            <div>Открытых займов не найдено</div>*}
-    </div>
+{if $can_show_new_order_form}
     {loan_form cards=$cards}
 {/if}
 
 {include  file='tv_medical_modals.tpl'}
-

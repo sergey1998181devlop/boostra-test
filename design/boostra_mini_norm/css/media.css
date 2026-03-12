@@ -303,7 +303,7 @@
     }
 
     .remove_account_block {
-        margin-bottom: 1rem;
+        margin: 15px 0 0px 0;
     }
 }
 @media (max-width: 799px) {
@@ -317,6 +317,12 @@
         right: 20px!important;
     }
     .faktstreet-close {
+        right: 20px!important;
+    }
+    .reghousing-close {
+        right: 20px!important;
+    }
+    .fakthousing-close {
         right: 20px!important;
     }
 }
@@ -941,7 +947,7 @@
         text-align: center;
     }
 
-    footer .footer-left, .footer__blocked_adv_sms {
+    footer .footer-left {
         display: none;
     }
 }

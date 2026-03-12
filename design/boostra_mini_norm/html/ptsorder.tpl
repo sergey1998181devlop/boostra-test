@@ -50,10 +50,10 @@
 							<input type="text" name="birthday" placeholder="Дата рождения" required=""/>
 						</label>
 						<label>
-							<input type="tel" name="phone" placeholder="Телефон" required=""/>
+							<input type="tel" name="phone" autocomplete="tel" inputmode="tel" placeholder="Телефон" required=""/>
 						</label>
 						<label>
-							<input type="text" name="email" placeholder="Электронная почта" required=""/>
+							<input type="text" autocomplete="email" name="email" placeholder="Электронная почта" required=""/>
 						</label>
 						<div class="next">
 							<span class="button big">Далее</span>

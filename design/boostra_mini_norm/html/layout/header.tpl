@@ -4,15 +4,17 @@
             <div class="top_menu__left_section">
                 <div class="top_menu__logo">
                     <a href="{$config->root_url}">
-                        <img src="/design/boostra_mini_norm/assets/image/logo.png" alt="{$settings->site_name}" />
+                        <img src="/design/boostra/img/svg/boostra-logo.svg" alt="{$settings->site_name}" />
                     </a>
+                    <p class="logo-additional-text-delimiter">/</p>
+                    <p class="logo-additional-text" href="">Каталог финансовых <br> продуктов</p>
                 </div>
                 <div class="top_menu__list_items hidden-mobile">
                     {*<div>
                         <a href="/info#demands">Условия</a>
                     </div>*}
                     <div>
-                        <a href="/contacts">Контакты</a>
+                        <a href="/contacts">Связаться с нами</a>
                     </div>
 
                     {if $smarty.server.REQUEST_URI == '/about/company'}

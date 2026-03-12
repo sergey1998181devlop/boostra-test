@@ -9,34 +9,20 @@
 
         <div class="sbp-notification">
             <div class="sbp-notification-content">
-                <div class="sbp-notification-title">Сейчас получение займа доступно только через СБП</div>
+                <div class="sbp-notification-title">Для получения займа, пожалуйста, укажите свой банк</div>
                 <div class="sbp-notification-text">
-                    Выберите банк, в который хотите получить деньги, а мы моментально переведем их по номеру телефона.
+                    Убедитесь, что в банковском приложении включена функция "Разрешить входящие переводы по СБП". Не обязательно устанавливать банк основным.
                 </div>
             </div>
         </div>
 
         <div class="sbp-method-selection">
-            <!-- Выпадающий список способа получения -->
-            <div class="sbp-payment-method-dropdown">
-                <div class="sbp-payment-selected" id="sbp-payment-selected">
-                    <div class="sbp-payment-icon">
-                        <img src="design/boostra_mini_norm/img/sbp_logo.png" alt="СБП" class="sbp-logo">
-                    </div>
-                    <span class="sbp-payment-text">Система Быстрых Платежей</span>
-                    <svg class="sbp-payment-arrow" width="12" height="8" viewBox="0 0 12 8" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        <path d="M1 1L6 6L11 1" stroke="#666" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                    </svg>
+            <!-- Статический способ получения СБП -->
+            <div class="sbp-payment-method-static">
+                <div class="sbp-payment-icon">
+                    <img src="design/boostra_mini_norm/img/sbp_logo.png" alt="СБП" class="sbp-logo">
                 </div>
-
-                <div class="sbp-payment-dropdown-list" id="sbp-payment-dropdown-list" style="display: none;">
-                    <div class="sbp-payment-option selected" data-payment-type="sbp">
-                        <div class="sbp-payment-option-icon">
-                            <img src="design/boostra_mini_norm/img/sbp_logo.png" alt="СБП" class="sbp-logo">
-                        </div>
-                        <span class="sbp-payment-option-text">Система Быстрых Платежей</span>
-                    </div>
-                </div>
+                <span class="sbp-payment-text">Система Быстрых Платежей</span>
             </div>
 
             <!-- Выпадающий список банков СБП -->
@@ -154,8 +140,8 @@
     }
 
     .sbp-notification {
-        background: #fff8e1;
-        border: 1px solid #ffc107;
+        background: #98FB98;
+        border: 1px solid #006400;
         border-radius: 12px;
         padding: 16px;
         margin-bottom: 24px;
@@ -164,13 +150,13 @@
 
     .sbp-notification-title {
         font-weight: 600;
-        color: #e65100;
+        color: black;
         margin-bottom: 8px;
         font-size: 14px;
     }
 
     .sbp-notification-text {
-        color: #e65100;
+        color: black;
         font-size: 13px;
         line-height: 1.4;
     }
@@ -179,84 +165,14 @@
         margin-bottom: 12px;
     }
 
-    .sbp-payment-method-dropdown {
-        position: relative;
-        margin-bottom: 16px;
-    }
-
-    .sbp-payment-selected {
+    .sbp-payment-method-static {
         display: flex;
         align-items: center;
         padding: 16px;
         background: white;
         border: 2px solid #e0e0e0;
         border-radius: 12px;
-        cursor: pointer;
-        transition: all 0.2s ease;
-    }
-
-    .sbp-payment-selected:hover {
-        border-color: #2196f3;
-        background-color: #f3f8ff;
-    }
-
-    .sbp-payment-selected.active {
-        border-color: #2196f3;
-        background-color: #f3f8ff;
-    }
-
-    .sbp-payment-selected.active .sbp-payment-arrow {
-        transform: rotate(180deg);
-    }
-
-    .sbp-payment-arrow {
-        margin-left: 12px;
-        transition: transform 0.2s ease;
-    }
-
-    .sbp-payment-dropdown-list {
-        position: absolute;
-        top: 100%;
-        left: 0;
-        right: 0;
-        background: white;
-        border: 2px solid #2196f3;
-        border-radius: 12px;
-        margin-top: 4px;
-        z-index: 1000;
-        box-shadow: 0 4px 12px rgba(33,150,243,0.15);
-        overflow: hidden;
-    }
-
-    .sbp-payment-option {
-        display: flex;
-        align-items: center;
-        padding: 12px 16px;
-        cursor: pointer;
-        transition: all 0.2s ease;
-    }
-
-    .sbp-payment-option:hover {
-        background-color: #f3f8ff;
-    }
-
-    .sbp-payment-option.selected {
-        background-color: #2196f3;
-        color: white;
-    }
-
-    .sbp-payment-option-icon {
-        width: 50px;
-        height: 20px;
-        margin-right: 12px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-    }
-
-    .sbp-payment-option-text {
-        font-size: 14px;
-        font-weight: 500;
+        margin-bottom: 16px;
     }
 
     .sbp-payment-icon {
@@ -491,7 +407,6 @@
         background: #fff5f5;
         border: 1px solid #ffcdd2;
         border-radius: 12px;
-        margin-bottom: 24px;
         text-align: left;
     }
 
@@ -527,6 +442,7 @@
     /* Кнопка продолжить */
     .sbp-continue-section {
         text-align: center;
+        margin-top: 24px;
     }
 
     .sbp-continue-button {
@@ -790,27 +706,7 @@
 
         let selectedBankId = null;
         let selectedBankTitle = null;
-        let selectedPaymentType = 'sbp'; // По умолчанию СБП
-
-        // Обработка клика по выпадающему списку способа получения
-        $('#sbp-payment-selected').click(function() {
-            console.log('Payment method dropdown clicked');
-            $(this).toggleClass('active');
-            $('#sbp-payment-dropdown-list').slideToggle(200);
-        });
-
-        // Обработка выбора способа получения
-        $('.sbp-payment-option').click(function() {
-            $('.sbp-payment-option').removeClass('selected');
-            $(this).addClass('selected');
-
-            selectedPaymentType = $(this).data('payment-type');
-
-            $('#sbp-payment-selected').removeClass('active');
-            $('#sbp-payment-dropdown-list').slideUp(200);
-
-            $('#sbp-banks-container').show();
-        });
+        let selectedPaymentType = 'sbp'; // Всегда СБП
 
         // Обработка клика по выпадающему списку банков
         $('#sbp-bank-selected').click(function() {
@@ -997,11 +893,6 @@
 
         // Закрытие списков при клике вне них
         $(document).click(function(e) {
-            if (!$(e.target).closest('.sbp-payment-method-dropdown').length) {
-                $('#sbp-payment-selected').removeClass('active');
-                $('#sbp-payment-dropdown-list').slideUp(200);
-            }
-
             if (!$(e.target).closest('.sbp-bank-dropdown').length) {
                 $('#sbp-bank-selected').removeClass('active');
                 $('#sbp-bank-dropdown-list').slideUp(200);
@@ -1090,9 +981,6 @@
         // Инициализация: показываем контейнер с банками СБП по умолчанию
         $('#sbp-banks-container').show();
 
-        // Устанавливаем по умолчанию выбранный способ получения
-        $('.sbp-payment-option[data-payment-type="sbp"]').addClass('selected');
-
         // Специальное решение для Android - гарантированная активация скролла
         if (isAndroid) {
             // Добавляем обработчики для решения проблемы с клавиатурой
@@ -1167,4 +1055,3 @@
     });
     {/literal}
 </script>
-

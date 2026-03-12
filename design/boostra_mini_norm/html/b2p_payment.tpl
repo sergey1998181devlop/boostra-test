@@ -253,7 +253,10 @@ function PaymentApp()
 
         if (amount > 0)
         {
-            if ($('[name=card_id]:checked').length > 0)
+            if (
+                app.payment_method === 'sbp'
+                || $('[name=card_id]:checked').length > 0
+            )
             {
                 $('.payment-block-title').removeClass('error');
                 $('.payment-block').addClass('loading');
@@ -490,17 +493,19 @@ $(function(){
                     <p class="payment-block-title">Выберите карту для оплаты</p>
 
                     <ul class="payment-card-list">
-                        {foreach $cards as $card}
-                            <li>
-                                <input type="radio" name="card_id" id="card_{$card->id}" value="{$card->id}" {if !empty($card_id) && $card->id == $card_id}checked="true"{/if} {if empty($card_id) && $card@first}checked="true"{/if} />
-                                {*                        <input type="radio" name="card_id" id="card_{$card->id}" value="{$card->id}" {if $basicCard == $card->id}checked="true"{/if} />*}
-                                <label for="card_{$card->id}">
-                                    <strong>{$card->pan}</strong>
-                                    <span>{$card->expdate}</span>
-                                </label>
-                                <br />
-                            </li>
-                        {/foreach}
+                        {if !$friend_restricted_mode}
+                            {foreach $cards as $card}
+                                <li>
+                                    <input type="radio" name="card_id" id="card_{$card->id}" value="{$card->id}" {if !empty($card_id) && $card->id == $card_id}checked="true"{/if} {if empty($card_id) && $card@first}checked="true"{/if} />
+                                    {*                        <input type="radio" name="card_id" id="card_{$card->id}" value="{$card->id}" {if $basicCard == $card->id}checked="true"{/if} />*}
+                                    <label for="card_{$card->id}">
+                                        <strong>{$card->pan}</strong>
+                                        <span>{$card->expdate}</span>
+                                    </label>
+                                    <br />
+                                </li>
+                            {/foreach}
+                        {/if}
                         <li>
                             <input type="radio" id="card_other" name="card_id" value="other" {if !$cards}checked="true"{/if} />
                             <label for="card_other"><strong>Другая карта</strong></label>
@@ -576,8 +581,15 @@ $(function(){
                     {/if}
                 </div>
 
-                <div class="payment-amount" id="paymentAmount">
-                    {if $discount > 0 && $amount > $discount}
+                <div class="payment-amount" id="paymentAmount" style="text-align: center;">
+                    {* Новогодняя акция *}
+                    {if isset($newyearPayment) && $newyearPayment && $amount > 0}
+                        <div style="margin-bottom: 10px;">
+                            <div style="font-size: 2rem; font-weight: bold; color: #2CB82C; margin-bottom: 5px;">
+                                {$amount|number_format:0:",":" "} руб
+                            </div>
+                        </div>
+                    {elseif $discount > 0 && $amount > $discount}
                         <s>{$amount} руб</s>
                         <br>
                         {$amount - $discount} руб
@@ -586,7 +598,7 @@ $(function(){
                     {/if}
 
                     {if $error}
-                        <div class="error" style="font-size:1rem;color:#f11;">
+                        <div class="error" style="font-size:1rem;color:#f11; margin-top: 10px;">
                             {$error}
                         </div>
                     {/if}
@@ -646,7 +658,16 @@ $(function(){
                     </p>
                     <button  class="button big button-inverse cancel_payment" type="button">Отменить</button>
                     <a href="javascript:void(0)" class="button big" id="confirm_payment" type="button">Оплатить</a>
+
                 </div>
+                {if !$friend_restricted_mode}
+                    <div class="friend-payment-section">
+                        <div class="friend-payment-divider">
+                            <span>или</span>
+                        </div>
+                            {include file='friend_payment.tpl'}
+                    </div>
+                {/if}
 
             </div>
 

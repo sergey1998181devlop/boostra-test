@@ -29,7 +29,7 @@
                         {foreach $extra_docs as $loan => $data}
                             {if $data['hidden']}{continue}{/if}
 
-                            {if $data['crm']|@count > 0}
+                            {if $data['crm']|@count > 0 && (($user_data['show_order_information']) or (isset($zaim_date) && ((time() - strtotime($zaim_date)) / 3600) > 24))}
                                 <div class="loan_docs" {if !$current_loan || $current_loan != $loan}data-hidden="1"{/if}>
                                     <h2 class="js-toggle-loan-docs"><ins>{$loan}{if $data['date']} от {$data['date']}{/if}</ins> <span>Нажмите, чтобы раскрыть</span></h2>
                                     <div class="loan_docs_list">

@@ -128,6 +128,7 @@ spl_autoload_register(function ($className) {
  * @property Contracts $contracts
  * @property Changelogs $changelogs
  * @property Organizations $organizations
+ * @property OrganizationsData $organizations_data
  * @property Installments $installments
  * @property OrderData $order_data
  * @property LeadPrice $leadPrice
@@ -175,6 +176,10 @@ spl_autoload_register(function ($className) {
  * @property OpenSearchLogger $open_search_logger
  * @property OverdueSliderService $overdue_slider_service
  * @property Ping3Data $ping3_data
+ * @property Caches $caches
+ * @property VirtualCard $virtualCard
+ * @property Rcl $rcl
+ * @property FakeOffer $fake_offer
  */
 class Simpla
 {
@@ -298,6 +303,7 @@ class Simpla
         'TBankDatabaseService' => TBankDatabaseService::class,
         'TBankValidateService' => TBankValidateService::class,
         'TBankLoggingService' => TBankLoggingService::class,
+        'organizations_data' => OrganizationsData::class,
         'self_dec' => 'SelfDec',
         'dop_license' => DOPLicense::class,
         'autoconfirm' => 'Autoconfirm',
@@ -317,6 +323,9 @@ class Simpla
         'open_search_logger' => 'OpenSearchLogger',
         'overdue_slider_service' => OverdueSliderService::class,
         'ping3_data' => 'Ping3Data',
+        'caches' => 'Caches',
+        'rcl' => 'Rcl',
+        'fake_offer' => 'FakeOffer',
     ];
 
     // Созданные объекты

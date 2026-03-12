@@ -28,10 +28,26 @@ class UserAdditionalDocsView extends View
                         Documents::STAR_ORACLE_POLICY,
                         Documents::ORDER_FOR_EXECUTION_STAR_ORACLE,
                         Documents::ACCEPT_TELEMEDICINE,
+                        Documents::CONTRACT_TV_MEDICAL,
+                        Documents::ORDER_FOR_EXECUTION_TV_MEDICAL,
                         Documents::DOC_MULTIPOLIS,
+                        Documents::CONTRACT_MULTIPOLIS,
                     ],
                     'exclude_older_than_days' => $this->documents::COOLDOWN_DAYS
                 ]);
+
+                if (!empty($documents)) {
+                    $documents = DocsHelper::addSaleStamp($documents, [
+                        Documents::ACCEPT_TELEMEDICINE,
+                        Documents::CONTRACT_TV_MEDICAL,
+                        Documents::ORDER_FOR_EXECUTION_TV_MEDICAL
+                    ]);
+
+                    $documents = DocsHelper::addSaleStamp($documents, [
+                        Documents::DOC_MULTIPOLIS,
+                        Documents::CONTRACT_MULTIPOLIS
+                    ]);
+                }
 
                 if (!$show_docs && $order->status_1c === '6.Закрыт') {
                     continue;
@@ -49,8 +65,13 @@ class UserAdditionalDocsView extends View
             }
         }
 
+        $user_data = $this->user_data->readAll($this->user->id);
+        $user_balance = $this->users->get_user_balance($this->user->id);
+        $zaim_date = $user_balance->zaim_date;
+
+        $this->design->assign('user_data', $user_data);
         $this->design->assign('extra_docs', $extra_docs);
+        $this->design->assign('zaim_date', $zaim_date);
         return $this->design->fetch('user_additional_docs.tpl');
     }
-
 }

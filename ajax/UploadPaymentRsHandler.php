@@ -54,7 +54,11 @@ class UploadPaymentRsHandler extends Simpla
 
         $filePath = $file['tmp_name'];
         $fileName = basename($file['name']);
-        $fileKey = "payments_rs/$orderId/" . uniqid() . '_' . $fileName;
+
+        $extension = pathinfo($fileName, PATHINFO_EXTENSION);
+        $uniquePart = bin2hex(random_bytes(8));
+
+        $fileKey = "payments_rs/$orderId/" . $uniquePart . ($extension ? '.' . $extension : '');
 
         $this->db->query("
             SELECT id FROM __contracts WHERE order_id = ? AND number = ?
@@ -87,12 +91,20 @@ class UploadPaymentRsHandler extends Simpla
                 $this->sendResponse(['error' => 'Вы уже загружали файл по этому договору сегодня. Повторная загрузка невозможна.']);
             }
 
-            $this->db->query("
+            $insertOk = $this->db->query("
                 INSERT INTO __payments_rs (user_id, order_id, contract_id, name, attachment)
                 VALUES (?, ?, ?, ?, '')
             ", $userId, $orderId, $contractId, $fileName);
 
-            $paymentId = $this->db->insert_id();
+            if (!$insertOk) {
+                throw new Exception('DB INSERT __payments_rs failed');
+            }
+
+            $paymentId = (int)$this->db->insert_id();
+            if ($paymentId <= 0) {
+                throw new Exception('DB INSERT __payments_rs returned empty insert_id');
+            }
+
             $this->db->commit();
 
         } catch (Exception $e) {
@@ -108,17 +120,27 @@ class UploadPaymentRsHandler extends Simpla
                 );
             }
 
-            $this->sendResponse(['error' => 'Ошибка при сохранении файла: ' . $e->getMessage()], 500);
+            $this->sendResponse(['error' => 'Не удалось загрузить чек. Попробуйте позже.'], 500);
         }
 
         try {
             $this->fileStorageService->putFile($filePath, $fileKey);
 
-            $this->db->query("
+            $updateOk = $this->db->query("
                 UPDATE __payments_rs
                 SET attachment = ?
                 WHERE id = ?
             ", $fileKey, $paymentId);
+
+            if (!$updateOk) {
+                throw new Exception('DB UPDATE __payments_rs attachment failed');
+            }
+
+            if ((int)$this->db->affected_rows() < 1) {
+                throw new Exception('DB UPDATE __payments_rs affected_rows = 0');
+            }
+
+            $this->sendCommentTo1cOnUpload($orderId, $userId, $contractNumber, $fileKey);
 
             $this->sendResponse(['success' => true, 'file_key' => $fileKey], 200);
         } catch (Exception $e) {
@@ -135,8 +157,59 @@ class UploadPaymentRsHandler extends Simpla
                     'upload_payment_rs_errors.txt'
                 );
             }
+            $this->sendResponse(['error' => 'Не удалось загрузить чек. Попробуйте позже.'], 500);
+        }
+    }
 
-            $this->sendResponse(['error' => 'Ошибка при загрузке файла: ' . $e->getMessage()], 500);
+    /**
+     * Отправляет в 1С комментарий о загрузке чека клиентом
+     *
+     * @param int $orderId
+     * @param int $userId
+     * @param string $contractNumber
+     * @param string $attachmentKey
+     * @return void
+     */
+    private function sendCommentTo1cOnUpload(int $orderId, int $userId, string $contractNumber, string $attachmentKey): void
+    {
+        try {
+            $order = $this->orders->get_order($orderId);
+            if (!$order || empty($order->id_1c)) {
+                return;
+            }
+
+            $user = $this->users->get_user_uid($userId);
+            if (!$user || empty($user->uid)) {
+                return;
+            }
+
+            $created = date('Y-m-d H:i:s');
+            $dateTimeFormatted = date('d.m.Y H:i', strtotime($created));
+            $receiptLink = rtrim($this->config->back_url, '/') . '/ajax/view_payment_receipt.php?key=' . urlencode($attachmentKey);
+            $text = 'Клиент загрузил чек об оплате по договору ' . $contractNumber . ' ' . $dateTimeFormatted . ".\n"
+                . 'Ссылка на чек в CRM: ' . $receiptLink;
+
+            $systemManager = $this->managers->get_manager($this->managers::MANAGER_SYSTEM_ID);
+
+            $this->soap->sendComment([
+                'number' => $order->id_1c,
+                'user_uid' => $user->uid,
+                'created' => $created,
+                'text' => $text,
+                'manager' => $systemManager->name_1c,
+            ]);
+        } catch (Exception $e) {
+            $this->open_search_logger->create(
+                "Ошибка отправки комментария о загрузке чека в 1С",
+                [
+                    'order_id' => $orderId,
+                    'user_id' => $userId,
+                    'attachment_key' => $attachmentKey,
+                    'error' => $e->getMessage(),
+                ],
+                'upload_payment_rs_1c',
+                \OpenSearchLogger::LOG_LEVEL_ERROR
+            );
         }
     }
 

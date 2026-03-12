@@ -40,7 +40,7 @@ class ShortLinkRepository extends BaseRepository
             FROM {$this->model->table} sl
             LEFT JOIN __contracts c ON c.number COLLATE utf8mb3_general_ci = sl.zaim_number COLLATE utf8mb3_general_ci
             LEFT JOIN __orders o ON o.id = c.order_id
-            WHERE sl.link COLLATE utf8mb3_general_ci = ?
+            WHERE sl.link = ?
             GROUP BY sl.id, sl.user_id, sl.type, sl.zaim_number, sl.order_id,
                      c.id, c.number, o.id, o.1c_status, o.status",
             $code

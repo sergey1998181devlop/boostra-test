@@ -725,7 +725,7 @@ function LoginApp(config)
                                     invokeShopview('bonon-background-login:pk', window.login_partner_href)
                                     sendMetric('reachGoal', 'decline_monitoring_13')
                                     localStorage.removeItem('partnerRedirectEnabled')
-                                    window.location.href = window.login_partner_href + '&p=' + input.value.replace(/\D/g, '');
+                                    window.location.href = window.login_partner_href + window.href_append + '&p=' + input.value.replace(/\D/g, '');
                                 }
                                 break;
                         }

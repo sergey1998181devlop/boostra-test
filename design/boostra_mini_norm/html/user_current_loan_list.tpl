@@ -1,5 +1,5 @@
 <div class="panel">
-    {if $restricted_mode === 1 && (in_array($due_days, [1,2])) && $due_days !== 'not'}
+    {if $restricted_mode === 1 && !$friend_restricted_mode && (in_array($due_days, [1,2])) && $due_days !== 'not'}
         <div class="restrict_alert row" style="width: 400px;">
             <div class="col-md-2 hidden-xs">
                 <img src="design/{$settings->theme|escape}/img/restrict/alert1.png">
@@ -456,6 +456,7 @@
     <div class="user_info">
         <div class="user_info-banner">
             <h1>{$salute|escape}</h1>
+            {if !$friend_restricted_mode}
                 {if $view_partner_href}
                     <div class="item">
                         {include
@@ -478,6 +479,7 @@
                         ab_key=$ab_key}
                     </div>
                 {/if}
+            {/if}
         </div>
         <input type="hidden" value="{$full_payment_amount_done}" id="full_payment_amount_done">
     </div>
@@ -521,17 +523,6 @@
                 Уважаемые Клиенты, просим учитывать, что при осуществлении оплаты Договора займа по <strong>РЕКВИЗИТАМ</strong> с 29.12.2023 г. по 08.01.2024 г., денежные средства будут проведены в счет оплаты задолженности не ранее 09.01.2024 г.
             </div>
         {/if}
-
-        {*    {include 'motivation_banner.tpl'}*}
-
-        {if $loan_buyers && !$vsev_debt_notification_disabled}
-            {foreach $loan_buyers as $loan_buyer}
-                <p>Уведомляем Вас, что задолженность по договору займа № {$loan_buyer['loan_number']}
-                    от {$loan_buyer['loan_date']} г. передана {$loan_buyer['loan_buy_date']} по агентскому договору в
-                    пользу {$loan_buyer['loan_buyer_name']} с целью возврата просроченной задолженности.</p>
-            {/foreach}
-        {/if}
-
 
         {if !$collapse_rating_banner}
             {include 'credit_rating/credit_rating.tpl'}
@@ -594,7 +585,7 @@
         </div>
     {/if}
 
-    {if !in_array($user->order['status'], [8, 9, 10, 11, 13]) && $user->order['1c_status'] == '3.Одобрено' || true}
+    {if !in_array($user->order['status'], [8, 9, 10, 11, 13]) && $user->order['1c_status'] == '3.Одобрено'}
         {include 'promocode.tpl'}
         {assign var="last_digit" value=$user->order['id']|substr:-1}
         {assign var="search_pattern" value="i:`$last_digit`;"}
@@ -637,107 +628,6 @@
             </a>
         {/if}
 
-        {*
-        <div class="spoiler">
-            <button class="spoiler-button" type="button">
-                <i class="bi bi-plus-square"></i>
-                <i class="bi bi-dash-square"></i>
-                <span>Внимание!!!</span>
-            </button>
-            <div class="spoiler-content">
-                <div><strong>Уважаемые клиенты, пожалуйста, будьте внимательны и остерегайтесь мошенников!</strong>
-                    <br />Наша компания никогда не предлагает оплачивать обязательства переводом на карту. Если вы
-                    получаете такие предложения, это может быть попытка обмана. Оплата возможна безопасно:
-                </div>
-                <ul>
-                    <li>Из личного кабинета заемщика</li>
-                    <li>Из мобильного приложения</li>
-                    <li>В любом отделении Почты РФ (бесплатно)</li>
-                    <li>По реквизитам из договора займа (пункт № 8)</li>
-                </ul>
-                <div>Уважаемые клиенты, пожалуйста, при переводе по реквизитам из п. № 8 договора займа, обязательно
-                    указывайте номер договора, чтобы мы могли быстрее обработать ваш платеж!</div>
-            </div>
-        </div>
-        {literal}
-            <style>
-                .spoiler {
-                    margin: 30px 0 0 0;
-                    background: #fff;
-                    border-radius: 4px;
-                    transition: all .4s;
-                    border: 1px solid rgba(0,0,0,.2);
-                }
-                .spoiler .bi-dash-square, .spoiler.opened .bi-plus-square {
-                    display: none;
-                }
-                .spoiler.opened {
-                    background: #2196F3;
-                    border: 1px solid #2196F3;
-                }
-                .spoiler.opened .spoiler-button {
-                    color: #fff;
-                }
-                .spoiler.opened .bi-dash-square {
-                    display: block;
-                }
-                .spoiler:hover i.bi {
-                    opacity: 1;
-                }
-
-                .spoiler-content {
-                    display: none;
-                    overflow: hidden;
-                    border-top: 1px solid rgba(255,255,255,.5);
-                    padding: 20px;
-                    color: #fff;
-                    font-size: 14px;
-                    letter-spacing: 0.5px;
-                }
-
-                .spoiler-button {
-                    width: 100%;
-                    justify-content: flex-start;
-                    display: flex;
-                    align-items: center;
-                    box-shadow: none;
-                    gap: 10px;
-                    padding: 15px 20px;
-                    border: none;
-                    background: none;
-                    color: #222;
-                    cursor: pointer;
-                    border-radius: 5px;
-                    font-size: 20px;
-                    transition: all .1s;
-                }
-
-                .spoiler-button:hover {
-                    background: none;
-                    box-shadow: -5px 5px 1rem rgba(0, 0, 0, .2);
-                }
-
-                .spoiler-button i.bi {
-                    opacity: .5;
-                    transition: all .1s;
-                }
-            </style>
-            <script>
-                $(document).ready(function() {
-                    $(".spoiler-button").on("click", function() {
-                        const content = $(this).next(".spoiler-content");
-                        const wrap = $(this).parent('.spoiler');
-                        content.slideToggle(300);
-                        wrap.toggleClass('opened');
-                    });
-                });
-            </script>
-        {/literal}
-        *}
-        {if $user->order['status'] == 17}
-            {include './cooling-off/cooling-off.tpl'}
-        {/if}
-
     {include file='cards_list.tpl'}
 
     <div style="padding-top: 15px;">
@@ -745,7 +635,7 @@
     </div>
     <div style="padding-top: 15px;">
         <div class="rs-payment-button-wrapper"
-             style="position: relative; display: inline-block; padding-top: 15px;">
+             style="position: relative; display: inline-block;">
             <button class="payment_button button button-inverse btn-600 btn-fsize-14 btn-line-h-24" type="button" id="openRsModal"
                     >Я уже оплатил заём полностью
             </button>
@@ -1270,8 +1160,14 @@
                     <input type="checkbox" value="1" style="width: auto;" name="accept_asp_2" required >
                     <input type="hidden" name="order_id" value="{$user->order['id']}">
                     <input type="hidden" name="user_id" value="{$user->id}">
-                    <span>Принимаю арбитражное <u><a href="user/docs?action=arbitration_agreement&order_id={$user->order['id']}" style="font-weight: bolder" target="_blank"></u>соглашение</a></span> <br>
-                    <span>и <u><a href="user/docs?action=asp_agreement&order_id={$user->order['id']}" style="font-weight: bolder" target="_blank"></u>соглашение</a> об использовании аналога собственноручной подписи (АСП)</span>
+                    <span>Принимаю арбитражное <u><a href="user/docs?action=arbitration_agreement&order_id={$user->order['id']}" style="font-weight: bolder" target="_blank"></u>
+                        соглашение,</a></span> <br>
+                    <span><u><a href="user/docs?action=asp_agreement&order_id={$user->order['id']}" style="font-weight: bolder" target="_blank"></u>
+                        соглашение</a> об использовании аналога собственноручной подписи (АСП)</span>
+                    <br>
+                    <span><u><a href="user/docs?action=offer_arbitration&order_id={$user->order['id']}" style="font-weight: bolder" target="_blank">
+                        и соглашение о подписании молчанием
+                    </a></u></span>
                 </div>
                 <button class="button medium asp-sign-accept" onclick="asp_app.click_asp_accept('arbitr')">Принять</button>
                 <div class="wrapper_sms_code" style="display: none;">
@@ -1726,7 +1622,7 @@
 
         </script>
     </div>
-    {if !$blocked_adv_sms}
+    {if !$blocked_adv_sms && !$friend_restricted_mode}
         <div class="footer__blocked_adv_sms blocked_adv_sms">
             <button type="button" class="button btn-sm button-inverse btn-600 btn-fsize-14 btn-line-h-24">
                 Отписаться от рекламных смс
@@ -1805,11 +1701,11 @@
 </div>
 
 <div id="ajax_prolongation__content"></div>
-<script src="design/{$settings->theme}/js/files_data.app.js?v=1.70" type="text/javascript"></script>
+<script src="design/{$settings->theme}/js/files_data.app.js?v=1.73" type="text/javascript"></script>
 <script>
 
     </script>
-    <script src="design/{$settings->theme}/js/add_card.js?v=1.013" type="text/javascript"></script>
+    <script src="design/{$settings->theme}/js/add_card.js?v=1.014" type="text/javascript"></script>
 
 {capture_array key="footer_page_scripts"}
 {literal}
@@ -2290,5 +2186,4 @@
     {/foreach}
     <script src="design/{$settings->theme}/js/promo/collectionPromo.js"></script>
 {/if}
-<script src="design/{$settings->theme}/js/sbp.js?v=1.007"></script>
 <script src="design/{$settings->theme}/js/rs_payment.js?v=1.0"></script>

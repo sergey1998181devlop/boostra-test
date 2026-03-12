@@ -31,7 +31,7 @@
                                            {if !$selected_sbp_account_id && $card@first}checked="true"{/if} />
                                     <span></span>
                                 </div>
-                                {$card->pan}
+                                {$card->pan|regex_replace:'/^(\d{4})\d{2}(\*{6})(\d{4})$/':'$1********$3'}
                             </label>
                         </li>
                     {/if}
@@ -64,7 +64,7 @@
 
 {if !$user_has_sbp && !$selected_bank}
     <div style="text-align:center;margin:15px 0;">
-        <button class="button small green choose_bank" type="button" onclick="changeSbpBank()" style="font-size:0.9rem;">
+        <button class="button small choose_bank" type="button" onclick="changeSbpBank()" style="font-size:0.9rem;">
             Выбрать банк для выплаты
         </button>
     </div>

@@ -55,9 +55,8 @@ class OverdueSliderService extends Simpla
 
                 $overdueDay = OrderService::calculateDueDays($balance->payment_date);
 
-                // Если вернулся "not", или '-1' - значит не просрочен
-                // Выходим из функции
-                if (in_array($overdueDay, ['not', '-1'], true)) {
+                // Если нет просрочки — выходим
+                if ($overdueDay === null || $overdueDay <= 0) {
                     return;
                 }
             }
@@ -95,7 +94,9 @@ class OverdueSliderService extends Simpla
 
     public function logPaid(int $userId, int $orderId)
     {
-        $this->logEvent($userId, $orderId, 'paid_after', null, ['diff_hours' => 48]);
+        if ($this->hasRecentInteraction($userId, $orderId)) {
+            $this->logEvent($userId, $orderId, 'paid_after', null, ['diff_hours' => 48]);
+        }
     }
 
     public function hasInteract(int $userId): bool

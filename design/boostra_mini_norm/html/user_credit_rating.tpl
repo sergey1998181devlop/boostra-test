@@ -139,4 +139,4 @@
     <input type="hidden" name="user_phone" value="{$user->phone_mobile}"/>
     <input type="hidden" name="insurer" value="{$insurer}"/>
 </div>
-<script src="design/{$settings->theme}/js/credit_rating_user_lk.js?v=1.012" type="text/javascript"></script>
+<script src="design/{$settings->theme}/js/credit_rating_user_lk.js?v=1.016" type="text/javascript"></script>

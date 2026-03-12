@@ -41,17 +41,18 @@
     <link rel="image_src" href="design/{$settings->theme|escape}/img/favicon.png" />
     <meta content="design/{$settings->theme|escape}/img/social.png" name="og:image" property="og:image">
 
-    <link rel="stylesheet" type="text/css" href="design/{$settings->theme|escape}/css/ion.rangeSlider.css?v=1.04"/>
+    <link rel="stylesheet" type="text/css" href="design/{$settings->theme|escape}/css/ion.rangeSlider.css?v=1.05"/>
     {if $add_order_css_js}
         <link rel="stylesheet" type="text/css" href="design/{$settings->theme|escape}/css/jquery.kladr.min.css?v=1.12"/>
+        <link rel="stylesheet" type="text/css" href="design/{$settings->theme|escape}/css/order_status.css?v=1.00"/>
     {/if}
     <link rel="stylesheet" type="text/css" href="design/{$settings->theme|escape}/css/owl.carousel.min.css"/>
     <link rel="stylesheet" type="text/css" href="design/{$settings->theme|escape}/css/owl.theme.default.min.css"/>
-    <link rel="stylesheet" type="text/css" href="design/{$settings->theme|escape}/css/style.css?v=3.85"/>
-    <link rel="stylesheet" type="text/css" href="design/{$settings->theme|escape}/css/pages.css?v=3.07"/>
-    <link rel="stylesheet" type="text/css" href="design/{$settings->theme|escape}/css/media.css?v=2.913" />
-    <link rel="stylesheet" type="text/css" href="design/{$settings->theme|escape}/css/new-design-2025.css?v=1.08" />
-    <link rel="stylesheet" href="design/{$settings->theme}/css/friend_payment.css?v=1.01">
+    <link rel="stylesheet" type="text/css" href="design/{$settings->theme|escape}/css/style.css?v=3.91"/>
+    <link rel="stylesheet" type="text/css" href="design/{$settings->theme|escape}/css/pages.css?v=3.11"/>
+    <link rel="stylesheet" type="text/css" href="design/{$settings->theme|escape}/css/media.css?v=2.915" />
+    <link rel="stylesheet" type="text/css" href="design/{$settings->theme|escape}/css/new-design-2025.css?v=1.10" />
+    <link rel="stylesheet" href="design/{$settings->theme}/css/friend_payment.css?v=1.02">
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&family=Open+Sans:wght@400;500;600&display=swap" rel="stylesheet">
     <link href="https://fonts.googleapis.com" rel="preconnect">
     <link crossorigin href="https://fonts.gstatic.com" rel="preconnect">
@@ -59,6 +60,15 @@
             href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap"
             rel="stylesheet">
     <link rel="stylesheet" type="text/css" href="design/{$settings->theme|escape}/css/faq_highlight.css" />
+    {if $usedesk_config.operatorAvatar}
+        <link rel="stylesheet" type="text/css"
+              href="design/{$settings->theme|escape}/css/usedesk-customizations.css?v=1.04"/>
+        <style>
+            :root {
+                --usedesk-operator-avatar: url('{$usedesk_config.operatorAvatar|escape:'quotes'}');
+            }
+        </style>
+    {/if}
     {$smarty.capture.page_styles}
 
 
@@ -73,11 +83,13 @@
     <script src="design/{$settings->theme}/js/jquery.inputmask.min.js" type="text/javascript"></script>
     <script src="design/{$settings->theme}/js/jquery.validate.min.js?v=2.10" type="text/javascript"></script>
     <script src="design/{$settings->theme|escape}/js/owl.carousel.min.js"></script>
+    <script src="/design/{$settings->theme}/js/friend_payment.js?v=1.02"></script>
     <script defer src="design/boostra_mini_norm/js/email_feedback.js?v=1.03"></script>
     <script src="design/{$settings->theme|escape}/js/user_tickets.js" type="text/javascript"></script>
     <script src="design/{$settings->theme|escape}/js/faq_highlight.js" type="text/javascript"></script>
     <!--script src="https://cfv4.com/landings.js"></script-->
     <meta name="cmsmagazine" content="6f3ef3c26272e3290aa0580d7c8d86ce" />
+
 
     <script>
         window.siteConfig = {
@@ -151,21 +163,12 @@
     {literal}
         <script type="text/javascript">!function(){var t=document.createElement("script");t.type="text/javascript",t.async=!0,t.src='https://vk.com/js/api/openapi.js?169',t.onload=function(){VK.Retargeting.Init("VK-RTRG-1440253-hcsa0"),VK.Retargeting.Hit()},document.head.appendChild(t)}();</script><noscript><img src="https://vk.com/rtrg?p=VK-RTRG-1440253-hcsa0" style="position:fixed; left:-999px;" alt=""/></noscript>
     {/literal}
+    <script defer src="/js/alpine_3.14.3.cdn.min.js"></script>
+    <script src="/js/pixel.js" async></script>
 </head>
 <body class="blue-theme {if $module=='MainPage'}main{/if} {if in_array($module, ["LoanView", "AccountView"])}get-loan{/if}" data-hh="{$settings->hui}">
 
 <style>
-    #inform {
-        position:relative;
-        padding:7px 30px;
-        background:#f00;
-        font-size:16px;
-        color:#fff;
-        font-weight:bold;
-        display:block;
-        justify-content: space-between;
-        text-align:center
-    }
     #admin_inform {
         position:relative;
         padding:7px 30px;
@@ -189,41 +192,67 @@
     @media screen and (min-width: 930px){
         .button_login_wrapper a {
             min-width: 205px;
-        }
-    }
-
+        } }
     @media screen and (max-width: 576px){
         #inform {
             font-size: 10px;
             padding: 2px 10px;
         }
     }
+
+    #usedesk-messenger textarea[name="message"] {
+        font-size: 16px !important;
+    }
 </style>
 
 {assign var="active_automation_fail" value=false}
+{assign var="automation_fail_text" value=""}
 {foreach $automation_fails as $item}
     {if $item->is_active}
         {assign var="active_automation_fail" value=true}
+        {assign var="automation_fail_text" value=$item->text}
         {break}
     {/if}
 {/foreach}
 
-{if ($active_automation_fail && $module|@array_search:['MainPage', 'UserView']) || $settings->site_warning_message_enabled}
-    <div id="inform">
-        {if $active_automation_fail}
-            <strong>
-                {foreach $automation_fails as $item}
-                    {if $item->is_active}
-                        {$item->text|nl2br}.
-                    {/if}
-                {/foreach}
-            </strong>
-        {/if}
-        {if $settings->site_warning_message_enabled}
-            <br><strong>{$settings->site_warning_message|nl2br}</strong>
-        {/if}
-    </div>
-{/if}
+<script>
+    window.serverTimeMsk = {$smarty.now * 1000};
+</script>
+<script>
+    window.settings = window.settings || {literal}{}{/literal};
+    {if $settings->site_warning_banner_config}
+    window.settings.site_warning_banner_config = {$settings->site_warning_banner_config|json_encode};
+    {/if}
+    
+    {if $active_automation_fail && ($module == 'MainPage' || $module == 'UserView')}
+    window.settings.automation_fail = {
+        enabled: true,
+        message: {$automation_fail_text|json_encode},
+        style: 'error',
+        position: 'top',
+        show_on_main_page: true,
+        closeable: false,
+        animation: 'slide',
+        desktop: {
+            background_color: '#F44336',
+            text_color: '#ffffff',
+            font_size: '16px',
+            font_weight: 'normal',
+            padding: '12px 20px',
+            border_radius: '4px'
+        },
+        mobile: {
+            background_color: '#F44336',
+            text_color: '#ffffff',
+            font_size: '14px',
+            font_weight: 'normal',
+            padding: '10px 15px',
+            border_radius: '4px'
+        }
+    };
+    {/if}
+</script>
+<script src="design/{$settings->theme|escape}/js/warning-banner.js"></script>
 
 {if $is_developer}
 
@@ -302,7 +331,7 @@
                         <h3><b>Введите код из СМС</b></h3>
                         <div class="sms_input_row">
                             <input name="pdn_excess_sms_phone" type="text" hidden value="{$user->phone_mobile}">
-                            <input name="pdn_excess_sms_code" inputmode="numeric" type="text" maxlength="4" placeholder="Код из смс" />
+                            <input name="pdn_excess_sms_code" autocomplete="one-time-code" inputmode="numeric" type="text" maxlength="4" placeholder="Код из смс" />
                         </div>
                         <div class="sms_repeat_row">
                             <span id="agreement-sms-timer"></span>
@@ -423,7 +452,7 @@
                         <div>
                             <div>
                                 <input name="agreement_sms_phone" type="text" hidden value="{$user->phone_mobile}">
-                                <input name="agreement_sms_code" type="text" inputmode="numeric" maxlength="4" />
+                                <input name="agreement_sms_code" autocomplete="one-time-code" type="text" inputmode="numeric" maxlength="4" />
                                 <a href="#" id="agreement-sms-repeat" style="display: none;">Отправить код повторно</a>
                             </div>
                             <span id="agreement-sms-timer"></span>
@@ -468,16 +497,23 @@
 </section>
 {/if}
 
-{if !in_array($module, ['LoanView', 'AccountView', 'InitUserView'])}
+{if !in_array($module, [ 'AccountView', 'InitUserView'])}
+  {if (in_array($module, []) || in_array($page->url, []) || (in_array($module, []) && !$user))}
+  {include 'layout/landing_footer.tpl'}
+  {elseif (in_array($module, [ 'RegisterView','NewOrderView', 'AccountContractView', 'AddDataView', 'Best2payCallback', 'UserExtraDocsView', 'UserAdditionalDocsView', 'SchedulePaymentsView', 'UserCreditRatingView', 'LoanHistoryView' , 'LoanView', 'AccountLoginView', 'UserView', 'UploadView', 'UserDocsView', 'UserTicketView', 'PaymentView','PartnersView', 'FaqView', 'ExceptionView', 'ComplaintView', 'AboutCompanyView']) || in_array($page->url, ['contacts', 'info', 'info_partners', '404']))}
+  {include 'layout/lk_footer.tpl'}
+  {else}
     <footer>
         <div class="footer-container">
             {if $module != 'AccountLoginView'}
                 <ul class="footer-left">
-                    {*}<li><a href="/info">Информация</a></li>{*}
-                    <li><a href="/contacts">Контакты</a></li>
-                    <li><a href="/user/extra_docs">Прочее</a></li>
-                    <li><a href="/user/additional_docs">Дополнительно</a></li>
-                    {*}<li class=""><a href="info#info">Условия</a></li>{*}
+                    {*<li><a href="/info">Информация</a></li>*}
+                    <li><a href="/contacts">Связаться с нами</a></li>
+                    {if $user}
+                        <li><a href="/user/extra_docs">Прочее</a></li>
+                        <li><a href="/user/additional_docs">Дополнительно</a></li>
+                    {/if}
+                    {*<li class=""><a href="info#info">Условия</a></li>*}
                     {if $user}
                         <li class=""><a href="{$lk_url}" >Личный кабинет</a></li>
                     {/if}
@@ -502,7 +538,7 @@
                         <a
                             href="/complaint"
                             {if $complaint_partner_href && !$same_page} target="_blank" onclick="clickHunter?.(14, window.complaint_partner_href);"{/if}
-                            style="font-size: 11px; color: red; text-decoration: none; width: 100%; text-transform: uppercase;"
+                            style="font-size: 11px; text-decoration: none; width: 100%; text-transform: uppercase;"
                         >Пожаловаться</a>
                     </p>
                 </div>
@@ -513,7 +549,6 @@
                     <div>Звони: </div>
                     <div style="display: flex; gap: 20px">
                         <a href="tel:88003333073">8 800 333 30 73</a>
-                        <a href="tel:88003330534">8 800 333 05 34</a>
                     </div>
                 </div>
                 <small style="display: block;text-align: center;">Клиентский сервис</small>
@@ -521,6 +556,7 @@
             </div>
         </div>
     </footer>
+    {/if}
 {/if}
 
 </div>
@@ -540,7 +576,7 @@
             <form action="#" method="post">
                 <label>
                     <div class="plup">
-                        <input type="text" autocomplete="off" name="sign[code]" placeholder="Код из смс" required="" />
+                        <input type="text" autocomplete="one-time-code" inputmode="numeric" name="sign[code]" placeholder="Код из смс" required="" />
                     </div>
                     {*
                     <span class="time">00:00</span>
@@ -549,7 +585,7 @@
                 <div>
                     <button class="medium">Подтвердить телефон</button>
                     <div class="repeat_sms">
-                        {*}<a href="#" class="new_sms">Отправить код еще раз</a>{*}
+                        {*<a href="#" class="new_sms">Отправить код еще раз</a>*}
                     </div>
                 </div>
             </form>
@@ -586,7 +622,8 @@
         {/literal}
         userParams: {
             {if $user}
-                UserID: '{$user->phone_mobile}',
+                UserID: '{$user->id}',
+                user_phone: '{$user->phone_mobile}',
                 vip_status: false,
                 child: 1,
                 user_approved: {$user_approved},
@@ -607,9 +644,9 @@
     function clickHunter(source_id, background_href) {
         setTimeout(() => {
         {if $user}
-            const href_append = '&p={$user->phone_mobile}'
+            const href_append = '&p={$user->phone_mobile}&utm_source2={$user->utm_source}'
         {else}
-            const href_append = ''
+            const href_append = '&utm_source2={$smarty.cookies.utm_source}'
         {/if}
             invokeShopview('bonon-background{$client_suffix}', background_href)
             sendMetric('reachGoal', 'decline_monitoring_' + source_id)
@@ -631,7 +668,7 @@
     <script src="design/{$settings->theme}/js/jquery.inputmask.min.js" type="text/javascript"></script>
     <script src="design/{$settings->theme}/js/jquery.validate.min.js?v=2.10" type="text/javascript"></script>
     <script src="design/{$settings->theme}/js/jquery.countdown.js" type="text/javascript"></script>
-    <script src="design/{$settings->theme}/js/worksheet.validate.js?v=1.7.5" type="text/javascript"></script>
+    <script src="design/{$settings->theme}/js/worksheet.validate.js?v=1.8.1" type="text/javascript"></script>
     <script src="design/{$settings->theme}/js/jquery.steps.js?v=1.03" type="text/javascript"></script>
     <script src="design/{$settings->theme}/js/plup.jquery.js" type="text/javascript"></script>
     <script src="design/{$settings->theme}/js/jquery.kladr.min.js" type="text/javascript"></script>
@@ -644,7 +681,7 @@
 {/if}
 {/if}
 {if !$step_js}
-    <script src="design/{$settings->theme}/js/step.jquery.js?v=1.25" type="text/javascript"></script>
+    <script src="design/{$settings->theme}/js/step.jquery.js?v=1.28" type="text/javascript"></script>
 {else}
     <script src="design/{$settings->theme}/js/pts-tep.jquery.js?v=1.23" type="text/javascript"></script>
 {/if}
@@ -654,13 +691,13 @@
 {if $login_scripts}
     <script src="design/{$settings->theme}/js/jquery.inputmask.min.js" type="text/javascript"></script>
     <script src="design/{$settings->theme}/js/jquery.validate.min.js?v=2.10" type="text/javascript"></script>
-    <script src="design/{$settings->theme}/js/login.app.js?v=2.713"></script>
+    <script src="design/{$settings->theme}/js/login.app.js?v=2.719"></script>
 {/if}
 
-<script src="design/{$settings->theme}/js/b2p.app.js?v=1.06" type="text/javascript"></script>
+<script src="design/{$settings->theme}/js/b2p.app.js?v=1.07" type="text/javascript"></script>
 <script src="/js/jquery.cookie.min.js" type="text/javascript"></script>
-<script src="design/{$settings->theme}/js/metrics.js?v=1.006" type="text/javascript"></script>
-<script src="design/{$settings->theme}/js/common.js?v=1.017" type="text/javascript"></script>
+<script src="design/{$settings->theme}/js/metrics.js?v=1.007" type="text/javascript"></script>
+<script src="design/{$settings->theme}/js/common.js?v=1.019" type="text/javascript"></script>
 <script src="/js/functions.js?v=1.0002" type="text/javascript"></script>
 
 <script type="text/javascript">
@@ -698,7 +735,10 @@
             });
 </script>
 
-<script src="design/{$settings->theme}/js/usedesk-validator.js?v=0.01"></script>
+<script>
+    window.usedeskConfig = {$usedesk_config_json};
+</script>
+<script src="design/{$settings->theme}/js/usedesk-validator.js?v=1.1"></script>
 
 {if in_array($module, ["LoanView", "AccountView", "ShortRegisterView"])}
     <script type="text/javascript">
@@ -801,5 +841,12 @@
         <button id="close-notice-button">&times;</button>
     </div>
 {/if}
+<div
+    id="pixel2"
+    data-pid="{$pixelConfig->pixel_pid|default:''}"
+    data-uid="{$pixelConfig->pixel_uid|default:''}">
+</div>
+
 </body>
 </html>
+

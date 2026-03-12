@@ -10,8 +10,8 @@
             {include file="credit_doctor/credit_doctor_checkbox.tpl" idkey=$user_order['id']}
             {continue}
         {/if}
-        {if $accept_document_key == 'star_oracle'}
-            {include file="star_oracle/star_oracle_checkbox.tpl" idkey=$user_order['id']}
+        {if $accept_document_key == 'tv_medical'}
+            {include file="tv_medical/tv_medical_checkbox.tpl" idkey=$user_order['id']}
             {continue}
         {/if}
 

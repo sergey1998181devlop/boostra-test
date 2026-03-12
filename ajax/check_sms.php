@@ -31,8 +31,8 @@ if (($_SESSION['sms'] == $sms) && ($phone == $_SESSION['phone']))
                 $query = $simpla->db->placehold("
                     SELECT id
                     FROM __users
-                    WHERE UID = ?
-                ", $soap->uid);
+                    WHERE UID = ? AND site_id = ?
+                ", $soap->uid, $simpla->config->site_id);
                 $simpla->db->query($query);
                 
                 if (!($user_id = $simpla->db->result('id')))

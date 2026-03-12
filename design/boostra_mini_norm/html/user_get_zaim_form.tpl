@@ -6,8 +6,7 @@
         </div>
     {/if}
 
-    <div class="clearfix about" id="user_get_zaim_form"
-         {if !$user->not_rating_maratorium_valid && (($reason_block && $reason_block !== 999) || $repeat_loan_block || $new_order_maratorium)}style="display: none"{/if}>
+    <div class="clearfix about" id="user_get_zaim_form">
 
         {if $success_add_data}
             <p class="success_add_data-par">
@@ -15,35 +14,16 @@
             </p>
         {/if}
 
-        {if empty($cards) && empty($sbp_accounts)}
+        {if empty($cards) && empty($sbp_accounts) && empty($hide_no_card_block)}
             {include file="no_cards.tpl" has_approved_order=false}
         {else}
 
             {if $need_add_fields|count > 0}
-                <a
-                        {if $user->fake_order_error > 0}style="display:none"{/if}
-                        href="add_data"
-                        class="button big button_get_zaim {if $config->snow}snow-relative primary{else}green{/if} bg-warning"
-                >
-                    {if $config->snow}
-                        <img class="snow-man" src="design/orange_theme/img/holidays/snow/snow_man.png?v=2"
-                             alt="Заявка на заём"/>
-                    {/if}
+                <a {if $user->fake_order_error > 0}style="display:none"{/if} href="add_data" class="button big button_get_zaim green bg-warning">
                     Получить займ
                 </a>
             {else}
-{*                <a*}
-{*                        {if $user->fake_order_error > 0 || $repeat_approve_message}style="display:none"{/if}*}
-{*                        href="#"*}
-{*                        class="button big {if $config->snow}snow-relative primary{else}green{/if} get_new_loan"*}
-{*                        {if $is_need_choose_card == 1}  is_need_reassign=true {/if}*}
-{*                >*}
-{*                    {if $config->snow}*}
-{*                        <img class="snow-man" src="design/orange_theme/img/holidays/snow/snow_man.png?v=2"*}
-{*                             alt="Заявка на заём"/>*}
-{*                    {/if}*}
-{*                    Заявка на заём*}
-{*                </a>*}
+
             {/if}
             <div id="is_need_reassign_block" class="mfp-hide">
 
@@ -154,9 +134,17 @@
                                         {/if}
                                     </a>
                                 {else}
-                                    <button type="submit" id="repeat_loan_submit"
-                                            {if $can_add_sbp_account && !empty($b2p_sbp_banks)} onclick="generateAndOpenSbpLink(event)"{/if}
-                                            class="{if $user->fake_order_error == 0}js-metrics-click-cash{/if} button big {if $config->snow}snow-relative primary{else}green{/if}">
+                                    <button
+                                            {if !$organization_id_for_river}
+                                                id="repeat_loan_submit"
+                                                type="submit"
+                                            {/if}
+                                            {if $organization_id_for_river}
+                                                data-organization_id="{$organization_id_for_river}"
+                                                type="button"
+                                            {/if}
+                                            {if $can_add_sbp_account && !empty($b2p_sbp_banks) && !$organization_id_for_river} onclick="generateAndOpenSbpLink(event)"{/if}
+                                            class="{if $user->fake_order_error == 0}js-metrics-click-cash{/if} button big {if $config->snow}snow-relative primary{else}green{/if} {if $organization_id_for_river}js-card_add_btn{/if}">
                                         {if $user->fake_order_error > 0}
                                             Отправить повторно
                                         {else}
@@ -191,28 +179,41 @@
                                         </p>
                                     </div>
 
-                                    <div class="collapse" data-target="collapse">
+                                    <div>
+                                        <label class="spec_size">
+                                            <div class="checkbox check_address"
+                                                 style="border-width: 1px;width: 16px !important;height: 16px !important;">
+                                                {if empty($rcl_loan)}
+                                                <input class="js-need-verify js-bki-consent-checkbox" type="checkbox" value="0"/>
+                                                <span></span>
+                                                {/if}
+                                            </div>
+                                        </label>
                                         <p>
+                                            Я согласен на <a href="{$config->root_url}/user/docs?action=soglasie_na_bki"
+                                                             target="_blank">направление запросов в Бюро кредитных историй</a>
+                                        </p>
+                                    </div>
+
+                                    <br>
+
+                                    <div class="collapse" data-target="collapse">
+                                        <p class="collapse_mb-15">
                                             С <a href="{$config->root_url}/files/docs/asp_usage_policy.pdf" target="_blank">
                                                 условиями использования аналога собственноручной подписи (АСП)
                                             </a> согласен
                                         </p>
-                                        <p>
-                                            Я согласен на <a href="{$config->root_url}/files/docs/personal_data_consent.pdf" target="_blank">
+                                        <p class="collapse_mb-15">
+                                            Я согласен на <a href="{$config->root_url}/preview/PERSONAL_DATA_CONSENT?user_id={$user->id}" target="_blank">
                                                 обработку персональных данных
                                             </a> и
-                                            <a href="{$config->root_url}/files/docs/marketing_consent.pdf" target="_blank">
+                                            <a href="{$config->root_url}/preview/MARKETING_CONSENT?user_id={$user->id}" target="_blank">
                                                 получение маркетинговых коммуникаций
                                             </a>
                                         </p>
 
                                         {if $autoconfirm_enabled || $is_old_client_or_old_register}
-                                            <p>
-                                                Я согласен на <a href="{$config->root_url}/preview/agreement_disagreement_to_receive_ko" target="_blank">
-                                                    направление запросов в БКИ
-                                                </a>
-                                            </p>
-                                            <p>
+                                            <p class="collapse_mb-15">
                                                 {if $is_old_client_or_old_register}
                                                     <a href="{$individual_max_amount_doc_url}" target="_blank">Индивидуальные условия договора займа</a>
                                                 {else}
@@ -224,7 +225,8 @@
                                                 <small>Сумма займа скорректирована на максимально доступное для выдачи значение с учетом результатов предварительного скоринга.</small>
                                             </p>
                                         {/if}
-                                        {if !$isVirtualCardConsent && $is_virtual_card_checkbox}
+
+                                        {if $is_virtual_card_enabled && !$is_virtual_card_consent && !$is_virtual_card_active}
                                             <div>
                                                 <label class="spec_size">
                                                     <div class="checkbox"
@@ -234,7 +236,11 @@
                                                     </div>
                                                 </label>
                                                 <p>
-                                                    Я согласен с <a href="{$config->root_url}../../../share_docs/general/docs_uslugi_oferta_esp_0250725.pdf" data-btn-toggle="collapse">«Офертой ООО РНКО «Платежный конструктор» на выпуск виртуальной карты Boostra»</a>.
+                                                    Я согласен с
+                                                    <a href="{$config->root_url}/share_docs/general/docs_user_agreement.docx" target="_blank" class="">
+                                                        «Пользовательским соглашением»
+                                                    </a> и
+                                                    <a href="{$config->root_url}/share_docs/general/docs_uslugi_oferta_esp_20251014.pdf" target="_blank">«Офертой ООО РНКО «Платежный конструктор» на выпуск виртуальной карты Boostra»</a>.
                                                 </p>
                                             </div>
                                         {/if}
@@ -374,7 +380,7 @@
             <span class="info" id="accept_info">На Ваш телефон {$user->phone_mobile} было отправлено СМС-сообщение с кодом для подтверждения.</span>
             <div id="autoconfirm_sms">
                 <div>
-                    <input type="input" name="code" class="js-autoconfirm-sms" maxlength="4" placeholder="Код из СМС"/>
+                    <input type="input" name="code" autocomplete="one-time-code" inputmode="numeric" class="js-autoconfirm-sms" maxlength="4" placeholder="Код из СМС"/>
                     <span class="js-autoconfirm-error error-info"></span>
                 </div>
                 <div class="js-repeat-autoconfirm-sms"></div>
@@ -384,8 +390,5 @@
 </div>
 
 {if !empty($b2p_sbp_banks)}
-    {include file = 'modals/modal_choose_bank.tpl' show_close_button=true show_text_to_choose_sbp=true}
+    {include file = 'modals/modal_choose_bank.tpl' show_close_button=true show_text_to_choose_sbp=false}
 {/if}
-
-{* Подключаем JavaScript для работы кнопки СБП *}
-<script src="design/{$settings->theme}/js/sbp.js?v=1.007"></script>

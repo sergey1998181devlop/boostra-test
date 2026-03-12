@@ -1,20 +1,12 @@
 {$meta_title = "АСП договора" scope=parent}
 
-{$docs_list = [
-["title" => "Положение об использовании АСП", "url" => "{$config->root_url}/files/docs/asp_usage_policy.pdf"],
-["title" => "Согласие на хранение и обработку персональных данных", "url" => "{$config->root_url}/files/docs/personal_data_consent.pdf"],
-["title" => "Согласие на получение маркетинговых коммуникаций", "url" => "{$config->root_url}/files/docs/marketing_consent.pdf"],
-["title" => "Согласие на направление запросов в БКИ", "url" => "{$config->root_url}/preview/agreement_disagreement_to_receive_ko"],
-["type" => "auto_confirm_href", "title" => "Индивидуальные условия договора займа", "url" => "{$individual_url}"]
-]}
-
 {literal}
     <style>
         body {
             height: 100vh;
             overflow: hidden;
         }
-        #auto_confirm_href {
+        #ind_usloviya {
             color: #1E262E;
         }
         #autoconfirm {
@@ -156,9 +148,7 @@
                 padding: 0 5px; /* Меньше отступы по бокам */
             }
         }
-        .promocodes {
-            text-align: center;
-        }
+
         .promo-block {
             padding: 15px;
             border: 1px black dashed;
@@ -189,7 +179,7 @@
                             <span class="info" id="accept_info">На Ваш телефон {$user->phone_mobile} было отправлено СМС-сообщение с кодом для подтверждения.</span>
                             <div id="autoconfirm_sms">
                                 <div>
-                                    <input type="input" name="code" class="js-autoconfirm-sms" maxlength="4" placeholder="Код из СМС" />
+                                    <input type="input" autocomplete="one-time-code" name="code" class="js-autoconfirm-sms" maxlength="4" placeholder="Код из СМС" />
                                     <span class="js-autoconfirm-error error-info"></span>
                                 </div>
                                 <div class="js-repeat-autoconfirm-sms"></div>
@@ -198,15 +188,15 @@
                     </div>
                 </div>
             </div>
-            {foreach $docs_list as $key => $doc}
+            {foreach $docs_list as $idx => $doc}
                 <div class="autoconfirm__list_item">
-                    {if $doc.type == 'auto_confirm_href'}
+                    {if $doc.type == 'ind_usloviya'}
                         <div>
                             <a id="{$doc.type}" target="_blank" href="{$doc.url}">{$doc.title}</a>
                         </div>
                     {else}
-                        <label for="autoconfirm_{$key}">
-                            <input type="checkbox" value="1" id="autoconfirm_{$key}" name="autoconfirm_item_{$key}" />
+                        <label for="autoconfirm_{$idx}">
+                            <input type="checkbox" value="1" id="autoconfirm_{$idx}" name="autoconfirm_item_{$idx}" />
                             <div>
                                 <a id="{$doc.type}" target="_blank" href="{$doc.url}">{$doc.title}</a>
                             </div>
@@ -233,7 +223,7 @@
             send_sms();
         }
 
-        $("#auto_confirm_href").one('click', function () {
+        $("#ind_usloviya").one('click', function () {
             $.cookie('autoconfirm_disabled', 1);
             sendMetric('reachGoal','read_dogovor_nk');
         });

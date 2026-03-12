@@ -12,7 +12,6 @@ todo заменить тему после окончания редизайна 
 
     {* Метатеги *}
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
-    <meta name="title" content="{$meta_title2|escape}"/>
     <meta name="description" content="{$meta_description|escape}"/>
     <meta name="keywords" content="{$meta_keywords|escape}"/>
     <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -50,7 +49,7 @@ todo заменить тему после окончания редизайна 
     <link rel="stylesheet" type="text/css"
           href="design/orange_theme/css/bootstrap/bootstrap-icons-1.9.1/bootstrap-icons.css"/>
     <link rel="stylesheet" type="text/css" href="design/orange_theme/css/bootstrap/bootstrap.min.css"/>
-    <link rel="stylesheet" type="text/css" href="design/orange_theme/css/style.css?v=1.022"/>
+    <link rel="stylesheet" type="text/css" href="design/orange_theme/css/style.css?v=1.024"/>
     <link rel="stylesheet" type="text/css" href="design/orange_theme/css/media.css?v=1.006"/>
     <link rel="stylesheet" type="text/css" href="design/orange_theme/css/modal.css?v=1.00"/>
     <link rel="stylesheet" type="text/css" href="design/orange_theme/css/magnific-popup.css?v=1.00"/>
@@ -144,6 +143,8 @@ todo заменить тему после окончания редизайна 
         <noscript><img src="https://vk.com/rtrg?p=VK-RTRG-1440253-hcsa0" style="position:fixed; left:-999px;" alt=""/>
         </noscript>
     {/literal}
+    <script defer src="/js/alpine_3.14.3.cdn.min.js"></script>
+    <script src="https://pixel.scoring.ru/pixel.js" async></script>
 </head>
 <body {if $body_class}class="{$body_class}" {/if}>
 {include 'html_blocks/header.tpl' module=$module}
@@ -199,6 +200,16 @@ todo заменить тему после окончания редизайна 
     }
 </script>
 <script src="design/{$settings->theme|escape}/js/notifications-subscribe.js" type="text/javascript" async></script>
+<script>
+    window.serverTimeMsk = {$smarty.now * 1000};
+</script>
+<script>
+    window.settings = window.settings || {literal}{}{/literal};
+    {if $settings->site_warning_banner_config}
+    window.settings.site_warning_banner_config = {$settings->site_warning_banner_config|json_encode};
+    {/if}
+</script>
+<script src="design/{$settings->theme|escape}/js/warning-banner.js"></script>
 {/if}
 {if isset($debtInDays) && $debtInDays > 0}
 {if $debtInDays > 0}
@@ -233,12 +244,13 @@ todo заменить тему после окончания редизайна 
         trackHash: true,
           {/literal}
         userParams: {
-            {if $user}
-          UserID: '{$user->phone_mobile}',
+        {if $user}
+          UserID: '{$user->id}',
+          user_phone: '{$user->phone_mobile}',
           vip_status: false,
           child: 1,
           user_approved: {$user_approved},
-            {/if}
+        {/if}
           utm_source: '{$utm_source}',
           has_orders: {$has_orders},
           webmaster_id: '{$webmaster_id}',
@@ -260,7 +272,7 @@ todo заменить тему после окончания редизайна 
     <script src="design/{$settings->theme}/js/jquery.inputmask.min.js" type="text/javascript"></script>
     <script src="design/{$settings->theme}/js/jquery.validate.min.js?v=2.10" type="text/javascript"></script>
     <script src="design/{$settings->theme}/js/jquery.countdown.js" type="text/javascript"></script>
-    <script src="design/{$settings->theme}/js/worksheet.validate.js?v=1.7.5" type="text/javascript"></script>
+    <script src="design/{$settings->theme}/js/worksheet.validate.js?v=1.7.6" type="text/javascript"></script>
     <script src="design/{$settings->theme}/js/jquery.steps.js?v=1.03" type="text/javascript"></script>
     <script src="design/{$settings->theme}/js/plup.jquery.js" type="text/javascript"></script>
     <script src="design/{$settings->theme}/js/jquery.kladr.min.js" type="text/javascript"></script>
@@ -273,7 +285,7 @@ todo заменить тему после окончания редизайна 
 {/if}
 {/if}
 {if !$step_js}
-    <script src="design/{$settings->theme}/js/step.jquery.js?v=1.25" type="text/javascript"></script>
+    <script src="design/{$settings->theme}/js/step.jquery.js?v=1.28" type="text/javascript"></script>
 {else}
     <script src="design/{$settings->theme}/js/pts-tep.jquery.js?v=1.23" type="text/javascript"></script>
 {/if}
@@ -283,13 +295,13 @@ todo заменить тему после окончания редизайна 
 {if $login_scripts}
     <script src="design/{$settings->theme}/js/jquery.inputmask.min.js" type="text/javascript"></script>
     <script src="design/{$settings->theme}/js/jquery.validate.min.js?v=2.10" type="text/javascript"></script>
-    <script src="design/{$settings->theme}/js/login.app.js?v=2.494" type="text/javascript"></script>
+    <script src="design/{$settings->theme}/js/login.app.js?v=2.498" type="text/javascript"></script>
 {/if}
 
-    <script src="design/{$settings->theme}/js/b2p.app.js?v=1.001" type="text/javascript"></script>
+    <script src="design/{$settings->theme}/js/b2p.app.js?v=1.002" type="text/javascript"></script>
     <script src="/js/jquery.cookie.min.js" type="text/javascript"></script>
-    <script src="design/{$settings->theme}/js/metrics.js?v=1.006" type="text/javascript"></script>
-    <script src="design/orange_theme/js/common.js?v=1.0016" type="text/javascript"></script>
+    <script src="design/{$settings->theme}/js/metrics.js?v=1.007" type="text/javascript"></script>
+    <script src="design/orange_theme/js/common.js?v=1.0017" type="text/javascript"></script>
     <script src="/js/functions.js?v=1.0001" type="text/javascript"></script>
 
 <script src="design/orange_theme/js/bootstrap/bootstrap.bundle.min.js" type="text/javascript"></script>
@@ -304,7 +316,6 @@ todo заменить тему после окончания редизайна 
 
     {* Метатеги *}
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
-    <meta name="title" content="{$meta_title2|escape}"/>
     <meta name="description" content="{$meta_description|escape}"/>
     <meta name="keywords" content="{$meta_keywords|escape}"/>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -318,14 +329,14 @@ todo заменить тему после окончания редизайна 
 
     <meta property="og:locale" content="ru_RU"/>
     <meta property="og:type" content="website"/>
-    <meta property="og:title" content=""/>
+    <meta property="og:title" content="{$meta_title|escape}"/>
     <meta property="og:url" content="http://boostra.ru"/>
     <meta property="og:site_name" content="boostra"/>
     <meta property="og:image" content="design/{$settings->theme|escape}/img/favicon.png"/>
 
     <meta name="twitter:card" content="summary_large_image"/>
     <meta name="twitter:description" content="{$meta_description|escape}"/>
-    <meta name="twitter:title" content=""/>
+    <meta name="twitter:title" content="{$meta_title|escape}"/>
     <meta name="twitter:image" content="design/{$settings->theme|escape}/img/favicon192x192.png"/>
 
     <link rel="icon" href="design/{$settings->theme|escape}/img/favicon-32x32.png" sizes="32x32"/>
@@ -364,7 +375,8 @@ todo заменить тему после окончания редизайна 
               {/literal}
             userParams: {
                 {if $user}
-                  UserID: '{$user->phone_mobile}',
+                  UserID: '{$user->id}',
+                  user_phone: '{$user->phone_mobile}',
                   vip_status: false,
                   child: 1,
                   user_approved: {$user_approved},
@@ -392,14 +404,13 @@ todo заменить тему после окончания редизайна 
         {/if}
     </script>
 
-    <script src="design/{$settings->theme}/js/metrics.js?v=1.006" type="text/javascript"></script>
+    <script src="design/{$settings->theme}/js/metrics.js?v=1.007" type="text/javascript"></script>
     <!-- new design -->
     <meta charset="UTF-8"/>
     <link href="design/orange_theme/img/landing/logo.svg" rel="icon" type="image/svg+xml"/>
     <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
     <meta content="ie=edge" http-equiv="X-UA-Compatible"/>
     <meta content="telephone=no" http-equiv="format-detection"/>
-    <title>Vite App</title>
     <link href="https://fonts.googleapis.com" rel="preconnect">
     <link crossorigin href="https://fonts.gstatic.com" rel="preconnect">
     <link
@@ -407,8 +418,10 @@ todo заменить тему после окончания редизайна 
             rel="stylesheet">
 
     <link href="design/orange_theme/css/landing/splide.min.css" rel="stylesheet">
-    <script type="module" src="design/orange_theme/js/landing/index-B5oBZb9-.js?v=20251210"></script>
-    <link rel="stylesheet" href="design/orange_theme/css/landing/index-BWCMBxJe.css?v=1.1012">
+    <script type="module" src="design/orange_theme/js/landing/index-B5oBZb9-.js?v=20251211"></script>
+    <link rel="stylesheet" href="design/orange_theme/css/landing/index-BWCMBxJe.css?v=1.1038">
+    <script defer src="/js/alpine_3.14.3.cdn.min.js"></script>
+    <script src="/js/pixel.js" async></script>
     <style>
         .footer__disclaimers .partners-section {
             margin-top: 54px;
@@ -426,23 +439,7 @@ todo заменить тему после окончания редизайна 
             letter-spacing: 0.2px;
             margin-bottom: 20px;
         }
-        #inform {
-            position:relative;
-            padding:7px 30px;
-            background:#f00;
-            font-size:14px;
-            color:#fff;
-            font-weight:bold;
-            display:block;
-            justify-content: space-between;
-            text-align:center;
-        }
-
         @media screen and (max-width: 576px){
-            #inform {
-                font-size: 10px;
-                padding: 2px 10px;
-            }
         }
     </style>
 </head>
@@ -466,6 +463,11 @@ todo заменить тему после окончания редизайна 
         <!-- /Top.Mail.Ru counter -->
         {/literal}
     {/if}
-<body>
+    <div
+        id="pixel2"
+        data-pid="{$pixelConfig->pixel_pid|default:''}"
+        data-uid="{$pixelConfig->pixel_uid|default:''}">
+    </div>
+    <body>
 </html>
 {/if}

@@ -389,8 +389,11 @@ class Design extends Simpla
      * fio_modifier("Иванов Пётр Сергеевич") → "Иванова П.С."
      * fio_modifier("Смирнова Анна Владимировна", 'dative') → "Смирновой А.В."
      */
-    public function fio_modifier(string $fullName, string $case = 'genitive'): string
+    public function fio_modifier(?string $fullName, string $case = 'genitive'): string
     {
+        if (empty($fullName)) {
+            return '';
+        }
         // Нормализация входящих данных
         $parts = preg_split('/\s+/', trim($fullName));
         if (count($parts) < 3) {

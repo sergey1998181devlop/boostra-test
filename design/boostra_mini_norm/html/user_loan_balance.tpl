@@ -92,7 +92,8 @@
 <style>
 
 </style>
-    {if isset($orderData->balance->sum_with_grace)}
+    {* Те, кто участвуют в новогодней акции, не могут быть клиентами Бикеша *}
+    {if empty($orderData->newyear_promo) && isset($orderData->balance->sum_with_grace)}
         <input class="grace-value" {if $orderData->balance->sum_with_grace} value="true" {/if} type="hidden">
         <div class="grace-main-div" id="grace-div">
             <div class="grace-container-div">

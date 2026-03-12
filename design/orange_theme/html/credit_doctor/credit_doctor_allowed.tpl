@@ -84,5 +84,5 @@
     </div>
 </div>
 <script src="design/{$settings->theme}/js/jquery.inputmask.min.js" type="text/javascript"></script>
-<script src="design/{$settings->theme|escape}/js/credit_doctor.app.js?v=1.02" type="text/javascript"></script>
+<script src="design/{$settings->theme|escape}/js/credit_doctor.app.js?v=1.05" type="text/javascript"></script>
 {/if}

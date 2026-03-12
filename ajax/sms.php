@@ -403,16 +403,23 @@ switch ($simpla->request->get('action')):
                 }
             }
         }
+
+        if (!empty($result['success']) && !empty($user_id) && !empty($_COOKIE['_ym_uid'])) {
+            $simpla->custom_metric->addYmLog((int)$user_id, $_COOKIE['_ym_uid']);
+        }
         break;
 
     case 'check':
-        
+
         $result['success'] = defaultCheckSms();
-        
+
         if ($result['success']) {
             unset($_SESSION['sms_send_count']);
+            if (!empty($_SESSION['user_id']) && !empty($_COOKIE['_ym_uid'])) {
+                $simpla->custom_metric->addYmLog((int)$_SESSION['user_id'], $_COOKIE['_ym_uid']);
+            }
         }
-        
+
         $max_accept_try = $simpla->orders::MAX_ACCEPT_TRY;
         $check_asp = $simpla->request->get('check_asp', 'integer');
         if (!empty($check_asp))
@@ -423,6 +430,7 @@ switch ($simpla->request->get('action')):
             
             if (empty($order) || !empty($user->blocked) || $order->user_id != $_SESSION['user_id']) {
     			unset($_SESSION['user_id']);
+                $result['user_id'] = $order->user_id;
                 $result['success'] = 0;
                 break;
             }
@@ -432,12 +440,13 @@ switch ($simpla->request->get('action')):
                 $accept_try = $order->accept_try + 1;
                 $simpla->orders->update_order($order_id, ['accept_try' => $accept_try]);
                 $result['accept_try'] = $max_accept_try - $accept_try;
+                $result['user_id'] = $order->user_id;
                 if ($accept_try > $max_accept_try)
                 {
                     // banned
                     $simpla->users->update_user($order->user_id, ['blocked' => 1]);
         			unset($_SESSION['user_id']);
-                }                
+                }
             }
             else
             {
@@ -462,21 +471,17 @@ switch ($simpla->request->get('action')):
             $result['error'] = $result_validate_sms_auth['error'];
         }
 
-        $virtual_card_consent = (string)$simpla->request->get('is_virtual_card_consent');
         $user_id = (int)$_SESSION['user_id'];
 	    $order_id = $simpla->request->get('current_order_id', 'integer');
 
-        if (in_array($virtual_card_consent, ["1", "0"])) {
-	        $simpla->user_data->set($user_id, "is_virtual_card_consent", $virtual_card_consent);
-			if ($virtual_card_consent == '1') {
-				$vcService = new \lib\VirtualCard\VirtualCardService($simpla->config, $user_id, (int) $order_id);
-				$vcService->registerVirtualCard();
-			}
-        }
-
         if (!empty($result['success'])) {
             $sms = $_SESSION['sms'];
-            unset($_SESSION['sms'], $_SESSION['phone']);
+            unset($_SESSION['sms'], $_SESSION['phone'], $_SESSION['sms_time']);
+
+            // Получаем и сохраняем данные о доп услугах
+            $is_user_credit_doctor = $simpla->request->get('is_user_credit_doctor', 'integer');
+            $is_tv_medical = $simpla->request->get('is_tv_medical', 'integer');
+            $simpla->autoconfirm->saveAdditionalServicesForAutoconfirm($user_id, $is_user_credit_doctor, $is_tv_medical);
 
             // Если это подписание документов из ЛК по кнопке оплатить и погасить новый займ
             if ($flag == 'repeat_new_order' && empty($_COOKIE["autoconfirm_repeat_disabled"])) {
@@ -514,6 +519,55 @@ switch ($simpla->request->get('action')):
                         $simpla->autoconfirm->set_autoconfirm($autoconfirm_amount, $last_order);
                     }
                 }
+            }
+        } else {
+            $result['error'] = 'Код не совпадает';
+        }
+    break;
+
+    case 'check_autoconfirm_cross':
+        $result['success'] = defaultCheckSms();
+
+        $phone = $simpla->users->clear_phone($simpla->request->get('phone'));
+        $result_validate_sms_auth = $simpla->sms_auth_validate_sms->validateSms($phone, $simpla->sms_auth_validate_sms::TYPE_AUTOCONFIRM_CROSS);
+
+        if (!$result_validate_sms_auth['success']) {
+            $result['success'] = false;
+            $result['error'] = $result_validate_sms_auth['error'];
+        }
+
+        $user_id = (int)$_SESSION['user_id'];
+        $order_id = $simpla->request->get('parent_order_id', 'integer');
+
+        // Получаем параметры дополнительных услуг
+        $is_user_credit_doctor = $simpla->request->get('is_user_credit_doctor', 'integer');
+        $is_tv_medical = $simpla->request->get('is_tv_medical', 'integer');
+
+        if (!empty($result['success'])) {
+            $sms = $_SESSION['sms'];
+            unset($_SESSION['sms'], $_SESSION['phone'], $_SESSION['sms_time']);
+
+            $user = $simpla->users->get_user($user_id);
+
+            try {
+                if ($order_id) {
+                    // Сохраняем АСП код для кросс-ордера на основную заявку
+                    $simpla->order_data->set($order_id, $simpla->order_data::AUTOCONFIRM_ASP_CROSS, $sms);
+                    
+                    // Сохраняем параметры дополнительных услуг для кросс-ордера
+                    $simpla->autoconfirm->saveAdditionalServicesForAutoconfirm($user_id, $is_user_credit_doctor, $is_tv_medical, $order_id, true);
+                    
+                    // Удаляем запись из sms_auth_validate для возможности повторного показа
+                    $simpla->sms_auth_validate_sms->delete($phone, $simpla->sms_auth_validate_sms::TYPE_AUTOCONFIRM_CROSS);
+                    
+                    $result['success'] = true;
+                } else {
+                    $result['success'] = false;
+                    $result['error'] = 'Не удалось подписать кросс-ордер ' . $order_id;
+                }
+            } catch (Exception $e) {
+                $result['success'] = false;
+                $result['error'] = 'Ошибка создания кросс-ордера: ' . $e->getMessage();
             }
         } else {
             $result['error'] = 'Код не совпадает';
@@ -580,13 +634,13 @@ switch ($simpla->request->get('action')):
 
             $user = $simpla->users->get_user($user_id);
             $order = $simpla->orders->get_order($order_id);
-            if (empty($order->{'1c_id'})) {
+            if (empty($order->id_1c)) {
                 $result['success'] = false;
                 $result['error'] = 'order_1c_id_not_found';
                 break;
             }
 
-            $user_balance = $simpla->users->get_user_balance_for_order($user->id, $order->{'1c_id'});
+            $user_balance = $simpla->users->get_user_balance_for_order($user->id, $order->id_1c);
             if (!$user_balance) {
                 $result['success'] = false;
                 $result['error'] = 'balance_not_found_for_order';
@@ -651,6 +705,7 @@ switch ($simpla->request->get('action')):
 
                 $_SESSION['user_id'] = $user->id;
                 $result['redirect_url'] = $simpla->config->front_url . '/user';
+                $result['user_id'] = $user->id;
 
             } else {
 
@@ -689,6 +744,7 @@ switch ($simpla->request->get('action')):
                     $user = $simpla->users->get_user($user_id);
     
                     $_SESSION['user_id'] = $user->id;
+                    $result['user_id'] = $user->id;
                     $result['redirect_url'] = $simpla->config->front_url . '/user';
                     $result['is_new_user'] = 0;
 
@@ -755,6 +811,10 @@ switch ($simpla->request->get('action')):
             }
         }
         
+        if ($success && !empty($_SESSION['user_id']) && !empty($_COOKIE['_ym_uid'])) {
+            $simpla->custom_metric->addYmLog((int)$_SESSION['user_id'], $_COOKIE['_ym_uid']);
+        }
+
         $result['success'] = $success;
         break;
 

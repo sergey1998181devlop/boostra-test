@@ -193,10 +193,14 @@ function AcceptCredit($block, isAutoAcceptCrossOrders)
                 var uncheckedVerifyCheckboxes = $block.find('.js-need-verify').not(':checked');
 
                 if (uncheckedVerifyCheckboxes.length === $block.find('.js-need-verify').length) {
-                    $block.find('input[name="credit_doctor_check"]').prop('checked', true);
-                    $block.find('input[name="star_oracle_check"]').prop('checked', true)
-                    $block.find('input[name="is_user_credit_doctor"]').val('1');
-                    $block.find('input[name="is_star_oracle"]').val('1')
+                    if ($block.find('input[name="is_user_credit_doctor"]').data('allowed') !== 0) {
+                        $block.find('input[name="credit_doctor_check"]').prop('checked', true);
+                        $block.find('input[name="is_user_credit_doctor"]').val('1');
+                    }
+                    if ($block.find('input[name="is_tv_medical"]').data('allowed') !== 0) {
+                        $block.find('input[name="tv_medical_check"]').prop('checked', true);
+                        $block.find('input[name="is_tv_medical"]').val('1');
+                    }
                     $block.find('input[name="agree_claim_value"]').val('0')
                 } else if (uncheckedVerifyCheckboxes.length > 0) {
                     $block.find('#not_checked_info').show();

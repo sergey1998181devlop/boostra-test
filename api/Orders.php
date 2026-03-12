@@ -118,6 +118,9 @@ class Orders extends Simpla
 	public const STATUS_WAIT_VIRTUAL_CARD = 16;
     public const STATUS_COOLING = 17;
 
+    /** Статус ожидания финального расчета ПДН перед выдачей (см. crm - cron/check_pdn_before_issuance.php) */
+    public const STATUS_WAIT_PDN_CALCULATION = 18;
+
     /**
      * Статус из 1С 
      */
@@ -194,6 +197,14 @@ class Orders extends Simpla
 
     public const MAX_PERIOD_FIRST_LOAN = 16;
     public const MAX_AMOUNT_FIRST_LOAN = 16;
+
+    /**
+     * Базовый период ИЛ займа
+     */
+    public const BASE_IL_PERIOD = 84;
+
+    public const BASE_PDL_PERIOD = 16;
+
     public const IN_PROGRESS_STATUSES = [
         'Новая',
         'Не определено',
@@ -206,6 +217,11 @@ class Orders extends Simpla
      * Заявки ООО и ИП
      */
     public const UTM_SOURCE_COMPANY_FORM = 'company_form';
+
+    /**
+     * Ютм метка для органического траффика
+     */
+    public const UTM_SOURCE_ORGANIC = 'Boostra';
 
     /** @var string Выплата на карту (b2p_cards) */
     public const CARD_TYPE_CARD = 'card';
@@ -475,6 +491,7 @@ class Orders extends Simpla
 										o.sent_1c,
                                         o.official_response,
                                         o.reason_id,
+                                        o.pay_result,
 										o.sms,
                                         o.razgon,
                                         o.max_amount,
@@ -701,7 +718,12 @@ class Orders extends Simpla
 
         return (bool) $this->db->result('count');
     }
-	
+
+    /**
+     * Возвращает заявки для которых создавались, cross_order по их родительской заявки
+     * @param $base_order_id
+     * @return array|false
+     */
     public function get_cross_orders($base_order_id)
     {
         $this->db->query("
@@ -722,7 +744,8 @@ class Orders extends Simpla
 		$label_filter = '';	
 		$status_filter = '';
         $user_filter = '';
-        $loan_filter = '';	
+        $loan_filter = '';
+        $organizations_filter = '';
 		$modified_since_filter = '';
         $modified_to_filter = '';
 		$id_filter = '';
@@ -753,8 +776,11 @@ class Orders extends Simpla
         if (isset($filter['loan_type'])) {
             $loan_filter = $this->db->placehold('AND o.loan_type = ?', (string)($filter['loan_type']));
         }
-		
-		if(isset($filter['modified_since']))
+
+        if (!empty($filter['organization_id']))
+            $organizations_filter = $this->db->placehold("AND o.organization_id IN (?@)", array_map('intval', (array)$filter['organization_id']));
+
+        if(isset($filter['modified_since']))
 			$modified_since_filter = $this->db->placehold('AND o.modified > ?', $filter['modified_since']);
 
         if(isset($filter['modified_to']))
@@ -762,7 +788,7 @@ class Orders extends Simpla
 		
 		if(isset($filter['label']))
 			$label_filter = $this->db->placehold('AND ol.label_id = ?', $filter['label']);
-		
+
 		if(!empty($filter['keyword']))
 		{
 			$keywords = explode(' ', $filter['keyword']);
@@ -774,6 +800,7 @@ class Orders extends Simpla
 		$query = $this->db->placehold("
             SELECT 
 				o.id, 
+				o.contract_id,
                 o.accept_sms,
                 o.accept_try,
                 o.card_id,
@@ -798,6 +825,7 @@ class Orders extends Simpla
                 o.confirm_date,
                 o.official_response,
                 o.reason_id,
+                o.pay_result,
 				o.sms,
                 o.razgon,
                 o.max_amount,
@@ -829,6 +857,7 @@ class Orders extends Simpla
                 $status_filter 
                 $user_filter 
 			    $loan_filter
+			    $organizations_filter
                 $keyword_filter 
                 $label_filter 
                 $modified_since_filter 
@@ -965,18 +994,44 @@ class Orders extends Simpla
 			$this->db->query($query);
 		}
 	}
-	
+
+    /**
+     * Хотфикс, когда дублируется кликхеш - заявку 1с не принимает
+     * Когда заявка с таким кликхеш уже существует, то метки сбрасываются на органик
+     */
+    public function checkClickHash($order)
+    {
+        $this->db->query("
+            SELECT id FROM s_orders
+            WHERE organization_id = ?
+            AND utm_source = ?
+            AND click_hash = ?
+        ", $order->organization_id, $order->utm_source, $order->click_hash);
+
+        if ($this->db->result('id')) {
+            $order->utm_source = self::UTM_SOURCE_ORGANIC;
+            $order->click_hash = '';
+        }
+
+        return $order;
+    }
+
 	public function add_order($order)
 	{
 		$order = (object)$order;
-        
+
         if (empty($order->order_uid))
             $order->order_uid = exec($this->config->root_dir.'generic/uidgen');
 
-		$order->url = md5(uniqid($this->config->salt, true));
+        $order->url = md5(uniqid($this->config->salt, true));
+
 		$set_curr_date = '';
 		if(empty($order->date))
 			$set_curr_date = ', date=now()';
+
+        if (!empty($order->click_hash)) {
+            $order = $this->checkClickHash($order);
+        }
 
 		$query = $this->db->placehold("INSERT INTO __orders SET ?%$set_curr_date", $order);
 		$this->db->query($query);
@@ -1067,32 +1122,73 @@ class Orders extends Simpla
 
         return $this->db->result();
     }
-    
-	public function check_order_1c($id_1c)
-	{
 
-		$log = false;
+    /**
+     * Получение информации по заявке из 1С. Полученные данные кэшируются на 5 минут
+     * @param string|null $id_1c `s_orders.1c_id`
+     * @param bool|null $use_cache Если false - не ищем последние запросы в кэше
+     * @return mixed
+     * @throws SoapFault
+     */
+    public function check_order_1c(?string $id_1c, ?bool $use_cache = true)
+    {
+        if (empty($id_1c)) {
+            return false;
+        }
+        $cache_key = "soap:check_order_1c:{$id_1c}";
+
+        // На случай, если где-то понадобится получить действительно актуальное значение
+        if (empty($use_cache)) {
+            $this->caches->delete($cache_key);
+        }
+        // Ищем результат запроса в 1С в кэше
+        else if ($response = $this->caches->get($cache_key)) {
+            return $response;
+        }
+
+        // Делаем запрос в 1С
+        $log = false;
         $inn_arr =  $this->organizations->get_site_inns();
         if (count($inn_arr) < 1){
             return false;
         }
 
-		$z = new stdClass();
-		$z->НомерЗаявки = $id_1c;
-		$z->Partner = 'Boostra';
+        $z = new stdClass();
+        $z->НомерЗаявки = $id_1c;
+        $z->Partner = 'Boostra';
         $z->ArrayINN = json_encode($inn_arr, false);
 
         $this->setLoggerState(__METHOD__, $this->config->url_1c . $this->config->work_1c_db . '/ws/WebOtvetZayavki.1cws?wsdl GetOtvetZayavkiINN', (array)$z, 'statuses.txt');
-        
-        $stat_z_client = new SoapClient($this->config->url_1c . $this->config->work_1c_db . "/ws/WebOtvetZayavki.1cws?wsdl");
-        $returnnnn = $stat_z_client->__soapCall('GetOtvetZayavkiINN',array($z));
-		
-        if (!empty($log))
-            $this->logging(__METHOD__, $this->config->url_1c . $this->config->work_1c_db . '/ws/WebOtvetZayavki.1cws?wsdl GetOtvetZayavki', (array)$z, (array)$returnnnn, 'statuses.txt');
 
-        return $returnnnn;
-	}    
-    
+        $stat_z_client = new SoapClient($this->config->url_1c . $this->config->work_1c_db . "/ws/WebOtvetZayavki.1cws?wsdl");
+        $response = $stat_z_client->__soapCall('GetOtvetZayavkiINN',array($z));
+
+        if (!empty($log)) {
+            $this->logging(__METHOD__, $this->config->url_1c . $this->config->work_1c_db . '/ws/WebOtvetZayavki.1cws?wsdl GetOtvetZayavki', (array)$z, (array)$response, 'statuses.txt');
+        }
+
+        $this->caches->set($cache_key, $response, 60);
+        return $response;
+    }
+
+    /**
+     * Получение актуального статуса заявки 1С
+     * @param string $id_1c `s_orders.1c_id`
+     * @param bool $use_cache Если false - не ищем последние запросы в кэше
+     * @return string|null
+     * @throws SoapFault
+     */
+    public function get_1c_status(string $id_1c, ?bool $use_cache = true): ?string
+    {
+        $response = $this->orders->check_order_1c($id_1c, $use_cache);
+        if (empty($response) || empty($response->return->Статус)) {
+            // 1С не отдал нормальный ответ:
+            return null;
+        }
+
+        return $response->return->Статус;
+    }
+
     public function update_1c_status($last_order, $resp = null)
     {
         $last_order = (array)$last_order;
@@ -1219,29 +1315,6 @@ class Orders extends Simpla
 		$query = $this->db->placehold("UPDATE __labels SET ?% WHERE id in(?@) LIMIT ?", $label, (array)$id, count((array)$id));
 		$this->db->query($query);
 		return $id;
-	}
-
-	public function update_orders_waiting_virtual_cards_by_user($user_id)
-	{
-		if (empty($user_id)) {
-			return false;
-		}
-
-		$query = $this->db->placehold(
-			"UPDATE __orders
-                SET status = ?
-            WHERE user_id = ?
-            AND status = ?
-            AND card_type = ?",
-			self::STATUS_SIGNED,
-			$user_id,
-			self::STATUS_WAIT_VIRTUAL_CARD,
-			self::CARD_TYPE_VIRT
-		);
-
-		$this->db->query($query);
-
-		return $user_id;
 	}
 
 	/*
@@ -2144,12 +2217,16 @@ class Orders extends Simpla
 
     /**
      * Обновляет сумму заявки
+     *
      * @param string $uid
      * @param int $order_id
      * @param int $amount
+     * @param int $period
+     * @param array $update_order_data
      * @return bool
+     * @throws SoapFault
      */
-    public function editAmount(string $uid, int $order_id, int $amount, int $period = 0): bool
+    public function editAmount(string $uid, int $order_id, int $amount, int $period = 0, array $update_order_data = []): bool
     {
         $data = [
             'НомерЗаявки' => $uid,
@@ -2164,11 +2241,12 @@ class Orders extends Simpla
             $order = $this->get_order($order_id);
 
             $edit_period = empty($period) ? $order->period : $period;
+            $edit_percent = $update_order_data['percent'] ?? $order->percent;
             
-            $update_data = [
+            $update_data = array_merge($update_order_data, [
                 'amount' => $amount,
                 'period' => $edit_period,
-            ];
+            ]);
 
             //сохраним старую сумму для возможности ее применить потом после изменения суммы в ЛК
             if (empty($order->approve_amount)) {
@@ -2176,7 +2254,7 @@ class Orders extends Simpla
             }
             
             $manager = $this->managers->get_crm_manager($order->manager_id); 
-            $this->soap->update_status_1c($order->id_1c, 'Одобрено', $manager->name_1c, $amount, $order->percent, '', 0, $edit_period);
+            $this->soap->update_status_1c($order->id_1c, 'Одобрено', $manager->name_1c, $amount, $edit_percent, '', 0, $edit_period);
             
             $this->update_order($order_id, $update_data);
         }
@@ -2696,6 +2774,7 @@ class Orders extends Simpla
      * @param array $order
      * @param object $user
      * @return int
+     * @throws Exception
      */
     public function getAdditionalServicesPrice(array $order, object $user): int
     {
@@ -2704,7 +2783,7 @@ class Orders extends Simpla
             empty($user->loan_history)
         );
 
-        return $credit_doctor->price + $this->star_oracle::AMOUNT;
+        return $credit_doctor->price + $this->tv_medical::ISSUANCE_AMOUNT;
     }
 
     /**
@@ -2858,5 +2937,108 @@ class Orders extends Simpla
     public function isCrossOrder(stdClass $order): bool
     {
         return $order->utm_source === self::UTM_SOURCE_CROSS_ORDER;
+    }
+
+
+    /**
+     * Условия возможности перевыдачи заявки, если ранее не удалось выдать:
+     *
+     * 1. Заявка в статусе 'Не удалось выдать'
+     * 2. Заявка в 1c_status = '3.Одобрено'
+     * 3. Есть договор
+     * 4. Договор создан не ранее чем 1 неделю назад
+     * 5. НЕ превышено максимальное кол-во попыток перевыдачи (3)
+     * 6. У клиента есть хотя бы 1 неудаленная карта или неудаленный СБП счет
+     * 7. Подходящая ошибка выдачи (проверяем по s_orders.pay_result)
+     */
+    public function canRepeatIssuanceNotIssuedOrder(stdClass $order): bool
+    {
+        $order1CStatus = $order->status_1c ?: $order->{'1c_status'};
+
+        // 1. Заявка НЕ в статусе 'Не удалось выдать' ИЛИ Заявка НЕ в 1c_status = '3.Одобрено'
+        if (
+            (int)$order->status !== $this->orders::ORDER_STATUS_CRM_NOT_ISSUED ||
+            $order1CStatus !== $this->orders::ORDER_1C_STATUS_APPROVED
+        ) {
+            return false;
+        }
+
+        // 2. Нет договора
+        if (empty($order->contract_id)) {
+            return false;
+        }
+
+        $contract = $this->contracts->get_contract((int)$order->contract_id);
+        if (empty($contract) || empty($contract->create_date)) {
+            return false;
+        }
+
+        try {
+            $contractDate = new DateTime($contract->create_date);
+        } catch (Throwable $e) {
+            return false;
+        }
+
+        $diffDays = (new DateTime())->diff($contractDate)->days;
+
+        // 3. Договор создан ранее чем 1 неделю назад
+        if ($diffDays >= 7) {
+            return false;
+        }
+
+        $repeatIssuanceCount = (int)$this->order_data->read((int)$order->id, $this->order_data::REPEAT_ISSUANCE_COUNT);
+
+        $maxCountToRepeatIssuanceOrder = 3;
+
+        // 4. Превышено максимальное кол-во попыток перевыдачи
+        if ($repeatIssuanceCount >= $maxCountToRepeatIssuanceOrder) {
+            return false;
+        }
+
+        $userCards = $this->best2pay->get_cards([
+            'deleted' => 0,
+            'deleted_by_client' => 0,
+            'user_id' => (int)$order->user_id,
+        ]);
+
+        if (empty($userCards)) {
+            $sbpAccounts = $this->users->getSbpAccounts((int)$order->user_id);
+
+            // 5. Нет хотя бы 1 неудаленной карты или неудаленного СБП счет
+            if (empty($sbpAccounts)) {
+                return false;
+            }
+        }
+
+        $orderPayResultToRepeatIssuance = [
+            'Ошибка выдачи: Bank acquiring request forbidden',
+            'Ошибка выдачи: Couldn\'t get information about receiver from SBP',
+            'Ошибка выдачи: Pam не соответствует ФИО пользователя'
+        ];
+
+        // 6. Подходящая ошибка выдачи
+        if (!empty($order->pay_result) && in_array($order->pay_result, $orderPayResultToRepeatIssuance)) {
+            return true;
+        }
+
+        return false;
+    }
+
+    /**
+     * Проверяет есть ли у пользователя отказная или закрытая заявка
+     * @param int $user_id
+     * @return bool
+     */
+    public function hasRejectOrIssuedOrders(int $user_id): bool
+    {
+        $sql = $this->db->placehold(
+            "SELECT EXISTS(SELECT * FROM __orders WHERE user_id = ? AND (status = ? OR `1c_status` = ?)) as r",
+            $user_id,
+            self::ORDER_STATUS_CRM_REJECT,
+            self::ORDER_1C_STATUS_CLOSED
+        );
+        $this->db->query($sql);
+
+        return (bool)$this->db->result('r');
     }
 }

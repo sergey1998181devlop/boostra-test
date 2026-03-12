@@ -4,366 +4,10 @@
     ["title" => "Положение об использовании АСП", "url" => "{$config->root_url}/files/docs/asp_usage_policy.pdf"],
     ["title" => "Согласие на хранение и обработку персональных данных", "url" => "{$config->root_url}/files/docs/personal_data_consent.pdf"],
     ["title" => "Согласие на получение маркетинговых коммуникаций", "url" => "{$config->root_url}/files/docs/marketing_consent.pdf"],
-    ["title" => "Согласие на направление запросов в БКИ", "url" => "{$config->root_url}/preview/agreement_disagreement_to_receive_ko"],
     ["title" => "Индивидуальные условия договора займа", "url" => "{$individual_url}"]
 ]}
 
-{literal}
-    <style>
-        #autoconfirm {
-            --font-size: 16px;
-            width: 100%;
-            padding: 15px;
-            max-width: 100%;
-            box-sizing: border-box;
-            text-align: center;
-            h1 {
-                font-size: 32px;
-            }
-            a {
-                color: #0a91ed;
-            }
-            button {
-                background: #0A91ED;
-                color: white;
-                border-radius: 30px;
-                padding: 16px 40px;
-                font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-                font-size: 14px;
-                font-weight: 700;
-                line-height: 24px;
-                letter-spacing: 0px;
-                text-align: center;
-                vertical-align: middle;
-                border: none;
-                cursor: pointer;
-                transition: background-color 0.3s;
-                min-width: 280px;
-            }
-            button:hover:not(:disabled) {
-                background: #0880D6;
-            }
-            button:disabled {
-                opacity: .5;
-                cursor: not-allowed;
-            }
-        }
-        .autoconfirm__logo {
-            display: block;
-            max-width: 200px;
-            height: auto;
-            margin: 0 auto 20px;
-            text-align: center;
-        }
-        .autoconfirm__icon {
-            display: block;
-            max-width: 120px;
-            height: auto;
-            margin: 0 auto 30px;
-            text-align: center;
-        }
-        .autoconfirm__container {
-            max-width: 720px;
-            margin: auto;
-        }
-        .autoconfirm__list_item {
-            margin-top: 15px;
-            margin-bottom: 15px;
-            text-align: left;
-        }
-        .autoconfirm__list_item label {
-            div {
-                display: flex;
-                align-items: flex-start;
-                gap: 15px;
-                font-size: var(--font-size);
-                line-height: 1.4;
-                span {
-                    flex: 1;
-                }
-            }
-            input {
-                display: none;
-            }
-            div::before {
-                content: "";
-                height: 20px;
-                width: 20px;
-                min-width: 20px;
-                border: 2px solid #818C99;
-                display: block;
-                border-radius: 50%;
-                margin-top: 2px;
-                flex-shrink: 0;
-            }
-            input:checked + div::before {
-                content: url('/design/boostra_mini_norm/assets/icons/checkbox-check.svg');
-                display: inline-flex;
-                align-items: center;
-                justify-content: center;
-                background-color: #4E8FF5;
-                border-color: #4E8FF5;
-                color: white;
-                font-size: 14px;
-                font-weight: bold;
-                animation: checkAnim 0.3s ease;
-                /* box-shadow: inset 0 0 0 4px white; */
-            }
-        }
-
-        @keyframes checkAnim {
-            from {
-                transform: scale(0);
-                opacity: 0;
-            }
-            to {
-                transform: scale(1);
-                opacity: 1;
-            }
-        }
-
-        @media screen and (max-width: 768px){
-            #autoconfirm {
-                --font-size: 14px;
-                padding: 10px;
-                h1 {
-                    font-size: 24px;
-                    text-align: center;
-                }
-                button {
-                    width: 100%;
-                }
-            }
-            
-            .autoconfirm__logo {
-                max-width: 150px;
-                margin-bottom: 15px;
-            }
-            
-            .autoconfirm__icon {
-                max-width: 90px;
-                margin-bottom: 20px;
-            }
-            
-            .autoconfirm__approved_notice h2 {
-                font-size: 20px;
-                line-height: 26px;
-            }
-            
-            .autoconfirm__approved_notice p {
-                font-size: 14px;
-            }
-
-            .autoconfirm__list_item {
-                margin-top: 12px;
-                margin-bottom: 12px;
-            }
-
-            .autoconfirm__list_item label {
-                div {
-                    gap: 12px;
-                    align-items: flex-start;
-                }
-                div::before {
-                    margin-top: 1px;
-                    min-width: 20px;
-                    width: 20px;
-                    height: 20px;
-                }
-                /* input:checked + div::before {
-                    box-shadow: inset 0 0 0 3px white;
-                } */
-            }
-
-            .autoconfirm__approved_notice {
-                font-size: 18px;
-                padding: 16px 20px;
-            }
-        }
-
-        @media screen and (max-width: 480px) {
-            #autoconfirm {
-                --font-size: 13px;
-                padding: 8px;
-            }
-            
-            .autoconfirm__logo {
-                max-width: 120px;
-                margin-bottom: 10px;
-            }
-            
-            .autoconfirm__icon {
-                max-width: 70px;
-                margin-bottom: 15px;
-            }
-            
-            .autoconfirm__approved_notice h2 {
-                font-size: 18px;
-                line-height: 22px;
-            }
-            
-            .autoconfirm__approved_notice p {
-                font-size: 13px;
-            }
-
-            .autoconfirm__list_item label {
-                div {
-                    gap: 10px;
-                }
-                div::before {
-                    width: 18px;
-                    height: 18px;
-                    min-width: 18px;
-                }
-                /* input:checked + div::before {
-                    box-shadow: inset 0 0 0 3px white;
-                } */
-            }
-
-            .autoconfirm__container {
-                padding: 0 5px; /* Меньше отступы по бокам */
-            }
-        }
-        .promocodes {
-            text-align: center;
-        }
-        .promo-block {
-            padding: 15px;
-            border: 1px black dashed;
-            button {
-                margin-top: 20px;
-            }
-        }
-        .autoconfirm__approved_notice {
-            max-width: 720px;
-            margin: 20px auto;
-            background: transparent;
-            color: #1E262E;
-            padding: 0;
-            border-radius: 0;
-            font-weight: 400;
-            text-align: center;
-        }
-        .autoconfirm__approved_notice h2 {
-            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-            font-size: 20px;
-            font-weight: 700;
-            line-height: 26px;
-            letter-spacing: 0px;
-            text-align: center;
-            vertical-align: middle;
-            margin: 0 0 15px 0;
-            color: #1E262E;
-        }
-        .autoconfirm__approved_notice p {
-            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-            font-size: 14px;
-            font-weight: 500;
-            color: #6F7985;
-            margin: 10px 0;
-            line-height: 20px;
-            letter-spacing: 0px;
-            text-align: center;
-            vertical-align: middle;
-        }
-        .autoconfirm__list_item a {
-            text-align: left;
-            display: block;
-        }
-        .autoconfirm__list_item--button {
-            text-align: center;
-        }
-
-        /* Спойлер для документов */
-        .documents-spoiler {
-            margin: 25px 0;
-            border: none;
-            border-radius: 0;
-            overflow: visible;
-            width: 100%;
-            box-sizing: border-box;
-            background: transparent;
-        }
-        .documents-spoiler__header {
-            background: transparent;
-            padding: 0;
-            cursor: pointer;
-            display: flex;
-            justify-content: flex-start;
-            align-items: center;
-            font-weight: 400;
-            font-size: 16px;
-            color: #6F7985;
-            transition: color 0.3s;
-            text-align: left;
-            text-decoration: none;
-            margin-bottom: 15px;
-        }
-        .documents-spoiler__header:hover {
-            background: transparent;
-            color: #4E8FF5;
-        }
-        .documents-spoiler__underlined {
-            text-decoration: underline;
-            text-underline-offset: 3px;
-        }
-        .documents-spoiler__arrow {
-            transition: transform 0.3s;
-            margin-left: 8px;
-            display: inline-flex;
-            align-items: center;
-            flex-shrink: 0;
-            width: 16px;
-            height: 16px;
-        }
-        .documents-spoiler__arrow img {
-            width: 100%;
-            height: 100%;
-        }
-        .documents-spoiler__arrow.open {
-            transform: rotate(180deg);
-        }
-        .documents-spoiler__content {
-            max-height: 0;
-            overflow: hidden;
-            transition: max-height 0.3s ease-out, padding 0.3s ease-out;
-            padding: 0;
-            width: 100%;
-            box-sizing: border-box;
-            background: transparent;
-        }
-        .documents-spoiler__content.open {
-            max-height: 1000px;
-            padding: 0;
-        }
-        .documents-spoiler__content .autoconfirm__list_item {
-            width: 100%;
-            box-sizing: border-box;
-            margin: 12px 0;
-        }
-        .documents-spoiler__content .autoconfirm__list_item a {
-            color: #4E8FF5;
-            text-decoration: none;
-        }
-        .documents-spoiler__content .autoconfirm__list_item a:hover {
-            text-decoration: underline;
-        }
-        .promo-button {
-            margin-top: 20px;
-            text-align: center;
-        }
-        .promo-button button {
-            background: transparent;
-            color: #4E8FF5;
-            border: 2px solid #4E8FF5;
-            padding: 14px 30px;
-        }
-        .promo-button button:hover {
-            background: #F0F7FF;
-        }
-    </style>
-{/literal}
-
+{assign var="final_approved_amount" value="{if $il_approved_amount && $settings->il_nk_loan_edit_amount['status'] && in_array($order->utm_source, $settings->il_nk_loan_edit_amount['utm_sources'])}{$il_approved_amount}{else}{$decisionSum}{/if}"}
 <div id="autoconfirm">
     <div class="autoconfirm__container">
         {* Логотип boostra *}
@@ -373,9 +17,9 @@
         <img class="autoconfirm__icon" src="design/{$settings->theme|escape}/img/svg/confetti.svg" alt="Congratulations" />
         
         {* Блок с одобрением *}
-        {if !empty($decisionSum)}
+        {if !empty($final_approved_amount)}
             <div class="autoconfirm__approved_notice">
-                <h2>{$user->firstname}, отличные новости! Вам одобрено<br>{$decisionSum|number_format:0:",":" "} рублей на {$order->period|number_format:0:",":" "} дней</h2>
+                <h2>{$user->firstname}, отличные новости! Вам одобрено до <br>{$final_approved_amount|number_format:0:",":" "} рублей</h2>
                 <p>Осталось подписать документы и добавить карту<br>для получения выдачи</p>
             </div>
         {/if}
@@ -393,14 +37,21 @@
             
             {* Кнопка подписания *}
             <div class="autoconfirm__list_item autoconfirm__list_item--button">
-                <button disabled type="button">Подписать и получить</button>
+                <button disabled type="button">
+                    Подписать и получить
+                    {if $order->loan_type == Orders::LOAN_TYPE_PDL}
+                        {$decisionSum}
+                    {else}
+                        {$order->amount}
+                    {/if}
+                </button>
                 <div class="hidden">
                     <div class="autoconfirm_sms_block js-autoconfirm-block" data-phone="{$user->phone_mobile}">
                         <div class="autoconfirm_actions">
                             <span class="info" id="accept_info">На Ваш телефон {$user->phone_mobile} было отправлено СМС-сообщение с кодом для подтверждения.</span>
                             <div id="autoconfirm_sms">
                                 <div>
-                                    <input type="input" name="code" class="js-autoconfirm-sms" maxlength="4" placeholder="Код из СМС" />
+                                    <input type="input" autocomplete="one-time-code" name="code" class="js-autoconfirm-sms" maxlength="4" placeholder="Код из СМС" />
                                     <span class="js-autoconfirm-error error-info"></span>
                                 </div>
                                 <div class="js-repeat-autoconfirm-sms"></div>
@@ -411,7 +62,7 @@
             </div>
             {* Спойлер с документами *}
             <div class="documents-spoiler">
-                <div class="documents-spoiler__header" onclick="toggleDocumentsSpoiler()">
+                <div class="documents-spoiler__header js-documents-spoiler-toggle">
                     <span>Я согласен <span class="documents-spoiler__underlined">со всеми условиями</span></span>
                     <span class="documents-spoiler__arrow">
                         <img src="design/{$settings->theme|escape}/img/svg/up_arrow.svg" alt="arrow" />
@@ -426,12 +77,63 @@
                                     <a id="{$doc.type}" target="_blank" href="{$doc.url}">{$doc.title}</a>
                                 </div>
                             </label>
-
+                        </div>
+                        {if !empty($rcl_loan) && $doc.title == 'Индивидуальные условия договора займа'}
+                            <p class="rcl_disclaimer" style="text-align: left!important;">В договоре указана максимально доступная сумма Кредитной линии</p>
+                        {/if}
+                    {/foreach}
+                    {foreach $rcl_docs as $key => $doc}
+                        <div class="autoconfirm__list_item">
+                            <label for="autoconfirm_rcl_{$key}">
+                                <input type="checkbox" value="1" id="autoconfirm_rcl_{$key}" name="autoconfirm_item_rcl_{$key}" />
+                                <div>
+                                    <a id="{$doc.type}" target="_blank" href="{$doc.url}">{$doc.title}</a>
+                                </div>
+                            </label>
                         </div>
                     {/foreach}
+
+                    {* Дополнительные услуги *}
+                    {if $isOrganic}
+                        <div class="autoconfirm__list_item autoconfirm__list_item--extra-service">
+                            {include file="credit_doctor/credit_doctor_checkbox.tpl" idkey=$order->id}
+                            <input type="hidden" id="credit_doctor_hidden{$order->id}" value="0" />
+                        </div>
+                        <div class="autoconfirm__list_item autoconfirm__list_item--extra-service">
+                            {include file="tv_medical/tv_medical_checkbox.tpl" idkey=$order->id}
+                            <input type="hidden" id="tv_medical_hidden{$order->id}" value="0" />
+                        </div>
+                    {/if}
                 </div>
             </div>
-            {include 'promocode.tpl'}
+
+            {if $rcl_loan}
+                <div class="documents-spoiler">
+                    <div class="documents-spoiler__header" onclick="toggleRclSpoiler()">
+                        <span>Одобрили вам <span class="documents-spoiler__underlined">Кредитную линию</span></span>
+                        <span class="documents-spoiler__arrow rcl-spoiler__arrow">
+                            <img src="design/{$settings->theme|escape}/img/svg/up_arrow.svg" alt="arrow" />
+                        </span>
+                    </div>
+                    <div class="documents-spoiler__content" id="rcl-spoiler-content" style="text-align: left!important;">
+                        <p>- Максимальная сумма Кредитной линии {$rcl_max_amount} рублей</p>
+                        <p>- Получение денег без лишних проверок</p>
+                        <p>- Сами выбираете сумму, которая нужна сейчас</p>
+                    </div>
+                </div>
+            {/if}
+
+            {if $order->loan_type == Orders::LOAN_TYPE_PDL}
+                {include 'promocode.tpl'}
+            {/if}
+
+            {* Временная проверка на лида *}
+            {if $settings->il_nk_loan_edit_amount['status'] && in_array($order->utm_source, $settings->il_nk_loan_edit_amount['utm_sources'])}
+                {* Если усть одобренная сумма ИЛ займа и она больше 30000, отобразим бегунок *}
+                {if isset($il_approved_amount) && $il_approved_amount > Orders::PDL_MAX_AMOUNT  && $order->loan_type == Orders::LOAN_TYPE_PDL}
+                    {include 'calculator/il_amount_slider.tpl'}
+                {/if}
+            {/if}
         </div>
     </div>
 </div>
@@ -478,6 +180,8 @@
                 action: 'check_autoconfirm',
                 phone: $('.js-autoconfirm-block').data('phone'),
                 code: $('.js-autoconfirm-sms').val(),
+                is_user_credit_doctor: $('#credit_doctor_hidden{/literal}{$order->id}{literal}').val(),
+                is_tv_medical: $('#tv_medical_hidden{/literal}{$order->id}{literal}').val(),
             };
             $.ajax({
                 url: 'ajax/sms.php',
@@ -508,6 +212,13 @@
                         } else {
                             // Показываем секцию добавления карты
                             $('#card-add-section').removeClass('is-hidden').fadeIn(200);
+                        }
+                        
+                        // Показываем модалку кросс-ордера поверх всего (если она есть)
+                        if ($('#auto_confirm_2_cross_order_modal').length > 0) {
+                            setTimeout(function() {
+                                $('#auto_confirm_2_cross_order_modal').fadeIn(300);
+                            }, 300);
                         }
                     } else {
                         $('.js-autoconfirm-block').removeClass('loading');
@@ -550,6 +261,8 @@
 
         $("#autoconfirm_all").on('change', function () {
             $(".autoconfirm__list_item input[name^='autoconfirm_item_']").prop('checked', this.checked);
+
+            $("input[name='credit_doctor_check'], input[name='tv_medical_check']").prop('checked', this.checked).trigger('change');
             validateCheckBox();
         });
 
@@ -561,12 +274,14 @@
             autoconfirm();
         });
 
-        $(document).on('click', ".js-send-repeat", function (){
+        $(document).on('click', ".js-send-repeat", function (e){
+            e.preventDefault();
             send_sms();
+            return false;
         });
 
-        // Функция переключения спойлера документов
-        function toggleDocumentsSpoiler() {
+        // Обработчики для спойлеров
+        $(document).on('click', '.js-documents-spoiler-toggle', function() {
             const content = document.getElementById('documents-spoiler-content');
             const arrow = document.querySelector('.documents-spoiler__arrow');
 
@@ -577,7 +292,33 @@
                 content.classList.add('open');
                 arrow.classList.add('open');
             }
+        });
+
+        function toggleRclSpoiler() {
+            const content = document.getElementById('rcl-spoiler-content');
+            const arrow = document.querySelector('.rcl-spoiler__arrow');
+
+            if (content.classList.contains('open')) {
+                content.classList.remove('open');
+                arrow.classList.remove('open');
+            } else {
+                content.classList.add('open');
+                arrow.classList.add('open');
+            }
         }
+
+        $(document).on('click', '.js-rcl-spoiler-toggle', function() {
+            const content = document.getElementById('rcl-spoiler-content');
+            const arrow = document.querySelector('.rcl-spoiler__arrow');
+
+            if (content.classList.contains('open')) {
+                content.classList.remove('open');
+                arrow.classList.remove('open');
+            } else {
+                content.classList.add('open');
+                arrow.classList.add('open');
+            }
+        });
 
         // Инициализация стартового состояния блоков при активном автоподписании:
         $(function() {
@@ -600,4 +341,10 @@
         });
         {/literal}
     </script>
+    <script src="design/{$settings->theme}/js/creditdoctor_modal.app.js?v=1.03" type="text/javascript"></script>
+    {$credit_doctor_js_loaded = true scope=parent}
 {/capture}
+
+{include file="credit_doctor/credit_doctor_popup.tpl"}
+{$credit_doctor_popup_loaded = true scope=parent}
+<link rel="stylesheet" href="design/{$settings->theme}/css/autoconfirm_2_asp.css?v=1.00">

@@ -311,20 +311,22 @@ class CreditDoctor extends Simpla
      * @param int $amount
      * @param bool $is_new_client
      * @param int|null $user_id
+     * @param int|null $order_id
      * @return object|null
      * @throws Exception
      */
-    public function getCreditDoctor(int $amount, bool $is_new_client = true, int $user_id = null): ?object
+    public function getCreditDoctor(int $amount, bool $is_new_client = true, int $user_id = null, int $order_id = null): ?object
     {
-        return $this->service->getServicePrice($amount, $is_new_client, $user_id);
+        return $this->service->getServicePrice($amount, $is_new_client, $user_id, $order_id);
     }
 
     /**
      * Проверяет доступность сервиса для пользователя
+     * @throws Exception
      */
-    public function isVisible($userId): array
+    public function isVisible($userId, ?int $orderId = null): array
     {
-        return $this->service->checkVisibility($userId);
+        return $this->service->checkVisibility($userId, $orderId);
     }
 
     /**
@@ -339,6 +341,18 @@ class CreditDoctor extends Simpla
             $penalty_price);
         $this->db->query($query);
         return $this->db->result('id');
+    }
+
+    /**
+     * Получить запись КД по сумме заявке и типу
+     * @param int $amount
+     * @return false|int
+     */
+    public function getCreditDoctorByPrice(int $amount)
+    {
+        $query = $this->db->placehold('SELECT * FROM s_credit_doctor_conditions WHERE from_amount <= ? AND is_new = 1 ORDER BY from_amount DESC LIMIT 1', $amount);
+        $this->db->query($query);
+        return $this->db->result();
     }
 
     /**
@@ -594,6 +608,33 @@ class CreditDoctor extends Simpla
         );
         $this->db->query($query);
         return $this->db->results();
+    }
+
+    /**
+     * Проверяет наличие возврата credit_doctor по order_id
+     */
+    public function hasReturnByOrderId(int $order_id): bool
+    {
+        $query = $this->db->placehold(
+            "SELECT COUNT(id) as cnt FROM s_credit_doctor_to_user WHERE order_id = ? AND return_date IS NOT NULL",
+            $order_id
+        );
+        $this->db->query($query);
+        return (int)$this->db->result('cnt') > 0;
+    }
+
+    /**
+     * Получает license_key из s_finansdoctor_license_keys по order_id (любой, не обязательно active)
+     */
+    public function getLicenseKeyByOrderId(int $order_id): ?string
+    {
+        $query = $this->db->placehold(
+            "SELECT license_key FROM s_finansdoctor_license_keys WHERE order_id = ? AND license_key IS NOT NULL AND license_key != '' ORDER BY id DESC LIMIT 1",
+            $order_id
+        );
+        $this->db->query($query);
+        $result = $this->db->result();
+        return $result ? $result->license_key : null;
     }
 
     /**

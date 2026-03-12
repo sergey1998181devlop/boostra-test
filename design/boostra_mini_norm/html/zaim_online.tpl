@@ -41,7 +41,7 @@
 
     <link rel="stylesheet" type="text/css" href="/design/orange_theme/css/bootstrap/bootstrap-icons-1.9.1/bootstrap-icons.css"/>
     <link rel="stylesheet" type="text/css" href="/design/orange_theme/css/bootstrap/bootstrap.min.css"/>
-    <link rel="stylesheet" type="text/css" href="/design/orange_theme/css/style.css?v=1.023"/>
+    <link rel="stylesheet" type="text/css" href="/design/orange_theme/css/style.css?v=1.024"/>
     <link rel="stylesheet" type="text/css" href="/design/orange_theme/css/media.css?v=1.008" />
     <link rel="stylesheet" type="text/css" href="/design/orange_theme/css/modal.css?v=1.00" />
     <link rel="stylesheet" type="text/css" href="/design/orange_theme/css/magnific-popup.css?v=1.00" />
@@ -704,7 +704,7 @@
     </style>
 
 
-    <script src="design/boostra_mini_norm/js/login.app.js?v=2.51" type="text/javascript"></script>
+    <script src="design/boostra_mini_norm/js/login.app.js?v=2.56" type="text/javascript"></script>
     <script src="design/boostra_mini_norm/js/jquery.inputmask.min.js" type="text/javascript"></script>
     <script src="design/boostra_mini_norm/js/jquery.validate.min.js?v=2.01" type="text/javascript"></script>
     <!--<script src="design/orange_theme/js/calculate.js?v=1.006" type="text/javascript"></script> -->
@@ -1009,10 +1009,10 @@
 
 
 
-<script src="/design/boostra_mini_norm/js/b2p.app.js?v=1.02" type="text/javascript"></script>
+<script src="/design/boostra_mini_norm/js/b2p.app.js?v=1.03" type="text/javascript"></script>
 <script src="/js/jquery.cookie.min.js" type="text/javascript"></script>
-<script src="/design/boostra_mini_norm/js/metrics.js?v=1.006" type="text/javascript"></script>
-<script src="/design/orange_theme/js/common.js?v=1.0016" type="text/javascript"></script>
+<script src="/design/boostra_mini_norm/js/metrics.js?v=1.007" type="text/javascript"></script>
+<script src="/design/orange_theme/js/common.js?v=1.0017" type="text/javascript"></script>
 <script src="/js/functions.js?v=1.0001" type="text/javascript"></script>
 
 <script src="/design/orange_theme/js/bootstrap/bootstrap.bundle.min.js" type="text/javascript"></script>

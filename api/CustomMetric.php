@@ -172,4 +172,124 @@ class CustomMetric extends Simpla
         $this->db->query($query);
         return $this->db->result();
     }
+
+    // --- Яндекс Метрика (_ym_uid) ---
+
+    /**
+     * Проверяет существование записи с одновременным совпадением user_id и ym_uid.
+     * Дубликаты по одному полю разрешены — блокируется только точная пара.
+     *
+     * @param int $user_id
+     * @param int $ym_uid
+     * @return bool
+     */
+    public function ymLogExists(int $user_id, int $ym_uid): bool
+    {
+        $query = $this->db->placehold(
+            "SELECT EXISTS (SELECT 1 FROM s_ym_logs WHERE user_id = ? AND ym_uid = ?) as r",
+            $user_id,
+            $ym_uid
+        );
+        $this->db->query($query);
+
+        return (bool)$this->db->result('r');
+    }
+
+    /**
+     * Записывает пару user_id + _ym_uid в s_ym_logs
+     *
+     * @param int    $user_id
+     * @param string $ym_uid  значение куки _ym_uid
+     * @return bool
+     */
+    public function addYmLog(int $user_id, string $ym_uid): bool
+    {
+        if ($user_id <= 0 || $ym_uid === '') {
+            return false;
+        }
+
+        $ym_uid_int = (int)$ym_uid;
+        if ($ym_uid_int <= 0) {
+            return false;
+        }
+
+        if ($this->ymLogExists($user_id, $ym_uid_int)) {
+            return false;
+        }
+
+        $query = $this->db->placehold(
+            "INSERT INTO s_ym_logs (user_id, ym_uid) VALUES (?, ?)",
+            $user_id,
+            $ym_uid_int
+        );
+        $this->db->query($query);
+
+        return (bool)$this->db->insert_id();
+    }
+
+    /**
+     * Возвращает все записи s_ym_logs по user_id
+     *
+     * @param int $user_id
+     * @return array
+     */
+    public function getYmLogsByUserId(int $user_id): array
+    {
+        $query = $this->db->placehold(
+            "SELECT * FROM s_ym_logs WHERE user_id = ? ORDER BY created_at DESC",
+            $user_id
+        );
+        $this->db->query($query);
+
+        return $this->db->results();
+    }
+
+    /**
+     * Возвращает все записи s_ym_logs по значению куки _ym_uid
+     *
+     * @param string $ym_uid
+     * @return array
+     */
+    public function getYmLogsByYmUid(string $ym_uid): array
+    {
+        $ym_uid_int = (int)$ym_uid;
+
+        $query = $this->db->placehold(
+            "SELECT * FROM s_ym_logs WHERE ym_uid = ? ORDER BY created_at DESC",
+            $ym_uid_int
+        );
+        $this->db->query($query);
+
+        return $this->db->results();
+    }
+
+    /**
+     * Удаляет запись s_ym_logs по id
+     *
+     * @param int $id
+     * @return void
+     */
+    public function deleteYmLogById(int $id): void
+    {
+        $query = $this->db->placehold(
+            "DELETE FROM s_ym_logs WHERE id = ?",
+            $id
+        );
+        $this->db->query($query);
+    }
+
+    /**
+     * Удаляет все записи s_ym_logs по user_id
+     *
+     * @param int $user_id
+     * @return void
+     */
+    public function deleteYmLogsByUserId(int $user_id): void
+    {
+        $query = $this->db->placehold(
+            "DELETE FROM s_ym_logs WHERE user_id = ?",
+            $user_id
+        );
+        $this->db->query($query);
+    }
 }

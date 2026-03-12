@@ -12,7 +12,7 @@
                 <a href="info#info">Условия</a>
             </div>
             <div class="menu-item">
-                <a href="info#contacts">Контакты</a>
+                <a href="info#contacts">Связаться с нами</a>
             </div>
             <div class="menu-item">
                 <a href="info#demands">Вопросы и ответы</a>
@@ -51,7 +51,7 @@
                 <a href="info#info">Условия</a>
             </div>
             <div class="actions__item">
-                <a href="info#contacts">Контакты</a>
+                <a href="info#contacts">Связаться с нами</a>
             </div>
             <div class="actions__item">
                 <a href="info#demands">Вопросы и ответы</a>
@@ -64,7 +64,7 @@
         </div>
         <div class="contacts-other">
             <div class="phone">+7 800 333 30 73</div>
-            <div class="phone">+7 800 551 88 81</div>
+            <div class="phone">+7 800 350 66 91</div>
             <div class="phone-label">Круглосуточный клиентский сервис</div>
             <div class="social-networks">
 {*                <a href="https://telegram.me/boostra_bot">*}
@@ -176,7 +176,7 @@
             <div class="credit-get-item">
                 <div class="credit-get-item__decoration">
                     <div class="credit-get-item__decoration__item">Шаг 1</div>
-                    <div class="credit-get-item__decoration__item time-label">За 10 минут</div>
+                    <div class="credit-get-item__decoration__item time-label">За 3-4 минуты</div>
                 </div>
                 <div class="credit-get-item__title">
                     Оформление заявки
@@ -189,7 +189,7 @@
             <div class="credit-get-item">
                 <div class="credit-get-item__decoration">
                     <div class="credit-get-item__decoration__item">Шаг 2</div>
-                    <div class="credit-get-item__decoration__item time-label">За 5 минут</div>
+                    <div class="credit-get-item__decoration__item time-label">За 1 минуту</div>
                 </div>
                 <div class="credit-get-item__title">
                     Дождитесь ответа
@@ -202,7 +202,7 @@
             <div class="credit-get-item">
                 <div class="credit-get-item__decoration">
                     <div class="credit-get-item__decoration__item">Шаг 3</div>
-                    <div class="credit-get-item__decoration__item time-label">За 3 минут</div>
+                    <div class="credit-get-item__decoration__item time-label">За 30 секунд</div>
                 </div>
                 <div class="credit-get-item__title">
                     Мгновенный перевод
@@ -214,7 +214,7 @@
             <div class="credit-get-item">
                 <div class="credit-get-item__decoration">
                     <div class="credit-get-item__decoration__item">Шаг 4</div>
-                    <div class="credit-get-item__decoration__item time-label">За 10 минут</div>
+                    <div class="credit-get-item__decoration__item time-label">за 3 минуты</div>
                 </div>
                 <div class="credit-get-item__title">
                     Погасите заём
@@ -511,7 +511,7 @@
         <div class="submenu-block">
             <div class="submenu-block__item">Партнеры</div>
             <div class="submenu-block__item">Условия</div>
-            <div class="submenu-block__item">Контакты</div>
+            <div class="submenu-block__item">Связаться с нами</div>
             <div class="submenu-block__item">Вопросы и ответы</div>
         </div>
         <hr/>
@@ -523,7 +523,6 @@
             <div class="item">
                 <div class="item__label">Телефон</div>
                 <div class="item__value">8 800 333 30 73</div>
-                <div class="item__value">8 800 333 05 34</div>
             </div>
         </div>
         <div class="partners-section">

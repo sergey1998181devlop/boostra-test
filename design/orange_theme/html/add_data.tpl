@@ -13,7 +13,7 @@
 
 	<script src="design/{$settings->theme}/js/neworder.kladr.js?v=1.62" type="text/javascript"></script>
 
-	<script src="design/{$settings->theme}/js/personal_data.app.js?v=1.71" type="text/javascript"></script>
+	<script src="design/{$settings->theme}/js/personal_data.app.js?v=1.72" type="text/javascript"></script>
 
 
     <script type="text/javascript" src="/js/autocomplete/jquery.autocomplete-min.js"></script>
@@ -22,7 +22,7 @@
     <script src="design/{$settings->theme}/js/additional_data.app.js?v=1.70" type="text/javascript"></script>
 
 
-	<script src="design/{$settings->theme}/js/files_data.app.js?v=1.54" type="text/javascript"></script>
+	<script src="design/{$settings->theme}/js/files_data.app.js?v=1.57" type="text/javascript"></script>
 
 {/capture}
 

@@ -42,11 +42,24 @@
 		{if $add_order_css_js}
 		<link rel="stylesheet" type="text/css" href="design/{$settings->theme|escape}/css/jquery.kladr.min.css?v=1.12"/>
 		{/if}
-		<link rel="stylesheet" type="text/css" href="design/{$settings->theme|escape}/css/style.css?v=2.05"/>
-		<link rel="stylesheet" type="text/css" href="design/{$settings->theme|escape}/css/pages.css?v=1.142"/>
+		<link rel="stylesheet" type="text/css" href="design/{$settings->theme|escape}/css/style.css?v=2.07"/>
+		<link rel="stylesheet" type="text/css" href="design/{$settings->theme|escape}/css/pages.css?v=1.144"/>
 		<link rel="stylesheet" type="text/css" href="design/{$settings->theme|escape}/css/media.css?v=2.35" />
+		{if $usedesk_config.operatorAvatar}
+			<link rel="stylesheet" type="text/css"
+				  href="design/{$settings->theme|escape}/css/usedesk-customizations.css?v=1.04"/>
+			<style>
+				:root {
+					--usedesk-operator-avatar: url('{$usedesk_config.operatorAvatar|escape:'quotes'}');
+				}
+			</style>
+		{/if}
 
 		<script src="design/{$settings->theme}/js/jquery-2.1.3.min.js" type="text/javascript"></script>
+		<script>
+			window.usedeskConfig = {$usedesk_config_json};
+		</script>
+		<script src="design/{$settings->theme}/js/usedesk-validator.js?v=0.09"></script>
 
 	</head>
 	<body class="boy {if $page->id == 1}main{/if} {$body_class}">
@@ -71,7 +84,7 @@
 								<ul>
 									<li><a href="info#info">Информация</a></li>
 									<li><a href="info#docs">Документы</a></li>
-									<li class="nav"><a href="/contacts">Контакты</a></li>
+									<li class="nav"><a href="/contacts">Связаться с нами</a></li>
 									<li class="nav"><a href="info#demands">Условия</a></li>
 									<li class="nav"><a href="/edu">Развитие</a></li>
 									<li class="nav"><a href="tel:88003333073">8 800 333 30 73</a></li>
@@ -84,7 +97,7 @@
 							</div>
 							<ul>							
 								<li class="nav"><a href="info#info">Условия</a></li>
-								<li class="nav"><a href="/contacts">Контакты</a></li>
+								<li class="nav"><a href="/contacts">Связаться с нами</a></li>
 								<li class="nav"><a href="/edu">Развитие</a></li>
 								
 								<li class="nav"><a href="tel:88003333073">8 800 333 30 73</a></li>
@@ -107,7 +120,7 @@
 						<ul>
 							<li><a href="info">Информация</a></li>
 							<li><a href="info#docs">Документы</a></li>
-							<li><a href="/contacts">Контакты</a></li>
+							<li><a href="/contacts">Связаться с нами</a></li>
 						</ul>
 					</li>
 					<li>
@@ -167,7 +180,7 @@
 		<script src="design/{$settings->theme}/js/{$order_js}" type="text/javascript"></script>
 		{/if}
 		{if !$step_js}
-		<script src="design/{$settings->theme}/js/step.jquery.js?v=1.23" type="text/javascript"></script>
+		<script src="design/{$settings->theme}/js/step.jquery.js?v=1.26" type="text/javascript"></script>
 		{else}
 		<script src="design/{$settings->theme}/js/pts-tep.jquery.js?v=1.23" type="text/javascript"></script>
 		{/if}

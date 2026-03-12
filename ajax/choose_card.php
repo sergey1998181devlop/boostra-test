@@ -56,6 +56,22 @@ class ChooseCard extends ajaxController
         return ['result' => 'success'];
     }
 
+    /**
+     * Проставляем шаг карты
+     * @return void
+     */
+    private function finishedCardAddedStep()
+    {
+        if (!empty($this->user->card_added)) {
+            return;
+        }
+
+        $this->users->update_user($this->user->id, [
+            'card_added' => 1,
+            'card_added_date' => date('Y-m-d H:i:s')
+        ]);
+    }
+
     public function actionChooseSbp(): array
     {
         $canAddSbpAccount = $this->best2pay->canAddSbpAccount((int)$this->user->id);
@@ -126,10 +142,6 @@ class ChooseCard extends ajaxController
      */
     private function checkLoanForCard(array $userOrders, stdClass $selectedCard): void
     {
-        if ((int)$selectedCard->organization_id !== (int)$this->organizations->get_base_organization_id()) {
-            $this->request->json_output(['error' => 'Выбор данной карты невозможен']);
-        }
-
         foreach ($userOrders as $order) {
             if (((int)$order->status === $this->orders::STATUS_CONFIRMED && $order->card_id === $selectedCard->id) || (int)$order->status === $this->orders::STATUS_APPROVED) {
                 return;
@@ -388,24 +400,28 @@ class ChooseCard extends ajaxController
             $this->request->json_output(['error' => 'СБП счет уже выбран']);
         }
 
-        $bank = $this->getBank();
-        $this->saveDefaultBankId($bank);
+        $newBank = $this->getBank((int)$this->data['bank_id']);
+        if (empty($newBank)) {
+            $this->request->json_output(['error' => 'Банк не найден']);
+        }
 
-        $this->order_data->set((int)$order->id, $this->order_data::BANK_ID_FOR_SBP_ISSUANCE, (int)$bank->id);
+        $this->saveDefaultBankId($newBank);
+
+        $bankIdForSbpIssuance = (int)$this->order_data->read((int)$order->id, $this->order_data::BANK_ID_FOR_SBP_ISSUANCE);
+        $oldBank = $this->getBank($bankIdForSbpIssuance);
+
+        $this->order_data->set((int)$order->id, $this->order_data::BANK_ID_FOR_SBP_ISSUANCE, (int)$newBank->id);
 
         $this->orders->update_order((int)$order->id, ['card_type' => $this->orders::CARD_TYPE_SBP, 'card_id' => 0]);
 
-        $this->logging(__METHOD__, '', 'Успешно выбран банк для автозаявки', ['order' => $order, 'bank' => $bank], self::LOG_FILE);
+        // Проверим шаг скористы, если есть проставим шаг
+        if ($this->users->skipSelectCardStep($this->user)) {
+            $this->finishedCardAddedStep();
+        }
 
-        $this->changelogs->add_changelog([
-            'manager_id' => $this->managers::MANAGER_SYSTEM_ID,
-            'order_id' => $order->id,
-            'user_id' => $order->user_id,
-            'type' => 'card_change',
-            'old_values' => json_encode(['card_id' => (int)$order->card_id, 'card_type' => $order->card_type]),
-            'new_values' => 'Выбран банк для выплаты по СБП: ' . $bank->title,
-            'created' => date('Y-m-d H:i:s'),
-        ]);
+        $this->logging(__METHOD__, '', 'Успешно выбран банк', ['order' => $order, 'bank' => $newBank], self::LOG_FILE);
+
+        $this->addOrderLoggingForChooseBank($order, $newBank, $oldBank);
 
         if ($cross_orders = $this->orders->get_cross_orders($order->id)) {
             foreach ($cross_orders as $co) {
@@ -413,20 +429,32 @@ class ChooseCard extends ajaxController
                     'card_type' => $this->orders::CARD_TYPE_SBP,
                     'card_id' => 0
                 ]);
-                $this->order_data->set((int)$co->id, $this->order_data::BANK_ID_FOR_SBP_ISSUANCE, (int)$bank->id);
+                $this->order_data->set((int)$co->id, $this->order_data::BANK_ID_FOR_SBP_ISSUANCE, (int)$newBank->id);
             }
         }
 
         return ['result' => 'success'];
     }
 
-    private function getBank(): stdClass
-    {
-        $bankId = (int)$this->data['bank_id'];
 
+    private function addOrderLoggingForChooseBank(stdClass $order, stdClass $newBank, ?stdClass $oldBank)
+    {
+        $this->changelogs->add_changelog([
+            'manager_id' => $this->managers::MANAGER_SYSTEM_ID,
+            'order_id' => $order->id,
+            'user_id' => $order->user_id,
+            'type' => 'card_change',
+            'old_values' => json_encode(['card_id' => (int)$order->card_id, 'card_type' => $order->card_type, 'old_bank' => $oldBank->title ?? 'Не выбран'], JSON_UNESCAPED_UNICODE),
+            'new_values' => 'Выбран банк для выплаты по СБП: ' . $newBank->title,
+            'created' => date('Y-m-d H:i:s'),
+        ]);
+    }
+
+    private function getBank(int $bankId): ?stdClass
+    {
         if (empty($bankId)) {
             $this->logging(__METHOD__, '', 'Не передан ID банка', ['user' => $this->user, 'bank_id' => $bankId], self::LOG_FILE);
-            $this->request->json_output(['error' => 'Не найден банк']);
+            return null;
         }
 
         $bank = $this->b2p_bank_list->getOne([
@@ -436,7 +464,7 @@ class ChooseCard extends ajaxController
 
         if (empty($bank)) {
             $this->logging(__METHOD__, '', 'Банк не найден', ['user' => $this->user, 'bank_id' => $bankId, 'bank' => $bank], self::LOG_FILE);
-            $this->request->json_output(['error' => 'Банк не найден']);
+            return null;
         }
 
         return $bank;
@@ -444,10 +472,16 @@ class ChooseCard extends ajaxController
 
     public function actionChooseDefaultBank(): array
     {
-        $bank = $this->getBank();
+        $bank = $this->getBank((int)$this->data['bank_id']);
+        if (empty($bank)) {
+            $this->request->json_output(['error' => 'Банк не найден']);
+        }
+
         $this->saveDefaultBankId($bank);
 
-        return ['result' => 'success'];
+        $result = $this->repeatIssuanceNotIssuedOrders($bank);
+
+        return ['result' => 'success', 'need_reload' => $result['need_reload']];
     }
 
     private function saveDefaultBankId(stdClass $bank)
@@ -459,7 +493,78 @@ class ChooseCard extends ajaxController
             'user_id' => (int)$this->user->id,
             'order_id' => 0,
             'block' => 'card_change',
-            'text' => 'Клиент изменил банк для выплаты по СБП: ' . $bank->title,
+            'text' => 'Клиент изменил банк по умолчанию для выплаты по СБП: ' . $bank->title,
+            'created' => date('Y-m-d H:i:s'),
+        ]);
+    }
+
+    /**
+     * Повторить выдачу с новым банком, если у клиента есть заявки, которые не удалось выдать ранее
+     */
+    private function repeatIssuanceNotIssuedOrders(stdClass $newBank): array
+    {
+        $result = ['need_reload' => false];
+
+        $ordersToCheck = [];
+
+        // Для возможности перевыдачи проверяется последняя заявка клиента
+        $lastOrder = $this->orders->get_last_order((int)$this->user->id);
+
+        if (empty($lastOrder)) {
+            return $result;
+        }
+
+        $ordersToCheck[] = $lastOrder;
+
+        // Если последняя заявка кросс-ордер, то проверяем также по его основной заявке
+        if ($this->orders->isCrossOrder($lastOrder)) {
+            $mainOrder = $this->orders->get_order($lastOrder->utm_medium);
+
+            if (!empty($mainOrder)) {
+                $ordersToCheck[] = $mainOrder;
+            }
+        }
+
+        foreach ($ordersToCheck as $order) {
+            if (!$this->orders->canRepeatIssuanceNotIssuedOrder($order)) {
+                continue;
+            }
+
+            // 1. Старый банк для выдачи
+            $bankIdForSbpIssuance = (int)$this->order_data->read((int)$order->id, $this->order_data::BANK_ID_FOR_SBP_ISSUANCE);
+            $oldBank = $this->getBank($bankIdForSbpIssuance);
+
+            // 2. Устанавливаем новый банк в заявку
+            $this->order_data->set((int)$order->id, $this->order_data::BANK_ID_FOR_SBP_ISSUANCE, (int)$newBank->id);
+
+            // 3. Отправляем заявку на перевыдачу
+            $this->orders->update_order((int)$order->id, ['status' => $this->orders::STATUS_SIGNED, 'card_id' => 0, 'card_type' => $this->orders::CARD_TYPE_SBP]);
+
+            // 4. Увеличиваем кол-во попыток перевыдач
+            $repeatIssuanceCount = (int)$this->order_data->read((int)$order->id, $this->order_data::REPEAT_ISSUANCE_COUNT);
+            $this->order_data->set((int)$order->id, $this->order_data::REPEAT_ISSUANCE_COUNT, ++$repeatIssuanceCount);
+
+            // 5. Добавляем комментарий в заявку
+            $this->addOrderLoggingForRepeatIssuance($order, $newBank, $oldBank);
+
+            // 6. Логируем
+            $this->logging(__METHOD__, '', 'Заявка отправлена на перевыдачу', ['order' => $order, 'new_bank' => $newBank, 'old_bank' => $oldBank], self::LOG_FILE);
+
+            $result['need_reload'] = true;
+        }
+
+        return $result;
+    }
+
+    private function addOrderLoggingForRepeatIssuance(stdClass $order, stdClass $newBank, ?stdClass $oldBank)
+    {
+        $this->changelogs->add_changelog([
+            'manager_id' => $this->managers::MANAGER_SYSTEM_ID,
+            'order_id' => $order->id,
+            'user_id' => $order->user_id,
+            'type' => 'repeat_issuance',
+            'old_values' => json_encode(['card_id' => (int)$order->card_id, 'card_type' => $order->card_type, 'old_bank' => $oldBank->title ?? 'Не выбран'], JSON_UNESCAPED_UNICODE),
+            'new_values' => 'Выбран банк для перевыдачи: ' . $newBank->title,
             'created' => date('Y-m-d H:i:s'),
         ]);
     }

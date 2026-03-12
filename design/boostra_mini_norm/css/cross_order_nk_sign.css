@@ -1,0 +1,650 @@
+/* Экран подписания кросс-ордера НК */
+
+#cross_order_nk_sign {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.6);
+    z-index: 9000;
+    padding: 20px;
+    box-sizing: border-box;
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    overflow-y: auto;
+}
+
+#cross_order_nk_sign:not([style*="display: block"]):not([style*="display: flex"]) {
+    display: none;
+}
+
+.cross-order-sign__container {
+    --font-size: 16px;
+    max-width: 720px;
+    width: 100%;
+    background: #fff;
+    border-radius: 20px;
+    padding: 40px 30px;
+    text-align: center;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+    position: relative;
+    box-sizing: border-box;
+    margin: auto;
+}
+
+#cross_order_sign_button {
+    background: #0A91ED;
+    color: white;
+    border: none;
+    border-radius: 30px;
+    padding: 16px 40px;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    font-size: 14px;
+    font-weight: 700;
+    line-height: 24px;
+    letter-spacing: 0;
+    text-align: center;
+    vertical-align: middle;
+    cursor: pointer;
+    transition: background-color 0.3s;
+    min-width: 280px;
+}
+
+#cross_order_sign_button:hover:not(:disabled) {
+    background: #0880D6;
+}
+
+#cross_order_sign_button:disabled {
+    opacity: .5;
+    cursor: not-allowed;
+}
+
+.cross-order-sign__container a {
+    color: #0a91ed;
+}
+
+.cross-order-sign__logo {
+    display: block;
+    max-width: 200px;
+    height: auto;
+    margin: 0 auto 20px;
+    text-align: center;
+}
+
+.cross-order-sign__icon {
+    display: block;
+    max-width: 120px;
+    height: auto;
+    margin: 0 auto 30px;
+    text-align: center;
+}
+
+.cross-order-sign__approved_notice {
+    max-width: 720px;
+    margin: 20px auto;
+    background: transparent;
+    color: #1E262E;
+    padding: 0;
+    border-radius: 0;
+    font-weight: 400;
+    text-align: center;
+}
+
+.cross-order-sign__approved_notice h2 {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    font-size: 20px;
+    font-weight: 700;
+    line-height: 26px;
+    letter-spacing: 0;
+    text-align: center;
+    vertical-align: middle;
+    margin: 0 0 15px 0;
+    color: #1E262E;
+}
+
+.cross-order-sign__approved_notice p {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    font-size: 14px;
+    font-weight: 500;
+    color: #6F7985;
+    margin: 10px 0;
+    line-height: 20px;
+    letter-spacing: 0;
+    text-align: center;
+    vertical-align: middle;
+}
+
+.cross-order-sign__list_item {
+    margin-top: 15px;
+    margin-bottom: 15px;
+    text-align: left;
+}
+
+.cross-order-sign__list_item label div {
+    display: flex;
+    align-items: flex-start;
+    gap: 15px;
+    font-size: var(--font-size);
+    line-height: 1.4;
+}
+
+.cross-order-sign__list_item label div span {
+    flex: 1;
+}
+
+.cross-order-sign__list_item label input {
+    display: none;
+}
+
+.cross-order-sign__list_item label div::before {
+    content: "";
+    height: 20px;
+    width: 20px;
+    min-width: 20px;
+    border: 2px solid #818C99;
+    display: block;
+    border-radius: 50%;
+    margin-top: 2px;
+    flex-shrink: 0;
+}
+
+.cross-order-sign__list_item label input:checked + div::before {
+    content: url('/design/boostra_mini_norm/assets/icons/checkbox-check.svg');
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background-color: #4E8FF5;
+    border-color: #4E8FF5;
+    color: white;
+    font-size: 14px;
+    font-weight: bold;
+    animation: checkAnim 0.3s ease;
+}
+
+@keyframes checkAnim {
+    from {
+        transform: scale(0);
+        opacity: 0;
+    }
+    to {
+        transform: scale(1);
+        opacity: 1;
+    }
+}
+
+.cross-order-sign__list_item a {
+    text-align: left;
+    display: inline;
+}
+
+.cross-order-docs-inline {
+    display: block;
+    line-height: 1.6;
+}
+
+.cross-order-docs-inline a {
+    display: inline;
+    white-space: nowrap;
+}
+
+.cross-order-sign__list_item--button {
+    text-align: center;
+}
+
+/* Блок СМС */
+.cross-order-sign__sms-block {
+    position: relative;
+    background: #fff;
+    max-width: 800px;
+    border-radius: 20px;
+    margin: 20px auto 0;
+    box-sizing: border-box;
+    padding: clamp(30px, 21px + 2.439vw, 60px);
+}
+
+.cross-order-sign__sms-block.loading {
+    opacity: 0.6;
+    pointer-events: none;
+}
+
+.cross-order-sign__sms-actions {
+    margin-top: 0;
+}
+
+.cross-order-sign__input {
+    background: #F4F7FA;
+    border-radius: 16px;
+    padding: 20px;
+    font-size: 16px;
+    font-weight: 500;
+    color: #02113B;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    width: 100%;
+    box-sizing: border-box;
+    border: none;
+    outline: none;
+    -webkit-appearance: none;
+    margin-top: 20px;
+    display: block;
+}
+
+.cross-order-sign__input:focus {
+    outline: none;
+}
+
+.cross-order-sign__error {
+    display: block;
+    margin-top: 8px;
+    color: #d22;
+    font-size: 14px;
+}
+
+.cross-order-sign__sms-resend {
+    text-align: left;
+    font-size: 12px;
+    margin-top: 8px;
+    color: #6F7985;
+}
+
+.cross-order-sign__sms-resend.inactive {
+    color: #333;
+    text-decoration: none;
+}
+
+.cross-order-sign__sms-resend a {
+    color: #0a91ed;
+    font-size: 12px;
+    text-decoration: underline;
+    cursor: pointer;
+}
+
+.cross-order-sign__sms-resend a:hover {
+    text-decoration: none;
+}
+
+/* Спойлер с документами */
+.documents-spoiler {
+    margin: 25px 0;
+    border: none;
+    border-radius: 0;
+    overflow: visible;
+    width: 100%;
+    box-sizing: border-box;
+    background: transparent;
+}
+
+.documents-spoiler__header {
+    background: transparent;
+    padding: 0;
+    cursor: pointer;
+    display: flex;
+    justify-content: flex-start;
+    align-items: center;
+    font-weight: 400;
+    font-size: 16px;
+    color: #6F7985;
+    transition: color 0.3s;
+    text-align: left;
+    text-decoration: none;
+    margin-bottom: 15px;
+}
+
+.documents-spoiler__header:hover {
+    background: transparent;
+    color: #4E8FF5;
+}
+
+.documents-spoiler__underlined {
+    text-decoration: underline;
+    text-underline-offset: 3px;
+}
+
+.documents-spoiler__arrow {
+    transition: transform 0.3s;
+    margin-left: 8px;
+    display: inline-flex;
+    align-items: center;
+    flex-shrink: 0;
+    width: 16px;
+    height: 16px;
+}
+
+.documents-spoiler__arrow img {
+    width: 100%;
+    height: 100%;
+}
+
+.documents-spoiler__arrow.open {
+    transform: rotate(180deg);
+}
+
+.documents-spoiler__content {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.3s ease-out, padding 0.3s ease-out;
+    padding: 0;
+    width: 100%;
+    box-sizing: border-box;
+    background: transparent;
+}
+
+.documents-spoiler__content.open {
+    max-height: 1000px;
+    padding: 0;
+}
+
+.documents-spoiler__content .cross-order-sign__list_item {
+    width: 100%;
+    box-sizing: border-box;
+    margin: 12px 0;
+}
+
+.documents-spoiler__content .cross-order-sign__list_item a {
+    color: #4E8FF5;
+    text-decoration: none;
+}
+
+.documents-spoiler__content .cross-order-sign__list_item a:hover {
+    text-decoration: underline;
+}
+
+.cross-order-sign__decline-button {
+    background: #fff;
+    color: #0A91ED;
+    border: 2px solid #4E8FF5;
+    border-radius: 30px;
+    padding: 16px 40px;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    font-size: 14px;
+    font-weight: 700;
+    line-height: 24px;
+    letter-spacing: 0;
+    text-align: center;
+    vertical-align: middle;
+    cursor: pointer;
+    transition: background-color 0.3s;
+    min-width: 280px;
+}
+
+.cross-order-sign__decline-button:hover {
+    background: #F0F7FF;
+}
+
+/* Дополнительные услуги */
+.cross-order-sign__list_item--extra-service {
+    display: block;
+}
+
+#credit_doctor_check_wrapper,
+#tv_medical_check_wrapper {
+    display: flex !important;
+}
+
+.cross-order-sign__list_item--extra-service #credit_doctor_check_wrapper,
+.cross-order-sign__list_item--extra-service #tv_medical_check_wrapper {
+    display: flex;
+    align-items: flex-start;
+    gap: 15px;
+    width: 100%;
+    flex-wrap: nowrap;
+}
+
+.cross-order-sign__list_item--extra-service label.spec_size {
+    flex: 0 0 20px;
+    margin: 0;
+    display: block;
+    position: relative;
+    width: 20px;
+    height: 20px;
+}
+
+.cross-order-sign__list_item--extra-service p {
+    margin: 0 !important;
+    padding: 0 !important;
+    flex: 1 1 auto;
+    font-size: var(--font-size);
+    line-height: 1.4;
+    text-align: left;
+    width: auto;
+    min-width: 0;
+    white-space: normal;
+}
+
+.cross-order-sign__list_item--extra-service a {
+    color: #4E8FF5;
+    text-decoration: none;
+    white-space: nowrap;
+    display: inline;
+}
+
+.cross-order-sign__list_item--extra-service a:hover {
+    text-decoration: underline;
+}
+
+.cross-order-sign__list_item--extra-service .btn.btn-prolongation {
+    display: inline;
+    margin-left: 0;
+    padding: 0;
+    font-size: inherit;
+    background: none;
+    color: #4E8FF5;
+    border: none;
+    cursor: pointer;
+    text-decoration: none;
+}
+
+.cross-order-sign__list_item--extra-service .btn.btn-prolongation:hover {
+    text-decoration: underline;
+}
+
+.cross-order-sign__list_item--extra-service .checkbox {
+    min-width: 24px !important;
+    min-height: 24px !important;
+    width: 24px !important;
+    height: 24px !important;
+    border-radius: 50% !important;
+    border: 2px solid #818C99 !important;
+    margin: 2px 0 0 0 !important;
+    padding: 0 !important;
+    position: relative !important;
+    display: block !important;
+    flex-shrink: 0 !important;
+    box-sizing: border-box !important;
+    overflow: visible !important;
+    background: transparent !important;
+}
+
+.cross-order-sign__list_item--extra-service .checkbox span {
+    position: absolute !important;
+    top: -1px !important;
+    left: -1px !important;
+    right: -1px !important;
+    bottom: -1px !important;
+    width: calc(100% + 2px) !important;
+    height: calc(100% + 2px) !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    border-radius: 50% !important;
+    pointer-events: none !important;
+    display: block !important;
+    box-sizing: border-box !important;
+}
+
+.cross-order-sign__list_item--extra-service .checkbox input:checked ~ span {
+    background: url('/design/boostra_mini_norm/assets/icons/checkbox-check.svg') center center no-repeat !important;
+    background-color: #4E8FF5 !important;
+    background-size: 8px 6px !important;
+    display: block !important;
+}
+
+.cross-order-sign__list_item--extra-service .checkbox:has(input:checked) {
+    border-color: #4E8FF5 !important;
+}
+
+.cross-order-sign__list_item--extra-service .checkbox input {
+    position: absolute;
+    opacity: 0;
+    cursor: pointer;
+    height: 0;
+    width: 0;
+    margin: 0;
+    padding: 0;
+}
+
+.cross-order-sign__list_item--extra-service .checkbox::before,
+.cross-order-sign__list_item--extra-service .checkbox::after {
+    display: none;
+}
+
+#modal-creditdoctor,
+#modalContainerCreditCancel {
+    display: none !important;
+}
+
+.mfp-wrap #modal-creditdoctor,
+.mfp-wrap #modalContainerCreditCancel {
+    display: block !important;
+    position: relative !important;
+    z-index: 100001 !important;
+}
+
+.mfp-wrap {
+    z-index: 100000 !important;
+}
+
+.mfp-bg {
+    z-index: 99999 !important;
+}
+
+.mfp-content {
+    position: relative !important;
+    z-index: 100001 !important;
+}
+
+.mfp-container {
+    position: relative !important;
+    z-index: 100001 !important;
+}
+
+.mfp-wrap .modal-dialog,
+.mfp-wrap .modal-content-creditdoctor,
+.mfp-wrap .modal-content {
+    position: relative !important;
+    z-index: 100002 !important;
+    display: block !important;
+}
+
+.popup__wrapper,
+.popup__wrapper .popup,
+.popup.popup-step-start-end,
+.popup.popup-step {
+    display: none !important;
+}
+
+body .popup__wrapper {
+    display: none !important;
+}
+
+body .popup__wrapper.mfp-ready,
+body .mfp-wrap .popup__wrapper {
+    display: flex !important;
+}
+
+@media screen and (max-width: 768px) {
+    #cross_order_nk_sign {
+        padding: 10px;
+    }
+    
+    .cross-order-sign__container {
+        --font-size: 14px;
+        padding: 30px 20px;
+    }
+
+    .cross-order-sign__container button {
+        width: 100%;
+        min-width: unset;
+    }
+
+    .cross-order-sign__logo {
+        max-width: 150px;
+        margin-bottom: 15px;
+    }
+
+    .cross-order-sign__icon {
+        max-width: 90px;
+        margin-bottom: 20px;
+    }
+
+    .cross-order-sign__approved_notice h2 {
+        font-size: 20px;
+        line-height: 26px;
+    }
+
+    .cross-order-sign__approved_notice p {
+        font-size: 14px;
+    }
+
+    .cross-order-sign__list_item {
+        margin-top: 12px;
+        margin-bottom: 12px;
+    }
+
+    .cross-order-sign__list_item label div {
+        gap: 12px;
+        align-items: flex-start;
+    }
+
+    .cross-order-sign__list_item label div::before {
+        margin-top: 1px;
+        min-width: 20px;
+        width: 20px;
+        height: 20px;
+    }
+
+    .cross-order-sign__approved_notice {
+        font-size: 18px;
+        padding: 16px 20px;
+    }
+}
+
+@media screen and (max-width: 480px) {
+    #cross_order_nk_sign {
+        padding: 8px;
+    }
+    
+    .cross-order-sign__container {
+        --font-size: 13px;
+        padding: 20px 10px;
+    }
+
+    .cross-order-sign__logo {
+        max-width: 120px;
+        margin-bottom: 10px;
+    }
+
+    .cross-order-sign__icon {
+        max-width: 70px;
+        margin-bottom: 15px;
+    }
+
+    .cross-order-sign__approved_notice h2 {
+        font-size: 18px;
+        line-height: 22px;
+    }
+
+    .cross-order-sign__approved_notice p {
+        font-size: 13px;
+    }
+
+    .cross-order-sign__list_item label div {
+        gap: 10px;
+    }
+
+    .cross-order-sign__list_item label div::before {
+        width: 18px;
+        height: 18px;
+        min-width: 18px;
+    }
+}

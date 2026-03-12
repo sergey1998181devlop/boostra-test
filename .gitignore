@@ -68,6 +68,7 @@ Thumbs.db
 !design/orange_theme/assets/**/*
 !design/boostra_mini_norm/html/pdf/i/**/*
 
+/files/contracts/Preview_Contracts/*
 /files
 index.php
 config/config.php

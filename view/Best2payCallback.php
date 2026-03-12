@@ -2,6 +2,8 @@
 
 use App\Core\Application\Application;
 use App\Modules\UserOrderGift\Services\UserOrderGiftService;
+use App\Modules\NewYearPromotion\Services\NewYearPromotionService;
+use App\Modules\Payment\Services\AddCardService;
 
 require_once 'View.php';
 require_once dirname(__DIR__) . '/api/addons/TVMedicalApi.php';
@@ -13,11 +15,18 @@ class Best2payCallback extends View
      * @var mixed|null
      */
     private UserOrderGiftService $userOrderGiftService;
+    private NewYearPromotionService $promoService;
+
+    private AddCardService $addCardService;
 
     public function __construct()
     {
         $app = Application::getInstance();
+
         $this->userOrderGiftService = $app->make(UserOrderGiftService::class);
+        $this->promoService = $app->make(NewYearPromotionService::class);
+        $this->addCardService = $app->make(AddCardService::class);
+
         parent::__construct();
     }
 
@@ -34,6 +43,11 @@ class Best2payCallback extends View
                 $this->add_card_action();
                 $this->design->assign('page_type', 'card');
                 break;
+
+            case 'add_card_from_vc':
+                $this->add_card_action();
+                $this->design->assign( 'wrapper', 'best2pay_iframe_callback.tpl');
+                return null;
 
             case 'payment':
                 $this->payment_action();
@@ -801,6 +815,29 @@ class Best2payCallback extends View
                                             ]
                                         );
 
+                                        $params = array_merge($params, [
+                                            'passport_issued' => $user->passport_issued,
+                                            'passport_date' => $user->passport_date,
+                                            'reg_city' => $user->Regcity,
+                                            'reg_street' => $user->Regstreet,
+                                            'reg_housing' => $user->Reghousing,
+                                            'reg_room' => $user->Regroom,
+                                            'email' => $user->email,
+                                            'accept_sms' => $asp_code,
+                                            'document_created' => date('d.m.Y'),
+                                        ]);
+
+                                        $this->documents->create_document(
+                                            [
+                                                'type' => $this->documents::CONTRACT_MULTIPOLIS,
+                                                'user_id' => $multipolis->user_id,
+                                                'order_id' => $multipolis->order_id,
+                                                'contract_number' => $contract_number,
+                                                'params' => $params,
+                                                'organization_id' => $order->organization_id,
+                                            ]
+                                        );
+
                                         // отправим запрос в 1С на формирование договора по мультиполису
                                         $this->soap->sendMultipolisContract($user->uid);
                                     }
@@ -884,6 +921,25 @@ class Best2payCallback extends View
                                     $this->overdue_slider_service->logPaid($order->user_id, $order->id);
                                 } catch (\Throwable $e) {
                                     $this->logging(__METHOD__, 'Overdue slider logPaid error', ['user_id' => $order->user_id, 'order_id' => $order->id], ['error' => $e->getMessage()], $this->overdue_slider_service::LOG_FILE_NAME);
+                                }
+
+                                // Логирование оплаты для новогодней акции (только если акция включена)
+                                if (!empty((int)$this->settings->newyear_promotion_enabled)) {
+                                    try {
+                                        if ($this->promoService->isUserInPromo($order->user_id, $order->id)) {
+                                            $this->promoService->logPaid($order->user_id, $order->id, [
+                                                'amount' => $payment_amount,
+                                                'payment_id' => $payment->id,
+                                            ]);
+                                        }
+                                    } catch (\Throwable $e) {
+                                        logger('newyear_promo')->error('Error logging paid event', [
+                                            'user_id' => $order->user_id,
+                                            'order_id' => $order->id,
+                                            'error' => $e->getMessage(),
+                                            'trace' => $e->getTraceAsString(),
+                                        ]);
+                                    }
                                 }
 
                                 if (!empty($payment->refinance)) {
@@ -1034,17 +1090,7 @@ class Best2payCallback extends View
                         }
 
                         if ($operationCorrect) {
-                            if ($transaction->sector == $this->best2pay->sectors['AKVARIUS_ADD_CARD']) {
-                                $organization_id = $this->organizations::AKVARIUS_ID;
-                            } elseif ($transaction->sector == $this->best2pay->sectors['FINLAB_ADD_CARD']) {
-                                $organization_id = $this->organizations::FINLAB_ID;
-                            } elseif ($transaction->sector == $this->best2pay->sectors['LORD_ADD_CARD']) {
-                                $organization_id = $this->organizations::LORD_ID;
-                            } elseif ($transaction->sector == $this->best2pay->sectors['RZS_ADD_CARD']) {
-                                $organization_id = $this->organizations::RZS_ID;
-                            } else {
-                                $organization_id = $this->organizations::BOOSTRA_ID;
-                            }
+                            $organization_id = $this->addCardService->getOrganizationIdBySector($transaction->sector);
 
                             $countSameCard = $this->best2pay->find_duplicates_for_user((string)$xml->reference,(string)$xml->pan,(string)$xml->expdate, $organization_id);
                             if ($countSameCard > 0) {
@@ -1099,11 +1145,6 @@ class Best2payCallback extends View
                                         'user_id' => (string)$transaction->user_id,
                                     ]
                                 );
-
-	                            // Временно, пока занято card_id поле в _orders
-	                            if ($last_user_order = $this->orders->get_last_order((string)$transaction->user_id)) {
-		                            $this->order_data->set($last_user_order->id, 'card_id', $card_id);
-	                            }
 
                                 try {
                                     if ($this->short_flow->isShortFlowUser((string)$transaction->user_id)) {
@@ -1255,6 +1296,7 @@ class Best2payCallback extends View
         $lord_sectors = $this->best2pay->get_lord_sectors();
         $moredeneg_sectors = $this->best2pay->get_moredeneg_sectors();
         $frida_sectors = $this->best2pay->get_frida_sectors();
+        $fastfinance_sectors = $this->best2pay->get_fastfinance_sectors();
 
         if (!empty($payment->split_data)) {
             $organization_id = $this->receipts::ORGANIZATION_SPLIT_FINTEH;
@@ -1272,6 +1314,8 @@ class Best2payCallback extends View
             $organization_id = $this->receipts::ORGANIZATION_MOREDENEG;
         } else if (in_array($payment->sector, $frida_sectors)) {
             $organization_id = $this->receipts::ORGANIZATION_FRIDA;
+        } else if (in_array($payment->sector, $fastfinance_sectors)) {
+            $organization_id = $this->receipts::ORGANIZATION_FASTFINANCE;
         } else {
             $organization_id = $this->receipts::ORGANIZATION_AKVARIUS;
         }

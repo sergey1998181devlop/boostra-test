@@ -3,7 +3,6 @@
 use api\helpers\UserHelper;
 use boostra\services\RegionService;
 use boostra\services\UsersAddressService;
-use lib\VirtualCard\VirtualCardService;
 
 require_once __DIR__ . '/View.php';
 require_once __DIR__ . '/../api/Scorings.php';
@@ -17,6 +16,7 @@ class AccountView extends View
 
     const SCORINGS_LIST = [
         Scorings::TYPE_BLACKLIST,
+        Scorings::TYPE_TERRORIST_CHECK,
         Scorings::TYPE_AXILINK_2,
         Scorings::TYPE_REPORT,
         Scorings::TYPE_UPRID,
@@ -48,6 +48,11 @@ class AccountView extends View
     private const MIN_PERIOD_TO_ADD_NEW_PHONE_IN_DAYS = 1;
 
     private const LOG_FILE = 'account_view.txt';
+
+    private const RCL_DOCS = [
+        ['type' => 'rcl_limit', 'title' => 'Заявление на установку расходного кредитного лимита'],
+        ['type' => 'rcl_transh', 'title' => 'Заявление на получение транша'],
+    ];
 
     public function fetch()
     {
@@ -90,6 +95,10 @@ class AccountView extends View
 
             $this->design->assign('user_order', $user_order);
         }
+
+        $bki_consent = $this->user_data->read($this->user->id, 'bki_consent');
+        $this->design->assign('bki_consent', $bki_consent);
+
 
         return $this->registrationProcess();
     }
@@ -252,9 +261,7 @@ class AccountView extends View
             $this->design->assign( 'error', 'empty_gender' );
 //        }elseif( empty( $user->marital_status ) ){
 //            $this->design->assign( 'error', 'empty_marital' );
-        }elseif( empty( $user->birth_place ) ){
-            $this->design->assign( 'error', 'empty_birth_place' );
-        }else{
+        } else{
             $user->personal_data_added      = 1;
             $user->personal_data_added_date = date( 'Y-m-d H:i:s' );
             $user->missing_real_date        = date( 'Y-m-d H:i:s' );
@@ -264,9 +271,8 @@ class AccountView extends View
             if( $this->users->update_user( $this->user->id, $user ) ){
 
 	            if ((int)$this->user_data->read($this->user->id, "is_virtual_card_consent") === 1) {
-		            $vcService = new VirtualCardService($this->config, $this->user->id, 0);
-		            $vcService->registerVirtualCard();
-	            }
+                    $this->virtualCard->forUser($this->user->id)->create();
+                }
 
                 header( 'Location: ' . $this->config->root_url . '/account' );
                 exit;
@@ -279,6 +285,7 @@ class AccountView extends View
     {
         $user = new StdClass();
 
+        // Получаем данные из POST запроса - они приходят в тех же полях
         $user->Regindex = (string)$this->request->post('Regindex');
         $user->Regregion = (string)$this->request->post('Regregion');
         $user->Regcity = (string)$this->request->post('Regcity');
@@ -304,6 +311,7 @@ class AccountView extends View
         $equal = $this->request->post('equal', 'integer');
         $this->design->assign('equal', $equal);
 
+        // Если адреса совпадают, копируем данные регистрации в фактический адрес
         if($equal)
         {
             $user->Faktindex = $user->Regindex;
@@ -320,53 +328,79 @@ class AccountView extends View
 
         $this->design->assign('user', $user);
 
-        if (empty($user->Regregion))
-            $this->design->assign('error', 'empty_Regregion');
-        elseif (empty($user->Regcity))
-            $this->design->assign('error', 'empty_Regcity');
-//        elseif (empty($user->Reghousing))
-//            $this->design->assign('error', 'empty_Reghousing');
-        elseif (empty($user->Faktregion))
-            $this->design->assign('error', 'empty_Faktregion');
-        elseif (empty($user->Faktcity))
-            $this->design->assign('error', 'empty_Faktcity');
-//        elseif (empty($user->Fakthousing))
-//            $this->design->assign('error', 'empty_Fakthousing');
+        // Валидация обязательных полей
+        if (empty($user->Regregion)) {
+            $this->design->assign('error', 'empty_registration_address');
+            $this->design->assign('error_message', 'Укажите адрес регистрации');
+        }
+        elseif (empty($user->Regcity)) {
+            $this->design->assign('error', 'empty_registration_address');
+            $this->design->assign('error_message', 'Укажите полный адрес регистрации (город обязателен)');
+        }
+        elseif (empty($user->Faktregion)) {
+            $this->design->assign('error', 'empty_residence_address');
+            $this->design->assign('error_message', 'Укажите адрес проживания');
+        }
+        elseif (empty($user->Faktcity)) {
+            $this->design->assign('error', 'empty_residence_address');
+            $this->design->assign('error_message', 'Укажите полный адрес проживания (город обязателен)');
+        }
         else
         {
             try {
                 $usersAddressService = new UsersAddressService();
 
+                // Получаем адреса в новом формате
                 $registrationAddress = $usersAddressService->getRegistrationAddress($this->request);
                 $factualAddress = $equal ? $registrationAddress : $usersAddressService->getFactualAddress($this->request);
 
+                // Сохраняем адреса
                 $user->registration_address_id = $usersAddressService->saveNewAddress($registrationAddress);
                 $user->factual_address_id = $usersAddressService->saveNewAddress($factualAddress);
 
+                // Сохраняем ОКТМО
                 $usersAddressService->saveOktmo($this->user->id, $registrationAddress);
+
             } catch (Throwable $e) {
-                $this->logging(json_encode($_SERVER), 'registrationAddress', $e->getMessage() . $e->getTraceAsString() . $e->getFile() . $e->getLine(), [$registrationAddress ?? [], $factualAddress ?? []], 'users_addresses.txt');
+                $this->logging(
+                    json_encode($_SERVER),
+                    'registrationAddress',
+                    $e->getMessage() . $e->getTraceAsString() . $e->getFile() . $e->getLine(),
+                    [$registrationAddress ?? [], $factualAddress ?? []],
+                    'users_addresses.txt'
+                );
+
+                // Показываем ошибку пользователю
+                $this->design->assign('error', 'save_error');
+                $this->design->assign('error_message', 'Произошла ошибка при сохранении адреса. Попробуйте еще раз.');
+                return;
             }
 
+            // Обновляем флаги заполнения данных
             $user->address_data_added = 1;
             $user->address_data_added_date = date('Y-m-d H:i:s');
             $user->missing_real_date = date('Y-m-d H:i:s');
 
+            // Очищаем от HTML тегов
             $user = array_map('strip_tags', (array)$user);
 
+            // Сохраняем juicescore session id
             $_SESSION['juicescore_session_id'] = $this->request->post('juicescore_session_id');
             if (empty($_SESSION['juicescore_session_id']) && !empty($_COOKIE['juicescore_session_id'])) {
                 $_SESSION['juicescore_session_id'] = $_COOKIE['juicescore_session_id'];
             }
 
+            // Обновляем данные пользователя
             if ($this->users->update_user($this->user->id, $user))
             {
+                // Успешное сохранение - редирект на главную страницу аккаунта
                 header('Location: '.$this->config->root_url.'/account');
                 exit;
             }
             else
             {
-                $this->design->assign('save_error', 1);
+                $this->design->assign('error', 'save_error');
+                $this->design->assign('error_message', 'Не удалось сохранить данные. Попробуйте еще раз.');
             }
         }
     }
@@ -463,8 +497,17 @@ class AccountView extends View
                     $this->user_data->set($this->user->id, 'bonon_wait_order_decision', $order_id);
                     $this->user_data->set($this->user->id, 'order_from_register', $order_id);
                     $this->order_data->set($order_id, $this->order_data::USER_AMOUNT, $this->user->first_loan_amount ?: $recomendation_amount);
+                    $this->order_data->set($order_id, $this->order_data::CREATED_AT_VIRTUAL_CARD_TIMESTAMP, time());
                 }
                 $_SESSION['order_id'] = $order_id;
+
+                if (!empty($_SESSION['vid'])) {
+                    $this->order_data->set(
+                        $order_id,
+                        $this->order_data::VISITOR_ID,
+                        $_SESSION['vid']
+                    );
+                }
 
                 $this->orders->saveFinkartaFp($order_id, $this->request->post('finkarta_fp'));
 
@@ -474,11 +517,17 @@ class AccountView extends View
                 /** @var int $rejectedScoringType Если заполнено - заявка отправится в отказ из-за этого скоринга */
                 $rejectedScoringType = null;
                 $isAxiExist = false;
-                if ($user_scorings = $this->scorings->get_scorings(array('user_id' => $this->user->id))) {
-                    foreach ($user_scorings as $user_scoring) {
-                        $this->scorings->update_scoring($user_scoring->id, array('order_id' => $order_id));
 
-                        if ($user_scoring == $this->scorings::TYPE_AXILINK_2) {
+                $user_scorings = $this->scorings->get_scorings(['user_id' => $this->user->id]);
+                if (!empty($user_scorings)) {
+
+                    // Обновляем order_id у скорингов (на случай если s_scorings.order_id до сих пор 0)
+                    foreach ($user_scorings as $user_scoring) {
+                        if (empty($user_scoring->order_id)) {
+                            $this->scorings->update_scoring($user_scoring->id, ['order_id' => $order_id]);
+                        }
+
+                        if ($user_scoring->type == $this->scorings::TYPE_AXILINK_2) {
                             $isAxiExist = true;
                         }
 
@@ -563,7 +612,7 @@ class AccountView extends View
                     'СуммаCRM' => (string)$recomendation_amount,
                     'УИД_CRM' => $order['order_uid'],
 
-                    'МестоРождения' => (string)$this->user->birth_place,
+                    'МестоРождения' => '',
                     'ГородскойТелефон' => (string)$this->user->landline_phone,
                     'Пол' => (string)$this->user->gender,
                     'ДевичьяФамилияМатери' => '',
@@ -683,6 +732,9 @@ class AccountView extends View
 
                         $update['1c_id'] = $resp->return->id_zayavka;
 
+                        // Заново получаем заявку, т.к. статус мог измениться
+                        $order = (array)$this->orders->get_order($order_id);
+
                         // Если по заявке уже отказали - не возвращаем ей статус 1
                         if (!empty($order) && (int)$order['status'] !== $this->orders::STATUS_REJECTED) {
                             $update['status'] = $this->orders::STATUS_NEW;
@@ -749,12 +801,6 @@ class AccountView extends View
         $contact_person['name'] = (string)$this->request->post('contact_person_name');
         $contact_person['phone'] = (string)$this->request->post('contact_person_phone');
         $contact_person['relation'] = (string)$this->request->post('contact_person_relation');
-
-        if (!empty($is_virtual_card_consent = $this->request->post('virtual_card'))) {
-            $this->user_data->set($this->user->id, "is_virtual_card_consent", $is_virtual_card_consent);
-	        $vcService = new VirtualCardService($this->config, $this->user->id, 0);
-	        $vcService->registerVirtualCard();
-        }
 
         $this->design->assign('user', $user);
 
@@ -859,13 +905,26 @@ class AccountView extends View
                     }
                 }
                 $_SESSION['order_id'] = $last_order->id;
-
+                if (!empty($_SESSION['vid'])) {
+                    $this->order_data->set(
+                        $last_order->id,
+                        $this->order_data::VISITOR_ID,
+                        $_SESSION['vid']
+                    );
+                }
                 if (!empty($useragent))
                     $this->order_data->set($last_order->id, $this->order_data::USERAGENT, $useragent);
 
-                if ($user_scorings = $this->scorings->get_scorings(array('user_id' => $this->user->id)))
-                    foreach ($user_scorings as $user_scoring)
-                        $this->scorings->update_scoring($user_scoring->id, array('order_id' => $last_order->id));
+                $user_scorings = $this->scorings->get_scorings(['user_id' => $this->user->id]);
+                if (!empty($user_scorings)) {
+
+                    // Обновляем order_id у скорингов (на случай если s_scorings.order_id до сих пор 0)
+                    foreach ($user_scorings as $user_scoring) {
+                        if (empty($user_scoring->order_id)) {
+                            $this->scorings->update_scoring($user_scoring->id, ['order_id' => $last_order->id]);
+                        }
+                    }
+                }
 
                 // добавляем скоринги в задание
                 $scoring_data = array(
@@ -985,15 +1044,6 @@ class AccountView extends View
                     header('Location: '.$this->config->root_url.'/account');
                     exit;
                 }
-
-	            $is_virtual_card = (int)$this->request->post('is_virtual_card');
-	            $this->users->update_user($this->user->id, ['is_virtual_card_consent' => $is_virtual_card]);
-
-	            if ($is_virtual_card === 1) {
-		            // Регистрация виртуальной карты
-		            $vcService = new VirtualCardService($this->config, $this->user->id, (int)$last_order->id);
-		            $vcService->registerVirtualCard();
-	            }
 
                 header('Location: '.$this->config->root_url.'/user');
                 exit;
@@ -1555,18 +1605,46 @@ class AccountView extends View
         }
 
         // Получаем данные адресов из сессии (приоритет) и БД (fallback)
+        $regRegion = $_SESSION['user_info']['addresses'][2]['region'] ?? $this->user->Regregion ?? '';
         $regCity = $_SESSION['user_info']['addresses'][2]['city'] ?? $this->user->Regcity ?? '';
         $regStreet = $_SESSION['user_info']['addresses'][2]['street'] ?? $this->user->Regstreet ?? '';
         $regHouse = $_SESSION['user_info']['addresses'][2]['house'] ?? $this->user->Reghousing ?? '';
+        $regBuilding = $_SESSION['user_info']['addresses'][2]['building'] ?? $this->user->Regbuilding ?? '';
+        $regApartment = $_SESSION['user_info']['addresses'][2]['apartment'] ?? $this->user->Regroom ?? '';
         $regZipCode = $_SESSION['user_info']['addresses'][2]['zipCode'] ?? $this->user->Regindex ?? '';
-        
+
+        $faktRegion = $_SESSION['user_info']['addresses'][1]['region'] ?? $this->user->Faktregion ?? '';
         $faktCity = $_SESSION['user_info']['addresses'][1]['city'] ?? $this->user->Faktcity ?? '';
         $faktStreet = $_SESSION['user_info']['addresses'][1]['street'] ?? $this->user->Faktstreet ?? '';
         $faktHouse = $_SESSION['user_info']['addresses'][1]['house'] ?? $this->user->Fakthousing ?? '';
+        $faktBuilding = $_SESSION['user_info']['addresses'][1]['building'] ?? $this->user->Faktbuilding ?? '';
+        $faktApartment = $_SESSION['user_info']['addresses'][1]['apartment'] ?? $this->user->Faktroom ?? '';
         $faktZipCode = $_SESSION['user_info']['addresses'][1]['zipCode'] ?? $this->user->Faktindex ?? '';
 
+        // Формируем полный адрес регистрации для отображения
+        $registrationFullAddress = $this->buildFullAddress([
+            'region' => $regRegion,
+            'city' => $regCity,
+            'street' => $regStreet,
+            'house' => $regHouse,
+            'building' => $regBuilding,
+            'apartment' => $regApartment
+        ]);
+
+        // Формируем полный адрес проживания для отображения
+        $residenceFullAddress = $this->buildFullAddress([
+            'region' => $faktRegion,
+            'city' => $faktCity,
+            'street' => $faktStreet,
+            'house' => $faktHouse,
+            'building' => $faktBuilding,
+            'apartment' => $faktApartment
+        ]);
+
+        // Проверка на совпадение адресов
         $addressesEqual = (
             $regZipCode === $faktZipCode &&
+            $regRegion === $faktRegion &&
             $regCity === $faktCity &&
             $regStreet === $faktStreet &&
             $regHouse === $faktHouse
@@ -1579,32 +1657,76 @@ class AccountView extends View
 
         $equal = $addressesEqual || $allFieldsEmpty;
 
-        
+        // Assign для Smarty шаблона
         $this->design->assign('equal', $equal ? 1 : 0);
 
-        $this->design->assign('regions', (new RegionService())->getRegions());
-        $this->design->assign('factual_region', $_SESSION['user_info']['addresses'][1]['region'] ?? $this->user->Faktregion ?? '');
-        $this->design->assign('registration_region', $_SESSION['user_info']['addresses'][2]['region'] ?? $this->user->Regregion ?? '');
+        // Полные адреса для инпутов
+        $this->design->assign('registration_full_address', $registrationFullAddress);
+        $this->design->assign('residence_full_address', $residenceFullAddress);
 
-        $this->design->assign('residence_settlement', $_SESSION['user_info']['addresses'][1]['settlement'] ?? '');
-        $this->design->assign('residence_city', $faktCity);
-        $this->design->assign('residence_house', $faktHouse);
-        $this->design->assign('residence_street', $faktStreet);
-        $this->design->assign('residence_apartment', $_SESSION['user_info']['addresses'][1]['apartment'] ?? '');
-        $this->design->assign('residence_building', $_SESSION['user_info']['addresses'][1]['building'] ?? '');
-        $this->design->assign('residence_zipCode', $faktZipCode);
-
-        $this->design->assign('registration_settlement', $_SESSION['user_info']['addresses'][2]['settlement'] ?? '');
+        // Адрес регистрации - компоненты
+        $this->design->assign('registration_region', $regRegion);
         $this->design->assign('registration_city', $regCity);
-        $this->design->assign('registration_house', $regHouse);
         $this->design->assign('registration_street', $regStreet);
-        $this->design->assign('registration_apartment', $this->user->Regroom ?: $_SESSION['user_info']['addresses'][2]['apartment'] ?? '');
-        $this->design->assign('registration_building', $_SESSION['user_info']['addresses'][2]['building'] ?? '');
+        $this->design->assign('registration_house', $regHouse);
+        $this->design->assign('registration_building', $regBuilding);
+        $this->design->assign('registration_apartment', $regApartment);
         $this->design->assign('registration_zipCode', $regZipCode);
+        $this->design->assign('registration_settlement', $_SESSION['user_info']['addresses'][2]['settlement'] ?? '');
+
+        // Адрес проживания - компоненты
+        $this->design->assign('factual_region', $faktRegion);
+        $this->design->assign('residence_city', $faktCity);
+        $this->design->assign('residence_street', $faktStreet);
+        $this->design->assign('residence_house', $faktHouse);
+        $this->design->assign('residence_building', $faktBuilding);
+        $this->design->assign('residence_apartment', $faktApartment);
+        $this->design->assign('residence_zipCode', $faktZipCode);
+        $this->design->assign('residence_settlement', $_SESSION['user_info']['addresses'][1]['settlement'] ?? '');
+
+        // Регионы для старых компонентов (если нужны)
+        $this->design->assign('regions', (new RegionService())->getRegions());
 
         $body = $this->design->fetch('account_address_data.tpl');
 
         return $body;
+    }
+
+    /**
+     * Формирование полного адреса из компонентов
+     *
+     * @param array $components Компоненты адреса
+     * @return string Полный адрес
+     */
+    private function buildFullAddress(array $components): string
+    {
+        $parts = [];
+
+        if (!empty($components['region'])) {
+            $parts[] = $components['region'];
+        }
+
+        if (!empty($components['city'])) {
+            $parts[] = $components['city'];
+        }
+
+        if (!empty($components['street'])) {
+            $parts[] = $components['street'];
+        }
+
+        if (!empty($components['house'])) {
+            $parts[] = 'д. ' . $components['house'];
+        }
+
+        if (!empty($components['building'])) {
+            $parts[] = 'стр. ' . $components['building'];
+        }
+
+        if (!empty($components['apartment'])) {
+            $parts[] = 'кв. ' . $components['apartment'];
+        }
+
+        return implode(', ', array_filter($parts));
     }
 
     private function pagePersonalData()
@@ -1735,16 +1857,27 @@ class AccountView extends View
     {
         $this->checkEmailRedirect();
 
-        $organization_id = $this->organizations->get_base_organization_id();
+        $last_order = $this->orders->get_last_order($this->user->id);
+
+        if (!empty($last_order)) {
+            $organization_id = (int)$last_order->organization_id;
+        } else {
+            $organization_id = $this->organizations->get_base_organization_id();
+        }
+
         $this->design->assign('organization_id', $organization_id);
 
+        $order_card_id = 0;
         if ($cards = $this->best2pay->get_cards(array('user_id' => $this->user->id, 'organization_id' => $organization_id))) {
             $reset_card = reset($cards);
 
             $order_card_id = $reset_card->id;
         }
 
-        $last_order = $this->orders->get_last_order($this->user->id);
+        // При автовыдаче только для utm Boostra отображаем дополнительные услуги
+        $isOrganic = $this->users->checkUtmSource($this->user->id);
+        $this->design->assign('isOrganic', $isOrganic);
+
         $hasSbpAccountOrSelectedBank = $this->checkSetSbpOrBankSpb($last_order->id);
 
         $hasActiveOrder = (
@@ -1779,6 +1912,7 @@ class AccountView extends View
                     'card_type' => $this->orders::CARD_TYPE_SBP,
                     'b2p' => 1,
                 ];
+
                 if ($last_order->organization_id == $this->organizations::BOOSTRA_ID) {
                     $update_order['organization_id'] = $this->organizations->get_base_organization_id(['user_id' => $this->user->id]);
                 }
@@ -1793,7 +1927,14 @@ class AccountView extends View
 
         $lastScoristaScoring = $this->scorings->get_last_scorista_for_user($this->user->id, true);
 
-        if (!empty($lastScoristaScoring) && (int)$lastScoristaScoring->order_id === (int)$last_order->id) {
+        if ($last_order->utm_source === Orders::UTM_SOURCE_CROSS_ORDER) {
+            $mainOrder = $this->orders->get_order((int)$last_order->utm_medium);
+            if (!empty($mainOrder)) {
+                $last_order = $mainOrder;
+            }
+        }
+
+        if (!empty($lastScoristaScoring) && !empty($last_order) && (int)$lastScoristaScoring->order_id === (int)$last_order->id) {
             $lastScoristaScoring->body = json_decode($this->scorings->get_scoring_body((int)$lastScoristaScoring->id));
             $this->design->assign('has_success_scorista', true);
             $this->design->assign('scorista', $lastScoristaScoring);
@@ -1806,20 +1947,44 @@ class AccountView extends View
         // Показываем блок автоподписания только если включён флоу 2.0 И сумма положительная И НЕТ карт
         $autoConfirm2Enabled = $this->user_data->read( $this->user->id,  $this->user_data::AUTOCONFIRM_2_FLOW);
 
-        if ($autoConfirm2Enabled && empty($cards)) {
+        if ($autoConfirm2Enabled && empty($cards) && !empty($last_order)) {
             try {
                 $this->design->assign('decisionSum', $decisionSum);
+                $is_rcl_loan = !empty($this->order_data->read($last_order->id, $this->order_data::RCL_LOAN));
+
+                if ($is_rcl_loan) {
+                    $this->design->assign('rcl_loan', $last_order->id);
+                } else {
+                    // Получим сумму для ИЛ займа, и если она есть, то отобразим ползунок изменения суммы
+                    $this->initIlLoanAmount();
+                }
 
                 $get_params = [
                     'params' => [
                         'percent' => $last_order->percent,
                         'period'  => $last_order->period,
-                        'amount'  => $decisionSum,
+                        'amount'  => $last_order->loan_type === Orders::LOAN_TYPE_IL ? $last_order->amount : $decisionSum,
+                        'loan_type' => $last_order->loan_type,
                     ],
                     'user_id' => $this->user->id,
+                    'organization_id' => $last_order->organization_id
                 ];
 
-                $this->design->assign('individual_url', $this->config->root_url . '/preview/IND_USLOVIYA?' . http_build_query($get_params));
+                if ($is_rcl_loan) {
+                    $get_params['params']['rcl_amount'] =
+                        $this->order_data->read($last_order->id, $this->order_data::RCL_AMOUNT)
+                            ?: $decisionSum
+                            ?: $last_order->amount;
+                    $get_params['params']['amount_string'] = $this->documents->convertAmountToString($get_params['params']['amount']);
+                    $get_params['params']['rcl_amount_string'] = $this->documents->convertAmountToString($get_params['params']['rcl_amount']);
+                    $get_params['params']['rcl_max_amount'] = $this->order_data->read($last_order->id, $this->order_data::RCL_MAX_AMOUNT);
+                    $get_params['params']['rcl_max_amount_string'] = $this->documents->convertAmountToString($get_params['params']['rcl_max_amount']);
+
+                    $this->design->assign('individual_url', $this->config->root_url . '/preview/rcl_ind_usloviya?' . http_build_query($get_params));
+                }
+                else {
+                    $this->design->assign('individual_url', $this->config->root_url . '/preview/IND_USLOVIYA?' . http_build_query($get_params));
+                }
 
                 $promo_block = $this->promocodes->promoCodeModeAutoConfirmNewUser($last_order);
                 $this->design->assign('promo_block', $promo_block);
@@ -1830,6 +1995,14 @@ class AccountView extends View
                         $this->design->assign('promo_code', $promocode->promocode);
                     }
                 }
+
+                $credit_doctor = $this->credit_doctor->getCreditDoctor((int)$last_order->amount, empty($credits_history));
+                $credit_doctor_tariffs = $this->credit_doctor->getTariffs();
+                $this->design->assign('credit_doctor_amount', $this->credit_doctor->numberToWords($credit_doctor->price));
+                $this->design->assign('credit_doctor_tariffs', $credit_doctor_tariffs);
+
+                $tv_medical_price = $this->tv_medical::ISSUANCE_AMOUNT;
+                $this->design->assign('tv_medical_price', $tv_medical_price);
 
                 $this->design->assign('show_auto_confirm_2_asp', 1);
             } catch (Throwable $e) {
@@ -1846,8 +2019,87 @@ class AccountView extends View
 
         $this->design->assign('order', $last_order);
 
-        $bankIdForSbpIssuance = $this->order_data->read($last_order->id, $this->order_data::BANK_ID_FOR_SBP_ISSUANCE);
+        $bankIdForSbpIssuance = empty($last_order)
+            ? null
+            : $this->order_data->read($last_order->id, $this->order_data::BANK_ID_FOR_SBP_ISSUANCE);
         $autoConfirmType = $this->user_data->read($this->user->id, $this->user_data::ACTIVE_AUTOCONFIRM_FLOW);
+
+        if (!empty($last_order) && $this->order_data->read($last_order->id, $this->order_data::RCL_LOAN)) {
+            $amount_string = $this->documents->convertAmountToString($decisionSum ?: $last_order->amount);
+            $rcl_amount = $this->order_data->read($last_order->id, $this->order_data::RCL_AMOUNT);
+            $transh_amount = $lastScoristaScoring->body->additional->decisionSum ?? $last_order->amount;
+            $rcl_amount_string = $this->documents->convertAmountToString($rcl_amount);
+            $transh_amount_string = $this->documents->convertAmountToString($transh_amount);
+            $rcl_max_amount = $this->order_data->read($last_order->id, $this->order_data::RCL_MAX_AMOUNT);
+            $rcl_max_amount_string = $this->documents->convertAmountToString($rcl_max_amount);
+
+            $doc_params = [
+                'params' => [
+                    'percent' => $last_order->percent,
+                    'period' => $last_order->period,
+                    'amount' => $decisionSum ?: $last_order->amount,
+                    'amount_string' => $amount_string,
+                    'rcl_loan' => 1,
+                    'rcl_amount' => $rcl_amount,
+                    'rcl_amount_string' => $rcl_amount_string,
+                    'rcl_transh' => $transh_amount,
+                    'rcl_transh_string' => $transh_amount_string,
+                    'rcl_max_amount' => $rcl_max_amount,
+                    'rcl_max_amount_string' => $rcl_max_amount_string,
+                ],
+                'user_id' => $this->user->id,
+                'organization_id' => $last_order->organization_id,
+            ];
+
+            $rcl_docs = self::RCL_DOCS;
+            foreach ($rcl_docs as &$rcl_doc) {
+                $rcl_doc['url'] = $this->config->root_url . '/preview/' . $rcl_doc['type'] . '?' . http_build_query($doc_params);
+            }
+
+            $this->design->assignBulk([
+                'rcl_loan' => $last_order->id,
+                'rcl_amount' => $rcl_amount,
+                'amount_string' => $rcl_amount_string,
+                'rcl_transh' => $transh_amount,
+                'transh_string' => $transh_amount_string,
+                'rcl_docs' => $rcl_docs,
+                'rcl_max_amount' => $rcl_max_amount,
+                'rcl_max_amount_string' => $rcl_max_amount_string,
+            ]);
+        }
+
+        // Проверяем условия для отображения кросс-ордера
+        $shouldRenderCrossOrder = $this->shouldRenderCrossOrderNK($last_order);
+        $this->design->assign('should_render_cross_order', (int)$shouldRenderCrossOrder);
+
+        if ($shouldRenderCrossOrder) {
+            // Определяем, нужно ли автоматически показать модалку при загрузке страницы
+            // Условие: основная заявка подписана (есть АСП), а кросс-ордер ещё нет
+            $mainOrderSigned = !empty($this->order_data->read($last_order->id, $this->order_data::AUTOCONFIRM_ASP));
+            $this->design->assign('show_auto_confirm_cross_order_asp', (int)$mainOrderSigned);
+
+            // Данные для кросс-ордера
+            $crossOrganizationId = (int)($this->settings->cross_organization_id ?? 0);
+            $crossOrderAmount = $decisionSum ?: $last_order->amount;
+            $crossOrderAmount = min(ceil($crossOrderAmount / 1000) * 1000, $this->orders::PDL_MAX_AMOUNT);
+            
+            $this->design->assign('cross_organization_id', $crossOrganizationId);
+            $this->design->assign('cross_order_amount', $crossOrderAmount);
+            
+            // URL индивидуальных условий
+            $cross_get_params = [
+                'params' => [
+                    'percent' => $last_order->percent,
+                    'period'  => $last_order->period,
+                    'amount'  => $crossOrderAmount,
+                    'loan_type' => $last_order->loan_type,
+                ],
+                'user_id' => $this->user->id,
+                'organization_id' => $crossOrganizationId
+            ];
+            
+            $this->design->assign('cross_order_individual_url', $this->config->root_url . '/preview/IND_USLOVIYA?' . http_build_query($cross_get_params));
+        }
 
         // Проверяем наличие СБП счетов пользователя
         $userSbpAccounts = $this->users->getSbpAccounts($this->user->id);
@@ -1875,23 +2127,7 @@ class AccountView extends View
         $this->design->assign('auto_confirm_type', $autoConfirmType);
 
         $utmSource = $this->user->utm_source ?? 'Boostra';
-
-        // Показываем привязку карты только если карты НЕТ
-        if (empty($cards)) {
-            if ($autoConfirmType === $this->user_data::ACTIVE_AUTOCONFIRM_2_FLOW_VALUE) {
-                // Карта при AUTOCONFIRM_2_FLOW: после выбора банка
-                $showCardAdd = !$this->user_data->read((int)$this->user->id, $this->user_data::AUTOCONFIRM_2_FLOW) && !$showSelectBank;
-            } elseif ($autoConfirmType === $this->user_data::ACTIVE_AUTOCONFIRM_FLOW_VALUE && $utmSource === 'test123') {
-                // Тестовая ветка: банк -> карта -> подписание
-                $showCardAdd = true;
-            } else {
-                // Обычный AUTOCONFIRM_FLOW: карты не показываем
-                $showCardAdd = false;
-            }
-        } else {
-            // Карта уже есть - не показываем привязку
-            $showCardAdd = false;
-        }
+        $showCardAdd = $this->shouldShowCardBinding($autoConfirmType, $showSelectBank, $utmSource, !empty($cards));
 
         // Показываем привязку СБП-счёта, если доступно и карта не показывается
         $canAddSbpAccount = $this->best2pay->canAddSbpAccount((int)$this->user->id);
@@ -1917,6 +2153,12 @@ class AccountView extends View
                 && !empty($cards);    // есть карты
         }
 
+        // Перекрываем показ сбп фитчей, флага скористы
+        if ($this->users->skipSelectCardStep($this->user)) {
+            $showCardAdd = false;
+            $needShowBankSelect = true;
+        }
+
         $this->design->assign('show_select_bank_for_sbp', (int)$needShowBankSelect);
         $this->design->assign('show_sbp_attach', (int)$showSbpAttach);
         $this->design->assign('show_card_add', (int)$showCardAdd);
@@ -1937,6 +2179,102 @@ class AccountView extends View
 
         return $body;
     }
+
+    /**
+     * Возвращает признак нужно ли отобразить привязку карты, на шаге СБП
+     * https://tracker.yandex.ru/MARK-845
+     *
+     * @param string|null $autoConfirmType
+     * @param bool $showSelectBank
+     * @param string|null $utmSource
+     * @param bool $hasCards
+     * @return bool
+     */
+    private function shouldShowCardBinding(?string $autoConfirmType, bool $showSelectBank, ?string $utmSource, bool $hasCards): bool
+    {
+        // Показываем привязку карты только если карты НЕТ
+        if ($hasCards) {
+            return false;
+        }
+
+        // Если нет карты и флага, то стандартно проверяем
+        if ($autoConfirmType === $this->user_data::ACTIVE_AUTOCONFIRM_2_FLOW_VALUE) {
+            // Карта при AUTOCONFIRM_2_FLOW: после выбора банка
+            $showCardAdd = !$this->user_data->read((int)$this->user->id, $this->user_data::AUTOCONFIRM_2_FLOW) && !$showSelectBank;
+        } elseif ($autoConfirmType === $this->user_data::ACTIVE_AUTOCONFIRM_FLOW_VALUE && $utmSource === 'test123') {
+            // Тестовая ветка: банк -> карта -> подписание
+            $showCardAdd = true;
+        } else {
+            // Обычный AUTOCONFIRM_FLOW: карты не показываем
+            $showCardAdd = false;
+        }
+
+        return $showCardAdd;
+    }
+
+    /**
+     * Проверяем одобренную сумму ИЛ займа и устанавливаем в переменную
+     * @return void
+     */
+    private function initIlLoanAmount()
+    {
+        $amount = $this->scorings->getApproveILAmountScoring($this->user->id);
+        if ($amount) {
+            $this->design->assign('il_approved_amount', $amount);
+        }
+    }
+
+    /**
+     * Проверяет, нужно ли рендерить HTML кросс-ордера НК
+     * 
+     * Рендерим HTML кросс-ордера если:
+     * 1. Функционал кросс-ордеров включен (cross_orders_enabled)
+     * 2. UTM метка разрешена в настройках autoconfirm_2_flow_cross_utm_sources
+     * 3. Кросс-ордер ещё НЕ был подписан (НЕТ AUTOCONFIRM_ASP_CROSS)
+     * 4. Проверка на тип займа PDL
+     * 5. Балл скористы >= 500
+     * 
+     * @param object $order Последняя заявка пользователя
+     * @return bool Нужно ли рендерить HTML
+     */
+    private function shouldRenderCrossOrderNK($order): bool
+    {
+        if (empty($order)) {
+            return false;
+        }
+        $crossOrdersEnabled = (bool)$this->settings->cross_orders_enabled;
+        // Проверяем, что функционал кросс-ордеров включен
+        if (!$crossOrdersEnabled) {
+            return false;
+        }
+        
+        // Проверяем UTM метку (ранняя проверка, чтобы не делать лишних проверок)
+        $utm_source = trim($order->utm_source ?? '');
+        $allowedUtmSources = array_map('trim', $this->settings->autoconfirm_2_flow_cross_utm_sources ?? []);
+        $isUtmAllowed = empty($allowedUtmSources) || in_array($utm_source, $allowedUtmSources);
+        if (!$isUtmAllowed) {
+            return false;
+        }
+        
+        // Проверяем, что кросс-ордер ещё не был подписан
+        $crossOrderAlreadySigned = !empty($this->order_data->read($order->id, $this->order_data::AUTOCONFIRM_ASP_CROSS));
+        if ($crossOrderAlreadySigned) {
+            return false;
+        }
+
+        // Проверяем тип займа
+        if ($order->loan_type !== Orders::LOAN_TYPE_PDL) {
+            return false;
+        }
+        
+        // Проверяем балл скористы
+        if ((int)$order->scorista_ball < 500) {
+            return false;
+        }
+
+        return true;
+    }
+
 
     private function pageAdditionalData()
     {

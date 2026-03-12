@@ -312,16 +312,18 @@ $(function(){
                 <p class="payment-block-title">Выберите карту для оплаты</p>
                 
                 <ul class="payment-card-list">
-    	       		{foreach $cards as $card}
-                    <li>
-                        <input type="radio" name="card_id" id="card_{$card['CardId']}" value="{$card['CardId']}" {if $card@first}checked="true"{/if} />
-                        <label for="card_{$card['CardId']}">
-                            <strong>{$card['Pan']}</strong>
-                            <span>{$card['ExpDate']}</span>
-                        </label>
-                    <br />
-                    </li> 
-                    {/foreach}
+                    {if !$friend_restricted_mode}
+                        {foreach $cards as $card}
+                        <li>
+                            <input type="radio" name="card_id" id="card_{$card['CardId']}" value="{$card['CardId']}" {if $card@first}checked="true"{/if} />
+                            <label for="card_{$card['CardId']}">
+                                <strong>{$card['Pan']}</strong>
+                                <span>{$card['ExpDate']}</span>
+                            </label>
+                        <br />
+                        </li>
+                        {/foreach}
+                    {/if}
                     <li>
                         <input type="radio" id="card_other" name="card_id" value="other" {if !$cards}checked="true"{/if} />
                         <label for="card_other"><strong>Оплатить с любой карты</strong></label>

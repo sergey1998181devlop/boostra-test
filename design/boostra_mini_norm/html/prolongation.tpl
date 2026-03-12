@@ -874,9 +874,26 @@
         <form>
             <input type="hidden" id="user_phone" value="{$user->phone_mobile}"/>
             <div class="prolongation_title">
-                Пролонгация по договору {$user->balance->zaim_number}
+                {if $is_rcl}
+                    Увеличение сроков возврата транша
+                {else}
+                    Пролонгация по договору {$user->balance->zaim_number}
+                {/if}
             </div>
             <div>
+                {if $is_rcl}
+                <p class="gray prolongation_amount_par">
+                    Сумма для оплаты
+                    <span id="amount_text">{($user->balance->ostatok_percents + $user->balance->ostatok_peni + $multipolis_amount + $tv_medical_price) * 1}</span>
+                    ₽
+                </p>
+                <p class="gray">
+                    Нажимая на кнопку &laquo;Принять&raquo; и оплачивая минимальный платеж вы можете установить новый <a href="#" class="js-rcl-toggle-date">срок возврата транша</a>.
+                </p>
+                <div id="rcl_new_date_block" style="display:none;">
+                    <p><b>Новый срок возврата транша: {$rcl_new_payment_date|date_format:"%d.%m.%Y"}</b></p>
+                </div>
+                {else}
                 <p class="gray prolongation_amount_par">
                     Сумма оплаты для пролонгации по договору составляет:
                     <span id="amount_text">{($user->balance->ostatok_percents + $user->balance->ostatok_peni + $multipolis_amount + $tv_medical_price + $user->balance->calc_percents) * 1}</span>
@@ -905,6 +922,7 @@
                         <ul id="prolongation_documents"></ul>
                     {/if}
                 </div>
+                {/if}
             </div>
 
             <div class="prolongation_actions prolongation_actions_accept">
@@ -938,7 +956,7 @@
                 <div id="prolongation_sms">
                     <div>
                         <label class="prolongation-sms_label" for="code">Введите код из СМС<span class="blue">*</span></label>
-                        <input class="prolongation-sms_input" type="input" inputmode="numeric" name="code" id="sms_code" maxlength="4" placeholder="Код из СМС"/>
+                        <input class="prolongation-sms_input" autocomplete="one-time-code" type="text" inputmode="numeric" name="code" id="sms_code" maxlength="4" placeholder="Код из СМС"/>
                         <span class="error-info"></span>
                     </div>
                     <div id="repeat_sms"></div>
@@ -1474,5 +1492,15 @@
         setTimeout(() => {
             prolongationCloseButton.classList.remove('hidden')
         }, 5000)
+    </script>
+{/if}
+
+{if $is_rcl}
+    <script>
+        document.querySelector('.js-rcl-toggle-date').addEventListener('click', function(e) {
+            e.preventDefault();
+            var block = document.getElementById('rcl_new_date_block');
+            block.style.display = block.style.display === 'none' ? 'block' : 'none';
+        });
     </script>
 {/if}

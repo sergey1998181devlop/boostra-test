@@ -667,6 +667,46 @@ header ul {
     transform: translateY(0)
 }
 
+.top_menu__logo {
+  display: flex;
+  gap: 10px;
+  z-index: 3;
+  align-items: center;
+
+  a img {
+    width: 130px;
+  }
+}
+
+.logo-additional-text-delimiter {
+  font-size: 35px;
+}
+
+.logo-additional-text {
+  white-space: nowrap;
+  line-height: 100%;
+  padding-top: 3px;
+  font-size: 16px;
+}
+
+#link_logo_wrapper {
+  align-self: unset;
+  padding-bottom: 20px;
+}
+
+@media screen and (max-width: 400px) {
+  .top_menu__logo {
+    .logo-additional-text {
+      font-size: 14px;
+      padding-top: 3px;
+    }
+
+    a img {
+      width: 100px;
+    }
+  }
+}
+
 .burger.opened .burger__icon_open {
     display: none
 }

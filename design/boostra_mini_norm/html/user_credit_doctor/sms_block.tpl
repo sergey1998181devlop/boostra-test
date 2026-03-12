@@ -5,7 +5,7 @@
     <div class="sms_code_wrapper">
         <div>
             <div>
-                <input name="sms_code" inputmode="numeric" value="" type="text" />
+                <input name="sms_code" autocomplete="one-time-code" inputmode="numeric" value="" type="text" />
                 <a href="#" id="sms-repeat" style="display: none;">Отправить код повторно</a>
             </div>
             <span id="sms-timer"></span>

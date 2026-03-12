@@ -12,23 +12,23 @@ class ExtraServiceVisibilityDto
     /**
      * @var bool
      */
-    private bool $starOracleShow;
+    private bool $tvMedicalShow;
     private bool $financialDoctorChecked;
-    private bool $starOracleChecked;
+    private bool $tvMedicalChecked;
 
-    public function __construct(bool $financialDoctorShow, bool $starOracleShow, bool $financialDoctorChecked = null, bool $starOracleChecked = null)
+    public function __construct(bool $financialDoctorShow, bool $tvMedicalShow, ?bool $financialDoctorChecked = null, ?bool $tvMedicalChecked = null)
     {
-        $this->financialDoctorShow = $financialDoctorShow;
-        $this->starOracleShow = $starOracleShow;
-        $this->financialDoctorChecked = $financialDoctorChecked ?? !$financialDoctorShow;
-        $this->starOracleChecked = $starOracleChecked ?? !$starOracleShow;
+        $this->financialDoctorShow    = $financialDoctorShow;
+        $this->tvMedicalShow          = $tvMedicalShow;
+        $this->financialDoctorChecked = $financialDoctorChecked ?? $financialDoctorShow;
+        $this->tvMedicalChecked       = $tvMedicalChecked ?? $tvMedicalShow;
     }
 
     public function toArray(): array
     {
         return [
             'financial_doctor' => ['show' => $this->financialDoctorShow, 'enable' => $this->financialDoctorChecked],
-            'star_oracle' => ['show' => $this->starOracleShow, 'enable' => $this->starOracleChecked]
+            'tv_medical' => ['show' => $this->tvMedicalShow, 'enable' => $this->tvMedicalChecked]
         ];
     }
 
@@ -36,7 +36,7 @@ class ExtraServiceVisibilityDto
     {
         return new self(
             $data['financial_doctor'] ?? false,
-            $data['star_oracle'] ?? false
+            $data['tv_medical'] ?? ($data['star_oracle'] ?? false)
         );
     }
 } 

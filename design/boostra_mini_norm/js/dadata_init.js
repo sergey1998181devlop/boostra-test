@@ -93,6 +93,7 @@ $(document).ready( function() {
 
             this.disableLatinLettersInInputs()
             this.disableLettersInInputs()
+            this.disableLatinLettersAndSpecialsInInputs()
 
             this.addSelectHintHandlers()
 
@@ -106,6 +107,9 @@ $(document).ready( function() {
 
             this.addRegStreetHandlers()
             this.addFaktStreetHandlers()
+
+            this.addRegHousingHandlers()
+            this.addFaktHousingHandlers()
         }
 
         addInputsHandlersForFloatingLabels() {
@@ -153,10 +157,26 @@ $(document).ready( function() {
             }
         }
 
-        disableLettersInInputs() {
+        disableLatinLettersAndSpecialsInInputs() {
             const inputs = [
                 regHousing,
                 faktHousing,
+            ];
+
+            for (let input of inputs) {
+
+                if (input === null) {
+                    continue
+                }
+
+                input.addEventListener('input', event => {
+                    event.target.value = event.target.value.replace(/[^А-Яа-яёЁ0-9\/]/g, '')
+                })
+            }
+        }
+
+        disableLettersInInputs() {
+            const inputs = [
 
                 regBuilding,
                 faktBuilding,
@@ -293,6 +313,7 @@ $(document).ready( function() {
                     }
                 },
                 onSelect: (item) => {
+                    ym(45594498,'reachGoal','hint_click_reg_city')
                     let city = this.getCity(item)
 
                     $(regCity)
@@ -302,7 +323,7 @@ $(document).ready( function() {
                         .attr('readonly', 'readonly');
 
                     $("#regcity-label").children(".floating-label").attr('id', 'disabled-regcity-label')
-                    $(regCity).parent().append(`<span class="regcity-close" style="position:absolute;top:21px;right:40px;cursor:pointer;font-size: 18px;">X</span>`);
+                    $(regCity).parent().append(`<span class="regcity-close" style="position:absolute;top:17px;right:40px;cursor:pointer;font-size: 18px;">X</span>`);
                     if (!!item.data.postal_code) {
                         $('[name="Regindex"]').val(item.data.postal_code)
                     }
@@ -310,6 +331,9 @@ $(document).ready( function() {
                     $('[name="Regregion_shorttype"]').val(item.data.region_type);
                     regRegion.dataset.fias_id = ''
                     refreshFloatingLabels()
+                },
+                beforeRender: () => {
+                    ym(45594498,'reachGoal','hint_shown_reg_city')
                 },
                 formatResult: formatResult
             })
@@ -360,6 +384,7 @@ $(document).ready( function() {
                     }
                 },
                 onSelect: (item) => {
+                    ym(45594498,'reachGoal','hint_click_fakt_city')
                     let city = this.getCity(item)
 
                     $(faktCity)
@@ -368,7 +393,7 @@ $(document).ready( function() {
                         .attr('value', city)
                         .attr('readonly', 'readonly');
                     $("#faktcity-label").children(".floating-label").attr('id', 'disabled-faktcity-label')
-                    $(faktCity).parent().append(`<span class="faktcity-close" style="position:absolute;top:21px;right:40px;cursor:pointer;font-size: 18px;">X</span>`);
+                    $(faktCity).parent().append(`<span class="faktcity-close" style="position:absolute;top:17px;right:40px;cursor:pointer;font-size: 18px;">X</span>`);
                     if (!!item.data.postal_code) {
                         $('[name="Faktindex"]').val(item.data.postal_code)
                     }
@@ -377,6 +402,9 @@ $(document).ready( function() {
                     faktRegion.dataset.fias_id = ''
 
                     refreshFloatingLabels()
+                },
+                beforeRender: () => {
+                    ym(45594498,'reachGoal','hint_shown_fakt_city')
                 },
                 formatResult: formatResult
             })
@@ -408,6 +436,7 @@ $(document).ready( function() {
                     }
                 },
                 onSelect: function (item) {
+                    ym(45594498,'reachGoal','hint_click_reg_street')
                     $(regStreet)
                         .attr('data-fias_id', item.data.fias_id)
                         .attr('data-selected', 1)
@@ -415,13 +444,16 @@ $(document).ready( function() {
                         .attr('readonly', 'readonly');
 
                     $("#regstreet-label").children(".floating-label").attr('id', 'disabled-regstreet-label')
-                    $(regStreet).parent().append(`<span class="regstreet-close" style="position:absolute;top:21px;right:40px;cursor:pointer;font-size: 18px;">X</span>`);
+                    $(regStreet).parent().append(`<span class="regstreet-close" style="position:absolute;top:17px;right:40px;cursor:pointer;font-size: 18px;">X</span>`);
                     if (!!item.data.postal_code) {
                         $('[name="Regindex"]').val(item.data.postal_code)
                     }
                     $('[name="Regstreet_shorttype"]').val(item.data.street_type);
 
                     refreshFloatingLabels()
+                },
+                beforeRender: () => {
+                    ym(45594498,'reachGoal','hint_shown_reg_street')
                 },
                 formatResult: formatResult
             });
@@ -453,19 +485,23 @@ $(document).ready( function() {
                     }
                 },
                 onSelect: function (item) {
+                    ym(45594498,'reachGoal','hint_click_fakt_street')
                     $(faktStreet)
                         .attr('data-fias_id', item.data.fias_id)
                         .attr('data-selected', 1)
                         .attr('value', item.data.street)
                         .attr('readonly', 'readonly');
                     $("#faktstreet-label").children(".floating-label").attr('id', 'disabled-faktstreet-label')
-                    $(faktStreet).parent().append(`<span class="faktstreet-close" style="position:absolute;top:21px;right:40px;cursor:pointer;font-size: 18px;">X</span>`);
+                    $(faktStreet).parent().append(`<span class="faktstreet-close" style="position:absolute;top:17px;right:40px;cursor:pointer;font-size: 18px;">X</span>`);
                     if (!!item.data.postal_code) {
                         $('[name="Faktindex"]').val(item.data.postal_code)
                     }
                     $('[name="Faktstreet_shorttype"]').val(item.data.street_type);
 
                     refreshFloatingLabels()
+                },
+                beforeRender: () => {
+                    ym(45594498,'reachGoal','hint_shown_fakt_street')
                 },
                 formatResult: formatResult
             });
@@ -491,18 +527,22 @@ $(document).ready( function() {
                     'input': 'Reghousing'
                 },
                 onSelect: function (item) {
+                    ym(45594498,'reachGoal','hint_click_reg_housing')
                     $(regHousing)
                         .attr('data-fias_id', item.data.fias_id)
                         .attr('data-selected', 1)
                         .attr('value', item.data.house)
                         .attr('readonly', 'readonly');
                     $("#reghousing-label").children(".floating-label").attr('id', 'disabled-reghousing-label')
-                    $(regHousing).parent().append(`<span class="reghousing-close" style="position:absolute;top:0;right:0;cursor:pointer">X</span>`);
+                    $(regHousing).parent().append(`<span class="reghousing-close" style="position:absolute;top:17px;right:40px;cursor:pointer;font-size: 18px;">X</span>`);
                     if (!!item.data.postal_code) {
                         $('[name="Regindex"]').val(item.data.postal_code)
                     }
 
                     refreshFloatingLabels()
+                },
+                beforeRender: () => {
+                    ym(45594498,'reachGoal','hint_shown_reg_housing')
                 },
                 formatResult: formatResult
 
@@ -529,18 +569,22 @@ $(document).ready( function() {
                     'input': 'Fakthousing'
                 },
                 onSelect: function (item) {
+                    ym(45594498,'reachGoal','hint_click_fakt_housing')
                     $(faktHousing)
                         .attr('data-fias_id', item.data.fias_id)
                         .attr('data-selected', 1)
                         .attr('value', item.data.house)
                         .attr('readonly', 'readonly');
                     $("#fakthousing-label").children(".floating-label").attr('id', 'disabled-fakthousing-label')
-                    $(faktHousing).parent().append(`<span class="fakthousing-close" style="position:absolute;top:0;right:0;cursor:pointer">X</span>`);
+                    $(faktHousing).parent().append(`<span class="fakthousing-close" style="position:absolute;top:17px;right:40px;cursor:pointer;font-size: 18px;">X</span>`);
                     if (!!item.data.postal_code) {
                         $('[name="Faktindex"]').val(item.data.postal_code)
                     }
 
                     refreshFloatingLabels()
+                },
+                beforeRender: () => {
+                    ym(45594498,'reachGoal','hint_shown_fakt_housing')
                 },
                 formatResult: formatResult
             });

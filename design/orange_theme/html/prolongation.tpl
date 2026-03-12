@@ -8,7 +8,7 @@
             </div>
             <div>
                 <p>
-                    Сумма оплаты для пролонгации по договору составляет: 
+                    Сумма оплаты для пролонгации по договору составляет:
                     <span id="in_insure">
                         {if $user->id|@array_search:[299082, 278878, 246778, 153750]}
                             <span class="user_amount_pay">{$user->balance->ostatok_percents}</span>
@@ -132,7 +132,7 @@
     ;function ProlongationApp()
     {
         var app = this;
-        
+
         app.sms_sent = 0;
         app.sms_timer;
 
@@ -148,41 +148,6 @@
                 
                 if ($this.hasClass('loading'))
                     return false;
-                
-                $.ajax({
-                    url: 'ajax/prolongation.php',
-                    data: {
-                        action: 'get_documents',
-                        number: _number
-                    },
-                    beforeSend: function(){
-                        $this.addClass('loading');
-                        $('body').addClass('loading')
-                    },
-                    success: function(resp){
-
-                        if(resp.error) {
-                            alert(resp.error);
-                            return;
-                        }
-                        
-                        $('#prolongation_documents').html('');
-                        if (!!resp.documents)
-                        {
-                            $.each(resp.documents, function(k, item){
-                                var $li = '<li>';
-                                $li += '<a href="'+item.file+'" class="js-open-document">'+item.name+'</a>'
-                                $li += '</li>';
-                                $('#prolongation_documents').append($li);
-                                $('#document_frame').attr('src', item.file);
-                            });
-                        }
-
-                        $this.removeClass('loading');
-
-                        app.open_info_modal();
-                    }
-                })
                 
                 $('#choose_insure').change(function(){
                     if (app.insure_counter > 0)
@@ -226,10 +191,9 @@
                 $('#status_input').val(1);
                 $('#accept_info').show();
                 $('#cancel_info').hide();
-                
+
                 if (!app.sms_sent)
                     app.send_sms();
-                
                 app.open_sms_modal();
             });
             
@@ -257,7 +221,7 @@
                 if (_v.length == 4)
                     app.check_sms();
             })
-            
+
         };
         
         

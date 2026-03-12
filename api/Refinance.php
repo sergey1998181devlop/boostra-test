@@ -359,6 +359,13 @@ class Refinance extends Simpla
         $order_id = $this->orders->add_order($new_order);
         if ($order_id) {
             $this->order_data->set($order_id, self::UTM_SOURCE, 1);
+            if (!empty($_SESSION['vid'])) {
+                $this->order_data->set(
+                    $order_id,
+                    $this->order_data::VISITOR_ID,
+                    $_SESSION['vid']
+                );
+            }
         }
 
         $response = $this->soap->send_repeat_zayavka([

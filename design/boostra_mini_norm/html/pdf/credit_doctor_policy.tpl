@@ -166,7 +166,7 @@
 <table cellspacing="0" cellpadding="2" border="0.5" width="100%">
 
     <tr>
-        <td>Продажу осуществляет: {$organization->name} ИНН: {$organization->inn}, ОГРН: {$organization->ogrn}
+        <td>Продажу осуществляет: ООО «Финтех-маркет» ИНН: 6317164496, ОГРН: 1236300023849
         </td>
     </tr>
 </table>

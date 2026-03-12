@@ -35,7 +35,12 @@ class InitUserView extends View
         $this->design->assign('calc_amount', $calc_amount);
         $this->design->assign('calc_period', $calc_period);
         $this->design->assign('user_phone', $user_phone);
-        $this->design->assign('is_virtual_card_checkbox', isset($_COOKIE['utm_campaign']) && $_COOKIE['utm_campaign'] === 'vctest');
+        $isVirtualCardCheckbox = $this->settings->vc_enabled
+            && isset($_COOKIE['utm_campaign'])
+            && $_COOKIE['utm_campaign'] === 'vctest';
+            //&& isset($_COOKIE['utm_source'])
+            //&& in_array(strtolower($_COOKIE['utm_source']), ['banki.ru','c2m','finuslugi']);
+        $this->design->assign('is_virtual_card_checkbox', $isVirtualCardCheckbox);
 
         $this->initAuthAllButtons();
 

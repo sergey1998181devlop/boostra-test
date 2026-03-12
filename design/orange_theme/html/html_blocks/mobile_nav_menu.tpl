@@ -38,7 +38,7 @@
                         </li>
                     {/if}
                     <li class="nav__item">
-                        <a onclick="window.history.pushState(null, '', window.location.href)" href="#contacts">Контакты</a>
+                        <a onclick="window.history.pushState(null, '', window.location.href)" href="#contacts">Связаться с нами</a>
                     </li>
                     <li class="nav__item">
                         <a href="/user/contract">Внести платёж</a>
@@ -53,7 +53,7 @@
                         </li>
                     {/if}
                     <li class="nav__item">
-                        <a style="color: red;" href="/complaint">Пожаловаться</a>
+                        <a href="/complaint">Пожаловаться</a>
                     </li>
                     {if $user_fully_filled}
                         <li class="nav__item">
@@ -78,7 +78,7 @@
                         </div>
                         <div class="nav__contacts_section">
                             <a href="tel:+78003333073">+7 800 333 30 73</a>
-                            <a href="tel:+78005518881">+7 800 551 88 81</a>
+                            <a href="tel:+78003506691">+7 800 350 66 91</a>
                             <span>Круглосуточный клиентский сервис</span>
                         </div>
                     </div>
@@ -97,14 +97,14 @@
                             </a>
 
                             <!-- TG -->
-                            <a href="https://telegram.me/boostra_bot">
-                                <svg fill="none" height="24" viewBox="0 0 24 24" width="24"
-                                     xmlns="http://www.w3.org/2000/svg">
-                                    <path
-                                            d="M19.4576 4.18176L2.62445 10.7066C1.94706 11.0104 1.71795 11.6189 2.4607 11.9491L6.77915 13.3286L17.2205 6.84227C17.7906 6.43506 18.3743 6.54365 17.8721 6.99158L8.90432 15.1532L8.62261 18.6072C8.88354 19.1405 9.36129 19.143 9.66602 18.878L12.1471 16.5182L16.3963 19.7165C17.3832 20.3038 17.9202 19.9248 18.1325 18.8484L20.9197 5.58293C21.209 4.25791 20.7155 3.67411 19.4576 4.18176Z"
-                                            fill="#16A3F2"/>
-                                </svg>
-                            </a>
+{*                            <a href="https://telegram.me/boostra_bot">*}
+{*                                <svg fill="none" height="24" viewBox="0 0 24 24" width="24"*}
+{*                                     xmlns="http://www.w3.org/2000/svg">*}
+{*                                    <path*}
+{*                                            d="M19.4576 4.18176L2.62445 10.7066C1.94706 11.0104 1.71795 11.6189 2.4607 11.9491L6.77915 13.3286L17.2205 6.84227C17.7906 6.43506 18.3743 6.54365 17.8721 6.99158L8.90432 15.1532L8.62261 18.6072C8.88354 19.1405 9.36129 19.143 9.66602 18.878L12.1471 16.5182L16.3963 19.7165C17.3832 20.3038 17.9202 19.9248 18.1325 18.8484L20.9197 5.58293C21.209 4.25791 20.7155 3.67411 19.4576 4.18176Z"*}
+{*                                            fill="#16A3F2"/>*}
+{*                                </svg>*}
+{*                            </a>*}
                         </section>
                     </div>
                 </div>

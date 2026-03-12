@@ -42,6 +42,9 @@
     margin-top: var(--space-3);
     padding: var(--space-3) 0;
     overflow: hidden;
+    position: relative;
+    z-index: 1;
+    max-width: 100%;
 }
 
 .overdue-progress__header {
@@ -113,6 +116,7 @@
     border-radius: 2px;
     outline: none;
     border-bottom: none !important;
+    padding: 0 !important;
 
     /* цветная часть трека + базовый трек */
     background:
@@ -123,6 +127,7 @@
 
 .overdue-progress__slider::-webkit-slider-thumb {
     -webkit-appearance: none;
+    -moz-appearance: none;
     appearance: none;
     width: var(--slider-thumb);
     height: var(--slider-thumb);
@@ -131,7 +136,8 @@
     border: 2px solid var(--color-white);
     box-shadow: 0 0 0 2px rgba(0, 0, 0, .08);
     cursor: pointer;
-    margin-top: 12px;
+    margin-top: -5.5px;
+    z-index: 2;
 }
 
 .overdue-progress__slider::-webkit-slider-runnable-track {
@@ -147,20 +153,6 @@
 .overdue-progress__slider::-moz-range-track {
     height: 7px;
     border-radius: 15px
-}
-
-.overdue-progress__slider::-webkit-slider-thumb {
-    -webkit-appearance: none;
-    -moz-appearance: none;
-    appearance: none;
-    margin-top: -15px;
-    background: var(--bucket-active-color);
-    border: 6px solid #ffffff;
-    box-shadow: 0 0 16px #00000029;
-    border-radius: 50%;
-    width: 36px;
-    height: 36px;
-    z-index: 100;
 }
 
 /* Фокусные состояния для доступности */
@@ -183,7 +175,7 @@
     position: absolute;
     left: 0;
     right: calc(var(--donut-size) + var(--space-3) + 22px + var(--space-3));
-    bottom: 6px;
+    bottom: 3px;
     z-index: 1;
     pointer-events: none;
 }
@@ -259,7 +251,7 @@
 .overdue-progress__range input[type="range"] {
     position: relative;
     z-index: 2;
-    width: 100%;
+    width: 100% !important;
 }
 
 .overdue-progress__slider {
@@ -271,6 +263,18 @@
     .overdue-progress{ --donut-size: 48px; --space-3: 10px; }
     .overdue-progress__slider-wrap, .overdue-progress__tooltip {
         max-width: 320px;
+    }
+}
+
+@media (max-width: 768px){
+    /* Фиксированная высота сообщения — устраняет «прыгание» прогресс-бара при смене текста */
+    .overdue-progress__message {
+        min-height: 4em;
+        line-height: 1.4;
+    }
+
+    .overdue-progress__ticks {
+        bottom: 5px;
     }
 }
 

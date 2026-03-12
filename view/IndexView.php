@@ -357,6 +357,7 @@ class IndexView extends View{
     
     private function processVisitor(): void
     {
+        $pixelData = $this->getPixelData();
         if( $this->isNewVisitor() ){
             if( ! $this->isBot() && ! $this->isImage() && ! $this->isCRM() ){
                 $utm_source      = (string)$this->request->get( 'utm_source' );
@@ -370,6 +371,9 @@ class IndexView extends View{
                     'ip'           => $_SERVER['REMOTE_ADDR'] ?? '',
                     'utm_source'   => $utm_source,
                     'webmaster_id' => $webmaster_id,
+                    'pixel_user_fp'  => $pixelData['pixel_user_fp'],
+                    'pixel_sess_id'  => $pixelData['pixel_sess_id'],
+                    'pixel_user_dt'  => $pixelData['pixel_user_dt'],
                 ] );
                 $_SESSION['vid'] = $visitor_id;
             }
@@ -381,6 +385,13 @@ class IndexView extends View{
         // Eсли есть пул метрик обновим их
         $update_data['last_active'] = date( 'Y-m-d H:i:s' );
         $update_data['user_id'] = $_SESSION['user_id'] ?? null;
+
+        // если Pixel догрузился позже — обновляем
+        if (!empty($pixelData['pixel_user_fp'])) {
+            $update_data['pixel_user_fp'] = $pixelData['pixel_user_fp'];
+            $update_data['pixel_sess_id'] = $pixelData['pixel_sess_id'];
+            $update_data['pixel_user_dt'] = $pixelData['pixel_user_dt'];
+        }
 
         if (!empty($_SESSION['user_id']) && !empty($_SESSION['metric_actions'])) {
             $loan_history_json = is_string($this->user->loan_history) ? $this->user->loan_history : json_encode(
@@ -405,7 +416,19 @@ class IndexView extends View{
     {
         return empty( $_SESSION['vid'] );
     }
-    
+
+    private function getPixelData(): array
+    {
+        return [
+            'pixel_user_fp' => $_COOKIE['pixel_user_fp'] ?? null,
+            'pixel_sess_id' => $_COOKIE['pixel_sess_id'] ?? null,
+            'pixel_user_dt' => isset($_COOKIE['pixel_user_dt'])
+                ? (int)$_COOKIE['pixel_user_dt']
+                : null,
+        ];
+    }
+
+
     private function getLKLink(): string
     {
         switch( true ){

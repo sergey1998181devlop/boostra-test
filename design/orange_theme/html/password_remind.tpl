@@ -19,7 +19,7 @@
 
 <form class="form" method="post">
 	<label>Введите email, который вы указывали при регистрации</label>
-	<input type="text" name="email" data-format="email" data-notice="Введите email" value="{$email|escape}"  maxlength="255"/>
+	<input type="text" name="email" autocomplete="email" data-format="email" data-notice="Введите email" value="{$email|escape}"  maxlength="255"/>
 	<input type="submit" class="button_submit" value="Вспомнить" />
 </form>
 {/if}

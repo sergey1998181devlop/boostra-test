@@ -48,11 +48,11 @@
         margin-bottom: 30px;
     }
 
-    .agree-label > a {
+    .agree-label > a, .agree-marketing-label > a {
         color: #818C99;
     }
 
-    .agree-label > a:hover {
+    .agree-label > a:hover .agree-marketing-label > a:hover {
         color: #818C99;
     }
 
@@ -61,7 +61,7 @@
         margin-bottom: 15% !important;
     }
 
-    #agree {
+    #agree, #agree-marketing {
         width: 16px;
         height: 16px;
         border-radius: 100%;
@@ -70,7 +70,8 @@
         margin-left: -16px;
     }
 
-    #agree.form-check-input.is-valid:checked {
+    #agree.form-check-input.is-valid:checked,
+    #agree-marketing.form-check-input.is-valid:checked {
         background-color: #0A91ED;
         border: none;
     }
@@ -83,7 +84,7 @@
         box-shadow: none;
     } */
 
-    .agree-label {
+    .agree-label, .agree-marketing-label {
         margin-top: 0px;
         margin-left: 5px;
         font-size: 17px;
@@ -115,12 +116,12 @@
     }
 
     @media(max-width: 767px) {
-        #agree {
+        #agree, #agree-marketing {
             width: 23px;
             height: 23px;
         }
 
-        .agree-label {
+        .agree-label, .agree-marketing-label {
             margin-top: 0px;
             font-size: 12px;
         }
@@ -310,7 +311,7 @@
                 <input name="huid" type="hidden" value="{$settings->hui}" />
                 <div class="mb-3">
                     <label for="phone" class="form-label">Номер телефона</label>
-                    <input type="text" inputmode="numeric" name="phone" class="form-control" id="phone" placeholder="+7-777-777-77-77" {if isset($user_phone) && $user_phone != ''} value="{$user_phone}" {/if} />
+                    <input type="text" autocomplete="tel" inputmode="tel" inputmode="tel" autocomplete="tel" name="phone" class="form-control" id="phone" placeholder="+7-777-777-77-77" {if isset($user_phone) && $user_phone != ''} value="{$user_phone}" {/if} />
                 </div>
                 <div class="my-2 text-danger" id="phone-error" style="display: none"><small>Код оператора введен не верно.</small></div>
 
@@ -333,25 +334,35 @@
                             </a> согласен
                         </p>
                         <p>
-                            Я согласен на <a href="{$config->root_url}/files/docs/personal_data_consent.pdf" target="_blank" class="">
+                            Я согласен на
+                            <a href="{$config->root_url}/files/docs/personal_data_consent.pdf" target="_blank" class="">
                                 обработку персональных данных
-                            </a> и
-                            <a href="{$config->root_url}/files/docs/marketing_consent.pdf" target="_blank" class="">
-                                получение маркетинговых коммуникаций
                             </a>
                         </p>
 
-                        {if ! $is_pk && $is_virtual_card_checkbox}
+                        {if $is_virtual_card_checkbox}
                             <div class="mini-checkbox for-nk">
                                 <input class="form-check-input" checked="checked" type="checkbox" value="1" id="agree_virtual_card" name="virtual_card">
                                 <label>
-                                    С <a href="{$config->root_url}../../../share_docs/general/docs_uslugi_oferta_esp_0250725.pdf" target="_blank" class="">
+                                    С <a href="{$config->root_url}/share_docs/general/docs_user_agreement.docx" target="_blank" class="">
+                                        «Пользовательским соглашением»
+                                    </a> и <a href="{$config->root_url}/share_docs/general/docs_uslugi_oferta_esp_20251014.pdf" target="_blank" class="">
                                         «Офертой ООО РНКО «Платежный конструктор» на выпуск виртуальной карты Boostra»
                                     </a> согласен
                                 </label>
                             </div>
                         {/if}
                     </div>
+                </div>
+
+                <div class="form-check form-check__label">
+                    <input class="form-check-input" type="checkbox" id="agree-marketing" name="agree-marketing">
+                    <label class="form-check-label agree-marketing-label" for="agree-marketing">
+                        Я согласен на
+                        <a href="{$config->root_url}/files/docs/marketing_consent.pdf" target="_blank" class="">
+                            получение маркетинговых коммуникаций
+                        </a>
+                    </label>
                 </div>
 
                 <div id="smart-captcha-loan-container" style="display: none;" class="smart-captcha mt-3" data-sitekey="{$config->smart_captcha_client_key}"></div>
@@ -363,7 +374,7 @@
                 <input name="huid" type="hidden" value="{$settings->hui}" />
                 <div class="input-group mb-3">
                     <span class="input-group-text input-group-text_code">Введите код</span>
-                    <input type="text" inputmode="numeric" name="code" class="form-control" id="code" placeholder="****" />
+                    <input type="text" inputmode="numeric" autocomplete="one-time-code" name="code" class="form-control" id="code" placeholder="****" />
                 </div>
                 <div class="code_btns_wrapper">
                     <button type="submit" class="btn btn-outline-primary">Отправить повторно {* <i class="mx-2 bi bi-repeat"></i> *}</button>
@@ -373,6 +384,45 @@
         </div>
     </div>
 </section>
+
+<script>
+    window.serverTimeMsk = {$smarty.now * 1000};
+</script>
+<script>
+    window.settings = window.settings || {literal}{}{/literal};
+    {if $settings->site_warning_banner_config}
+    window.settings.site_warning_banner_config = {$settings->site_warning_banner_config|json_encode};
+    {/if}
+    
+    {if $active_automation_fail && ($module == 'MainPage' || $module == 'UserView')}
+    window.settings.automation_fail = {
+        enabled: true,
+        message: {$automation_fail_text|json_encode},
+        style: 'error',
+        position: 'top',
+        show_on_main_page: true,
+        closeable: false,
+        animation: 'slide',
+        desktop: {
+            background_color: '#F44336',
+            text_color: '#ffffff',
+            font_size: '16px',
+            font_weight: 'normal',
+            padding: '12px 20px',
+            border_radius: '4px'
+        },
+        mobile: {
+            background_color: '#F44336',
+            text_color: '#ffffff',
+            font_size: '14px',
+            font_weight: 'normal',
+            padding: '10px 15px',
+            border_radius: '4px'
+        }
+    };
+    {/if}
+</script>
+<script src="design/{$settings->theme|escape}/js/warning-banner.js"></script>
 
 {capture name=page_scripts}
 

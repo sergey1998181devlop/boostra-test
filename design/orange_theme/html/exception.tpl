@@ -42,7 +42,7 @@
 				
                 <div style="color:red;text-align:center">
                     <h1>
-                        Сервер перегружен. 
+                        Сервер перегружен.
                     </h1>
                     <h3>
                         Попробуйте зайти позже.
@@ -50,9 +50,10 @@
                 </div>
                 
 			</div>
-			
-            
-            
+
+            {if $message}
+                <pre>{$message}</pre>
+            {/if}
 		</div>
 	</div>
 </section>

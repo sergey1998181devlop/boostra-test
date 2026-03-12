@@ -202,7 +202,7 @@
     </div>
     <script src="design/{$settings->theme}/js/jquery.inputmask.min.js" type="text/javascript"></script>
     {if $user_lk_page}
-        <script src="design/{$settings->theme|escape}/js/credit_rating.app.js?v=1.0050" type="text/javascript"></script>
+        <script src="design/{$settings->theme|escape}/js/credit_rating.app.js?v=1.0053" type="text/javascript"></script>
     {/if}
     <script type="text/javascript">
        $('.get-credit-rating-button').on('click', function (){

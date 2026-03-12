@@ -59,7 +59,7 @@
 
             <div class="user-cr-sms-block">
                 <form action="/user&action=credit_rating_sign">
-                    Код из СМС <input type="text" name="credit_rating_sms">
+                    Код из СМС <input autocomplete="one-time-code" inputmode="numeric" type="text" name="credit_rating_sms">
                     <div class="button medium credit-rating-check-sms disabled">Отправить</div>
                     <div class="sms-code-error">Код не совпадает</div>
                 </form>

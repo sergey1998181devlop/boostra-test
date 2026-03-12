@@ -20,8 +20,8 @@
 })();
 (function () {
   var h = document.querySelectorAll(".js-withoutCoeff"), l = document.querySelectorAll(".js-withCoeff"),
-    p = document.querySelectorAll(".js-total-output"), c = document.querySelector("[data-percent]").dataset.percent;
-  document.querySelector(".js-coeff").textContent = c;
+    p = document.querySelectorAll(".js-total-output"), c = document.querySelector("[data-percent]")?.dataset?.percent;
+  /*document.querySelector(".js-coeff").textContent = c;*/
   var r = x("#hero-range", ".js-hero-range-output", function () {
     u()
   }), o = x("#hero-range-long", ".js-hero-range-long-output", function () {

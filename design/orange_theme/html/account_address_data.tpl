@@ -13,7 +13,7 @@
 
 	<script src="design/{$settings->theme}/js/neworder.kladr.js?v=1.64" type="text/javascript"></script>
 
-	<script src="design/{$settings->theme}/js/personal_data.app.js?v=1.73" type="text/javascript"></script>
+	<script src="design/{$settings->theme}/js/personal_data.app.js?v=1.78" type="text/javascript"></script>
 {/capture}
 
 <section id="worksheet">

@@ -17,7 +17,7 @@ class UserHelper
 //            'patronymic',
 //            'phone_mobile',
 //            'birth',
-            'birth_place',
+//            'birth_place',
             'gender',
 
             'passport_serial',

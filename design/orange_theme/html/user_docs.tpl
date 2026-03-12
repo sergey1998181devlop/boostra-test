@@ -60,7 +60,6 @@
                                 {elseif $doc->type == 'application'}Заявление о предоставлении микрозайма
                                 {elseif $doc->type == 'other'}Прочие сведения и заверения о клиенте
                                 {elseif $doc->type == 'consent'}Согласие клиента на получение информации из бюро кредитных историй
-                                {elseif $doc->type == 'statementprolongation'}Заявление о пролонгации договора микрозайма
                                 {elseif $doc->type == 'prolongation'}Дополнительное соглашение
                                 {elseif $doc->type == 'insure'}Полис-оферта комбинированного страхования
                                 {elseif $doc->type == 'cession'}Уведомление по цессии

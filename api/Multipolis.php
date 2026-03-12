@@ -4,6 +4,8 @@ require_once 'Simpla.php';
 require_once 'interface/BaseModel.php';
 require_once( dirname(__DIR__) . '/vendor/autoload.php');
 
+use App\Core\Application\Application;
+use App\Services\ReturnCoefficientService;
 use PHPMailer\PHPMailer\PHPMailer;
 
 /**
@@ -269,6 +271,24 @@ class Multipolis extends Simpla implements BaseModel
      */
     public function getMultipolisAmount(object $user, int $nDays = 16, int $orderId= null): int
     {
+        // СРКВ: блокировка КС на оплате если конверсия оплаты и возврата>= целевой + клиент ранее возвращал КС
+        $userId = (int)($user->id ?? 0);
+        if ($userId > 0) {
+            try {
+                /** @var ReturnCoefficientService $srkv */
+                $srkv = Application::getInstance()->make(ReturnCoefficientService::class);
+                if ($srkv->shouldBlockService(
+                    $userId,
+                    ReturnCoefficientService::SERVICE_MULTIPOLIS,
+                    ReturnCoefficientService::STAGE_PAYMENT
+                )) {
+                    return 0;
+                }
+            } catch (Throwable $e) {
+                log_warning('SRKV: concierge block check failed', ['error' => $e->getMessage()]);
+            }
+        }
+
         if ($orderId) {
             $returnedMultipolis = $this->selectAll(
                 [

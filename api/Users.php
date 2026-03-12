@@ -380,8 +380,8 @@ class Users extends Simpla {
             $this->db->placehold(
                 "SELECT id
                     FROM __users
-                    WHERE passport_serial = ? {$checkExists}",
-                $passport_clear
+                    WHERE passport_serial = ? {$checkExists} AND site_id = ?",
+                $passport_clear, $this->config->site_id
             )
         );
 
@@ -401,31 +401,31 @@ class Users extends Simpla {
 
         $passport_clear = $this->getClearPassport($data['Passport']);
 
-        $query = $this->db->placehold("SELECT id, uid FROM __users  WHERE passport_serial = ? AND birth = ? LIMIT 1", $passport_clear, $data['DR']);
+        $query = $this->db->placehold("SELECT id, uid FROM __users  WHERE passport_serial = ? AND birth = ? AND site_id = ? LIMIT 1", $passport_clear, $data['DR'], $this->config->site_id);
         $this->db->query($query);
         return $this->db->result();
     }
 
     public function getUserIdByEmail($email) {
         $query = $this->db->placehold("
-            SELECT id FROM __users WHERE email = '?'
-        ", (string) $email);
+            SELECT id FROM __users WHERE email = '?' AND site_id = ?
+        ", (string) $email, $this->config->site_id);
         $this->db->query($query);
         return $this->db->result('id');
     }
 
     public function getUserInfoById($id) {
         $query = $this->db->placehold("
-            SELECT * FROM __users WHERE id = ?
-        ", (int) $id);
+            SELECT * FROM __users WHERE id = ? AND site_id = ?
+        ", (int) $id, $this->config->site_id);
         $this->db->query($query);
         return $this->db->result();
     }
 
     public function get_phone_user($phone) {
         $query = $this->db->placehold("
-            SELECT id FROM __users WHERE phone_mobile = ?
-        ", (string) $this->clear_phone($phone));
+            SELECT id FROM __users WHERE phone_mobile = ? AND site_id = ?
+        ", (string) $this->clear_phone($phone), $this->config->site_id);
         $this->db->query($query);
 
         return $this->db->result('id');
@@ -438,8 +438,8 @@ class Users extends Simpla {
     			u.uid,
     			u.uid_status
             FROM __users AS u
-            WHERE u.id = ?
-        ", (int) $id);
+            WHERE u.id = ? AND u.site_id = ?
+        ", (int) $id, $this->config->site_id);
 
         $this->db->query($query);
         return $this->db->result();
@@ -447,9 +447,9 @@ class Users extends Simpla {
 
     function get_user_by_uid($uid) {
         $query = $this->db->placehold("
-            SELECT * FROM __users WHERE uid = ?
+            SELECT * FROM __users WHERE uid = ? AND site_id = ?
             ORDER BY blocked ASC, id DESC
-        ", (string) $uid);
+        ", (string) $uid, $this->config->site_id);
         $this->db->query($query);
 
         $result = $this->db->result();
@@ -681,9 +681,10 @@ class Users extends Simpla {
                     $bad_uid_filter
                     $error_uid_filter
                     $ok_uid
+                    AND u.site_id = ?
             ORDER BY $order
             $sql_limit
-        ");
+        ", $this->config->site_id);
 
         //print_r('<br/><br/>');
         //print_r($query);
@@ -734,15 +735,15 @@ class Users extends Simpla {
         // Выбираем пользователей
         $query = $this->db->placehold("SELECT count(*) as count FROM __users u
 		                                LEFT JOIN __groups g ON u.group_id=g.id
-										WHERE 1 $group_id_filter $keyword_filter");
+										WHERE 1 $group_id_filter $keyword_filter AND u.site_id=?", $this->config->site_id);
         $this->db->query($query);
         return $this->db->result('count');
     }
 
     function get_user_by_id($id) {
         $query = $this->db->placehold("
-            SELECT * FROM __users u WHERE u.id = ? LIMIT 1
-        ", $id);
+            SELECT * FROM __users u WHERE u.id = ? AND u.site_id = ? LIMIT 1
+        ", $id, $this->config->site_id);
 
         $this->db->query($query);
         return $this->db->result();
@@ -750,9 +751,9 @@ class Users extends Simpla {
 
     function get_user($id, $for_zayavka = false) {
         if (gettype($id) == 'string')
-            $where = $this->db->placehold(' WHERE u.phone_mobile=? ', $this->clear_phone($id));
+            $where = $this->db->placehold(' WHERE u.phone_mobile=? AND u.site_id = ?', $this->clear_phone($id), $this->config->site_id);
         else
-            $where = $this->db->placehold(' WHERE u.id=? ', intval($id));
+            $where = $this->db->placehold(' WHERE u.id=? AND u.site_id = ?', intval($id), $this->config->site_id);
 
         // Выбираем пользователя
         $query = $this->db->placehold("
@@ -965,9 +966,9 @@ class Users extends Simpla {
                 u.last_ip,
                 u.reg_ip
             FROM __users u
-            WHERE u.reg_ip = ? OR u.last_ip = ?
+            WHERE u.reg_ip = ? OR u.last_ip = ? AND u.site_id = ?
             LIMIT 1;
-        ", $userIp, $userIp);
+        ", $userIp, $userIp, $this->config->site_id);
 
         return $this->db->result();
     }
@@ -978,7 +979,7 @@ class Users extends Simpla {
      */
     public function checkUtmSource($userId): bool
     {
-        $query = $this->db->placehold('SELECT utm_source FROM s_users WHERE id = ?', $userId);
+        $query = $this->db->placehold('SELECT utm_source FROM s_users WHERE id = ? AND site_id = ?', $userId, $this->config->site_id);
         $this->db->query($query);
 
         $result = $this->db->result('utm_source');
@@ -990,6 +991,8 @@ class Users extends Simpla {
     public function add_user($user) {
 
         $user = (array) $user;
+
+        $user['site_id'] = $this->config->site_id;
 
         if (isset($user['password']))
             $user['password'] = md5($this->salt . $user['password'] . md5($user['password']));
@@ -1004,7 +1007,7 @@ class Users extends Simpla {
             $user['passport_date'] = $this->tryFormatDate($user['passport_date']);
 
         //$query = $this->db->placehold("SELECT count(*) as count FROM __users WHERE email=?", $user['email']);
-        $query = $this->db->placehold("SELECT count(*) as count FROM __users WHERE phone_mobile=?", $user['phone_mobile']);
+        $query = $this->db->placehold("SELECT count(*) as count FROM __users WHERE phone_mobile=? AND site_id=?", $user['phone_mobile'],$this->config->site_id);
         $this->db->query($query);
 
         if ($this->db->result('count') > 0)
@@ -1148,16 +1151,24 @@ class Users extends Simpla {
      * @param array $filters  массив фильтров (например, ['zayavka' => 'ID_1C'])
      * @return false|object  Объект строки из s_user_balance либо false, если не найдено
      */
-    function get_user_balance($user_id, array $filters = [])
+    function get_user_balance($user_id = null, array $filters = [])
     {
-        $user_id = intval($user_id);
+        $whereConditions = [];
+        $params = [];
 
-        $filtersQuery = '';
-        foreach ($filters as $column => $value) {
-            $filtersQuery .= $this->db->placehold(" AND {$column} = ?", $value);
+        if ($user_id !== null) {
+            $whereConditions[] = 'ub.user_id = ?';
+            $params[] = intval($user_id);
         }
 
-        $query = $this->db->placehold("
+        foreach ($filters as $column => $value) {
+            $whereConditions[] = "ub.{$column} = ?";
+            $params[] = $value;
+        }
+
+        $whereClause = $whereConditions ? 'WHERE ' . implode(' AND ', $whereConditions) : '';
+
+        $query = "
             SELECT
                 ub.id,
                 ub.user_id,
@@ -1183,22 +1194,22 @@ class Users extends Simpla {
                 ub.last_prolongation,
                 ub.last_update,
                 ub.buyer,
+                ub.buyer_phone,
                 ub.penalty,
                 ub.is_cession_shown,
                 ub.inn,
                 ub.current_inn,
                 ub.discount_amount,
                 ub.discount_date,
-                sum_with_grace,
-                sum_od_with_grace,
-                sum_percent_with_grace 
+                ub.sum_with_grace,
+                ub.sum_od_with_grace,
+                ub.sum_percent_with_grace
             FROM __user_balance ub
-            WHERE ub.user_id=?
-            $filtersQuery
+            $whereClause
             LIMIT 1
-            ", $user_id);
+        ";
 
-        $this->db->query($query);
+        $this->db->query($query, ...$params);
         $user_balance = $this->db->result();
         if (empty($user_balance))
             return false;
@@ -1607,7 +1618,7 @@ class Users extends Simpla {
 
     public function check_password($email, $password) {
         $encpassword = md5($this->salt . $password . md5($password));
-        $query = $this->db->placehold("SELECT id FROM __users WHERE email=? AND password=? LIMIT 1", $email, $encpassword);
+        $query = $this->db->placehold("SELECT id FROM __users WHERE email=? AND password=? AND site_id=? LIMIT 1", $email, $encpassword, $this->config->site_id);
         $this->db->query($query);
         if ($id = $this->db->result('id'))
             return $id;
@@ -1899,23 +1910,6 @@ class Users extends Simpla {
         $query = $this->db->placehold($sql, $user_id);
         $this->db->query($query);
         return (bool)$this->db->result('result');
-    }
-
-    /**
-     * Обновляет время последней поданной заявки
-     * @param $user_id
-     * @return void
-     */
-    public function updateNoApprovedUserMoratorium($user_id)
-    {
-        $query = $this->db->placehold(
-            "REPLACE INTO __moratorium_rating SET ?%",
-            [
-                'date_order_added' => date('Y-m-d H:i:s'),
-                'user_id' => intval($user_id)
-            ]
-        );
-        $this->db->query($query);
     }
 
     /**
@@ -3124,8 +3118,8 @@ class Users extends Simpla {
                 SELECT 
                     COUNT(*) as total
                 FROM __users
-                WHERE phone_mobile = ?
-            ", $phone_mobile
+                WHERE phone_mobile = ? AND site_id = ?
+            ", $phone_mobile, $this->config->site_id
         );
 
         $this->db->query($query);
@@ -3154,8 +3148,8 @@ class Users extends Simpla {
                 SELECT 
                     COUNT(*) as total
                 FROM __users
-                WHERE passport_serial = ?
-            ", $passport_clear
+                WHERE passport_serial = ? AND site_id=?
+            ", $passport_clear, $this->config->site_id
         );
 
         $this->db->query($query);
@@ -3294,9 +3288,29 @@ class Users extends Simpla {
      */
     public function get_user_by_email($email)
     {
-        $query = $this->db->placehold("SELECT * FROM __users WHERE email = ? LIMIT 1", (string) $email);
+        $query = $this->db->placehold("SELECT * FROM __users WHERE email = ? AND site_id = ? LIMIT 1", (string) $email, $this->config->site_id);
         $this->db->query($query);
 
         return $this->db->result();
+    }
+
+    /**
+     * Проверяет есть ли у пользователя шаг скористы no_need_for_underwriter для пропуска шага карты
+     * @param object $user
+     * @return bool
+     */
+    public function skipSelectCardStep(object $user): bool
+    {
+        if (!empty($this->settings->no_need_for_underwriter_card_step_disabled['status'])
+            && in_array($user->utm_source,
+                        array_map(
+                            'trim',
+                            $this->settings->no_need_for_underwriter_card_step_disabled['utm_sources'] ?? []
+                        )
+            )) {
+            return (bool)$this->user_data->read($user->id, 'no_need_for_underwriter');
+        }
+
+        return false;
     }
 }

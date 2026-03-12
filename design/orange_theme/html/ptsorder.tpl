@@ -53,7 +53,7 @@
 							<input type="tel" name="phone" placeholder="Телефон" required=""/>
 						</label>
 						<label>
-							<input type="text" name="email" placeholder="Электронная почта" required=""/>
+							<input type="text" autocomplete="email" name="email" placeholder="Электронная почта" required=""/>
 						</label>
 						<div class="next">
 							<span class="button big">Далее</span>

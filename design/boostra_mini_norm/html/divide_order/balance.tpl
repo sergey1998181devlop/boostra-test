@@ -42,40 +42,50 @@
 
 {if $order_data->balance->zaim_number && $order_data->balance->zaim_number!='Ошибка' && $order_data->balance->zaim_number!='Нет открытых договоров'}
     {if $order_data->balance->sale_info=='Договор продан'}
-        <div class="about">
-            <div>Договор {$order_data->balance->zaim_number} продан {$order_data->balance->buyer}, номер для связи
-                <a href="tel:{$order_data->balance->buyer_phone}" style="color: red; text-decoration: underline; font-weight: bold;">
-                    {$order_data->balance->buyer_phone}
-                </a>
-            </div>
-        </div>
-
-        {if !in_array($user->balance->buyer, ['Правовая защита', 'БИКЭШ']) && !in_array($user->order['status'], [1,2,5,6,7,8,9,10,12])}
-            {loan_form cards=$cards}
-        {/if}
-
-        {if $order_data->balance->buyer == 'БИКЭШ' && !$order_data->balance->is_cession_shown && file_exists("{$config->root_dir}/files/contracts/Cess/{$order_data->balance->zaim_number}.pdf")}
-            <div style="display:block;
-                    position: fixed;
-                    top: 0;
-                    right: 0;
-                    bottom: 0;
-                    left: 0;
-                    padding-top: 60px;
-                    background-color: rgba(0,0,0,0.4); /* Black w/ opacity */
-                    ">
-                <div class="cdoctor-modal" style="max-width: 90%;">
-                    <div class="cdoctor-modal-title">Ваш договор продан</div>
-                    <div class="cdoctor-modal-price" style="margin: 0px 0;">
-                        <embed src="{$config->root_url}/files/contracts/Cess/{$order_data->balance->zaim_number}.pdf" style="max-width:100%;height:430px;" type="application/pdf">
+        {if !isset($user_data['show_cession_info']) || $user_data['show_cession_info'] != '0'}
+            <div class="about" style="max-width: 512px;">
+                <div class="status-box status-box--warning" style="display: flex; align-items: flex-start;">
+                    <div class="status-box__icon" style="flex-shrink: 0; margin-right: 15px;">
+                        <svg viewBox="0 0 24 24">
+                            <path d="M1 21h22L12 2 1 21zm12-3h-2v-2h2v2zm0-4h-2v-4h2v4z"/>
+                        </svg>
                     </div>
-                    <div class="cdoctor-modal-link">
-                        <a class="button medium" href="user?cession=shown">Я ознакомлен. Закрыть</a>
+                    <div class="status-box__content" style="flex: 1;">
+                        <h3 class="status-box__title" style="margin-top: 0;">Ваш договор продан</h3>
+                        <p class="status-box__text" style="margin-bottom: 0;">
+                            Договор № {$order_data->balance->zaim_number} продан {$order_data->balance->buyer}, номер
+                            для связи:
+                            <a href="tel:{$order_data->balance->buyer_phone}"
+                               style="color: inherit; text-decoration: underline; font-weight: bold;">
+                                {$order_data->balance->buyer_phone}
+                            </a>
+                        </p>
                     </div>
                 </div>
             </div>
+            {if $order_data->balance->buyer == 'БИКЭШ' && !$order_data->balance->is_cession_shown && file_exists("{$config->root_dir}/files/contracts/Cess/{$order_data->balance->zaim_number}.pdf")}
+                <div style="display:block;
+                        position: fixed;
+                        top: 0;
+                        right: 0;
+                        bottom: 0;
+                        left: 0;
+                        padding-top: 60px;
+                        background-color: rgba(0,0,0,0.4); /* Black w/ opacity */
+                        ">
+                    <div class="cdoctor-modal" style="max-width: 90%;">
+                        <div class="cdoctor-modal-title">Ваш договор продан</div>
+                        <div class="cdoctor-modal-price" style="margin: 0px 0;">
+                            <embed src="{$config->root_url}/files/contracts/Cess/{$order_data->balance->zaim_number}.pdf"
+                                   style="max-width:100%;height:430px;" type="application/pdf">
+                        </div>
+                        <div class="cdoctor-modal-link">
+                            <a class="button medium" href="user?cession=shown">Я ознакомлен. Закрыть</a>
+                        </div>
+                    </div>
+                </div>
+            {/if}
         {/if}
-
     {elseif $order_data->balance->zaim_number=='Ошибка. Обратитесь в офис'}
         <div class="about">
             <div>{$order_data->balance->zaim_number}</div>
@@ -91,21 +101,47 @@
                 <a class="button button-inverse btn-600 btn-fsize-14 btn-line-h-24 {*view-contract*} " target="_blank" href="user/docs" data-number="{$order_data->balance->zaim_number}">Смотреть договор</a>
             {/if}
         </div>
-
-        {if !empty($order_data->balance->buyer)}
-            <div style="color: red; margin: 10px; font-size: 14px;">
-                Ваш договор займа № {$order_data->balance->zaim_number} находится в работе {$order_data->balance->buyer}, номер для связи
-                <a href="tel:{$order_data->balance->buyer_phone}" style="color: red; text-decoration: underline; font-weight: bold;">
-                    {$order_data->balance->buyer_phone}
-                </a>
+        {if !empty($order_data->balance->buyer) && (!isset($user_data['show_agent_info']) || $user_data['show_agent_info'] != '0')}
+            {assign var="current_loan_buyer" value=null}
+            {if $loan_buyers}
+                {foreach $loan_buyers as $lb}
+                    {if $lb.loan_number == $order_data->balance->zaim_number}
+                        {assign var="current_loan_buyer" value=$lb}
+                    {/if}
+                {/foreach}
+            {/if}
+            <div class="about" style="max-width: 512px;">
+                <div class="status-box status-box--warning" style="display: flex; align-items: flex-start;">
+                    <div class="status-box__icon" style="flex-shrink: 0; margin-right: 15px;">
+                        <svg viewBox="0 0 24 24">
+                            <path d="M1 21h22L12 2 1 21zm12-3h-2v-2h2v2zm0-4h-2v-4h2v4z"/>
+                        </svg>
+                    </div>
+                    <div class="status-box__content" style="flex: 1;">
+                        <h3 class="status-box__title" style="margin-top: 0;">Передача договора в работу</h3>
+                        <p class="status-box__text" style="margin-bottom: 0;">
+                            {if $current_loan_buyer}
+                                Уведомляем Вас, что задолженность по договору займа № {$order_data->balance->zaim_number} от {$current_loan_buyer.loan_date} г.
+                                передана {$current_loan_buyer.loan_buy_date} по агентскому договору в пользу {$current_loan_buyer.loan_buyer_name} с целью возврата просроченной задолженности.
+                                <br>
+                                <br>
+                            {else}
+                                Уведомляем Вас, что задолженность по договору займа № {$order_data->balance->zaim_number} передана по агентскому договору в пользу {$order_data->balance->buyer} с целью возврата просроченной задолженности.
+                                <br>
+                                <br>
+                            {/if}
+                            Номер для связи:
+                            <a href="tel:{$order_data->balance->buyer_phone}"
+                               style="color: inherit; text-decoration: underline; font-weight: bold;">
+                                {$order_data->balance->buyer_phone}
+                            </a>
+                        </p>
+                    </div>
+                </div>
             </div>
         {/if}
     {/if}
-    {*{if $order_data->failed_sbp}
-        <div class="sbp_info">
-            Ваш платёж находится в обработке. Ожидайте, пожалуйста
-        </div>
-    {/if}*}
+
     {if $order_data->due_days >= 1 && $order_data->due_days <= 3 && $progress_bar_available}
         {include file='partials/progress_bar.tpl' orderData=$order_data}
     {/if}
@@ -136,7 +172,7 @@
                     <button class="button button-inverse btn-close-prolongation-notification">Понятно</button>
                 </div>
             </div>
-        {elseif ($order_data->balance->prolongation_amount > 0 && $user->balance->prolongation_count <= 5) || $order_data->balance->calc_percents > 0}
+        {elseif ($order_data->balance->prolongation_amount > 0 && ($user->balance->prolongation_count <= 5 || $order_data->is_rcl)) || $order_data->balance->calc_percents > 0}
             {if $order_data->balance->loan_type != 'IL'}
             <div class="user_payment_form">
                 {if !!$smarty.cookies.error}
@@ -144,6 +180,7 @@
                                     {$smarty.cookies.error}
                                 </h5>
                 {/if}
+                {if !$order_data->is_rcl}
                 {if $order_data->balance->last_prolongation == 1}
                     <span style="color:#d22;font-size:1.1rem;padding:0.5rem 1rem;display:block">
                                     У вас осталась последняя пролонгация
@@ -156,7 +193,8 @@
                                     Для формирования позитивной кредитной истории срочно погасите заем!
                                 </span>
                 {/if}
-                {if $order_data->balance->last_prolongation != 2}
+                {/if}
+                {if $order_data->balance->last_prolongation != 2 && !$friend_restricted_mode}
                     <div class="action flex-block action_minimal_payment">
 
                             {if ($user_data['show_order_information'] or ((time() - strtotime($order_data->balance->zaim_date)) / 3600) > 24) &&  $prolongation_amount>0}
@@ -177,9 +215,13 @@
                                     {/if}
                                 </button>
                                 <button style="display: none!important;" class="js-prolongation-open-modal js-save-click" data-order_id="{$order_data->order->order_id}" data-user="{$user->id}" data-event="1" type="button" data-number="{$order_data->balance->zaim_number}"></button>
-                                <div class="min_payment_info">
-                                    Знаете ли вы, что: при регулярной оплате минимальных платежей в МФО ваша кредитная история становится лучше, рейтинг доверия повышается, а значит кредитный лимит будет максимальным
-                                </div>
+                                {if isset($order_data) && isset($order_data->newyear_promo) && $order_data->newyear_promo}
+                                    <div style="margin-top: 20px;">
+                                        <link rel="stylesheet" href="design/{$settings->theme|escape}/css/newyear_promo_banner.css?v=8" />
+                                        {include file='partials/newyear_promo_banner.tpl' orderData=$order_data}
+                                        <script src="design/{$settings->theme|escape}/js/newyear_promo_banner.js?v=8"></script>
+                                    </div>
+                                {/if}
                             {/if}
                     </div>
 
@@ -188,40 +230,11 @@
             </div>
             {/if}
         {/if}
-    {else }
-        <div class="about">
-{*            <div>Открытых займов не найдено!</div>*}
-        </div>
 
-        {if $user->file_uploaded || Helpers::isFilesRequired($user)}
-            {loan_form cards=$cards}
-        {/if}
     {/if}
 
     {if $order_data->balance->sum_with_grace}
-{*        <div class="grace-main-div" id="grace-div">*}
-{*            <div class="grace-container-div">*}
-{*                <h1>Вам доступна оплата со скидкой для закрытия займа</h1>*}
-{*                <h4>Остаток задолженности с учетом скидки <span*}
-{*                            class="new-price">{str_replace(',', '', number_format($order_data->balance->sum_od_with_grace + $order_data->balance->sum_percent_with_grace, 2))}</span>*}
-{*                    <span class="old-price">{($order_data->balance->ostatok_od+$order_data->balance->ostatok_percents+$order_data->balance->ostatok_peni+$order_data->balance->penalty)}</span>*}
-{*                </h4>*}
-{*                <form method="POST" action="user/payment" class="user_payment_form form-pay">*}
-{*                    <input type="hidden" name="number" value="{{$order_data->balance->zaim_number}}"/>*}
-{*                    <input type="hidden" name="grace_payment" value="true"/>*}
-{*                    <input type="hidden"  name="order_id" value="{$order_data->order->order_id}"/>*}
-{*                    <input type="hidden" class="payment_amount" data-order_id="{$order_data->balance->zaim_number}"*}
-{*                           data-user_id="{$order_data->balance->user_id}" name="amount"*}
-{*                           value="{str_replace(',', '', number_format($order_data->balance->sum_od_with_grace + $order_data->balance->sum_percent_with_grace, 2))}"*}
-{*                           max="{str_replace(',', '', number_format($order_data->balance->sum_od_with_grace + $order_data->balance->sum_percent_with_grace, 2))}"*}
-{*                           min="1">*}
-{*                    <button class="pay-grace payment_button button button-inverse js-save-click" data-event="5">Оплатить*}
-{*                        со скидкой*}
-{*                    </button>*}
-{*                </form>*}
-{*                <button class="get-reference" data-number = "{$balance->zaim_number}" data-user = "{$balance->user_id}" disabled>Получить справку об отсутствии задолженности</button>*}
-{*            </div>*}
-{*        </div>*}
+
     {/if}
     {if $order_data->balance->sale_info!='Договор продан' && $order_data->balance->zaim_number && $order_data->balance->zaim_number!='Ошибка' && $order_data->balance->zaim_number!='Нет открытых договоров'}
 
@@ -245,12 +258,13 @@
                 </div>
             </div>
         {if $order_data->balance->last_prolongation != 2}
-            {if $order_data->balance->prolongation_amount > 0 && $user->balance->prolongation_count <= 5}
+            {if $order_data->balance->prolongation_amount > 0 && ($user->balance->prolongation_count <= 5 || $order_data->is_rcl)}
                 <div class="user_payment_form" style="margin-top:20px;">
                     <div class="action">
                         {*Данная кнопка показывает скрытую форму оплаты*}
                         <button class="payment_button button button-inverse btn-600 btn-fsize-14 btn-line-h-24 js-save-click"
                                 data-user="{$user->id}"
+                                data-order-id="{$order_data->order->order_id}"
                                 data-event="2"
                                 type="button"
                                 {if $restricted_mode == 1}
@@ -278,6 +292,10 @@
                         <input type="hidden" name="payment_type" value="prolongation"/>
                         <input type="hidden" name="number" value="{$order_data->balance->zaim_number}" />
                         <input type="hidden" name="order_id" value="{$order_data->order->order_id}" />
+                        {if isset($order_data->newyear_promo) && $order_data->newyear_promo && $order_data->newyear_promo->discount_activated && $order_data->newyear_promo->is_active}
+                            <input type="hidden" name="newyear_promo" value="1"/>
+                            <input type="hidden" name="newyear_discount" value="{$order_data->newyear_promo->discount_amount}"/>
+                        {/if}
 
                         {log_fields button_name="full_1"}
 
@@ -307,10 +325,7 @@
                             <input type="hidden" name="tv_medical_amount" value="{$price}"/>
                             <input type="hidden" name="tv_medical" value="1"/>
                             <input type="hidden" name="tv_medical_id" value="{$vita_med->id}"/>
-                            <input type="hidden" name="star_oracle_amount" value="{$oracle_price}"/>
-                            <input type="hidden" name="star_oracle" value="1"/>
-                            <input type="hidden" name="star_oracle_id" value="{$star_oracle->id}"/>
-                            {assign var="amount_value" value=$total_debt + $price + $oracle_price + $order_data->balance->penalty}
+                            {assign var="amount_value" value=$total_debt + $price + $order_data->balance->penalty}
                         {else}
                             {assign var="amount_value" value=$total_debt + $order_data->balance->penalty}
                         {/if}
@@ -322,6 +337,7 @@
                                max="{$amount_value}" min="1" />
                         <button class="payment_button button button-inverse btn-600 btn-fsize-14 btn-line-h-24 js-save-click pay-full"
                                 data-user="{$user->id}"
+                                data-order-id="{$order_data->order->order_id}"
                                 data-event="5"
                                 type="button"
                                 {if $restricted_mode == 1}
@@ -349,7 +365,7 @@
 
         {*Эта форма показывается по клику кнопке Погасить заём полностью выше с комментарием*}
         <div id="close_credit_form_{$order_data_index}"  style="margin-top:15px;{if $order_data->balance->last_prolongation != 2}display:none{/if}">
-            {if $order_data->balance->last_prolongation != 2 && $user->balance->prolongation_count <= 5}
+            {if $order_data->balance->last_prolongation != 2 && ($user->balance->prolongation_count <= 5 || $order_data->is_rcl)}
                 <div style="max-width:500px;margin-bottom:10px;">
                     <p style="color:#080;margin-bottom:10px;">
                         При оплате минимальной суммы ваша кредитная история станет лучше, а кредитный лимит максимальным
@@ -375,6 +391,10 @@
                     <input type="hidden" name="payment_type" value="full"/>
                     <input type="hidden" name="number" value="{$order_data->balance->zaim_number}"/>
                     <input type="hidden" name="order_id" value="{$order_data->order->order_id}"/>
+                    {if isset($order_data->newyear_promo) && $order_data->newyear_promo && $order_data->newyear_promo->discount_activated && $order_data->newyear_promo->is_active}
+                        <input type="hidden" name="newyear_promo" value="1"/>
+                        <input type="hidden" name="newyear_discount" value="{$order_data->newyear_promo->discount_amount}"/>
+                    {/if}
 
                     {log_fields button_name="full_2"}
                     
@@ -403,10 +423,7 @@
                             <input type="hidden" name="tv_medical_amount" value="{$price}"/>
                             <input type="hidden" name="tv_medical" value="1"/>
                             <input type="hidden" name="tv_medical_id" value="{$vita_med->id}"/>
-                            <input type="hidden" name="star_oracle_amount" value="{$oracle_price}"/>
-                            <input type="hidden" name="star_oracle" value="1"/>
-                            <input type="hidden" name="star_oracle_id" value="{$star_oracle->id}"/>
-                            {assign var="amount_value" value=$total_debt + $price + $oracle_price + $order_data->balance->penalty}
+                            {assign var="amount_value" value=$total_debt + $price + $order_data->balance->penalty}
                         {else}
                             {assign var="amount_value" value=$total_debt + $order_data->balance->penalty}
                         {/if}
@@ -420,6 +437,7 @@
                            value="{$amount_value}"
                            max="{$amount_value}" min="1"/>
                     <button data-order_id="{$order_data->balance->zaim_number}" class="payment_button button button-inverse btn-600 js-save-click btn-fsize-14 full_payment_button pay-full" data-user="{$user->id}"
+                            data-order-id="{$order_data->order->order_id}"
                             data-event="5" type="submit">Погасить заём полностью
                     </button>
                 </div>
@@ -431,56 +449,14 @@
                 <button class="payment_button button button-inverse btn-600 btn-fsize-14 btn-line-h-24 js-save-click" data-user="{$user->id}" data-event="6" onclick="$('#other_summ_{$order_data_index}').fadeIn('fast');$(this).hide()" type="button">Оплатить другую сумму</button>
             </div>
         </div>
-            {if isset($isTestUser) && $isTestUser}
-                <div class="friend_payment_wrapper">
 
-                    <div class="friend_action">
-                        <button type="button"
-                                class="payment_friend_button button medium js-friend-pay"
-                                data-contract="{$order_data->balance->zaim_number|escape}"
-                                data-overdue="{$order_data->due_days|default:0}"
-                                data-user="{$user->id}"
-                                data-uid="{$user->uid}">
-                            <img src="/design/boostra_mini_norm/assets/image/friend_payment.png" alt="" class="friend_btn_icon">
-                            Оплатит друг
-                        </button>
-
-                        <div class="friend_payment_loader">
-                            <div class="friend_payment_spinner"></div>
-                            <span class="friend_loader_text">Загрузка...</span>
-                        </div>
-                    </div>
-
-                    <div class="friend_payment_block" style="display:none;">
-                        <div class="friend_info">
-
-                            <div class="friend_info_title">
-                                Поделитесь ссылкой на оплату
-                            </div>
-
-                            <div class="friend_info_subtitle">
-                                Ваши персональные данные не раскрываем.
-                            </div>
-
-                            <a href="javascript:void(0)" class="friend_more_link">
-                                Подробнее
-                            </a>
-
-                            <div class="friend_more_text" style="display:none;">
-                                Отправляя ссылку Вы даете согласие на передачу следующей информации о Вас и Вашем договоре третьим лицам для целей оплаты вашего займа:
-                                ваше Имя и Отчество, первая буква Фамилии, номер договора, общая сумма задолженности и дата платежа.
-                                Вы осознаете, что данная информация будет доступна лицам, которым вы направите ссылку.
-                            </div>
-
-                            <button type="button" class="friend_ok_btn">
-                                Понятно
-                            </button>
-
-                        </div>
-                    </div>
-
-                </div>
-                {/if}
+            {if !$friend_restricted_mode}
+                {include
+                file='friend_payment.tpl'
+                order_data=$order_data
+                overdue_days=$order_data->due_days
+                }
+            {/if}
 
             <form method="POST" action="user/payment" id="other_summ_{$order_data_index}"
                   class="user_payment_form user_payment_form_other" style="display:none">
@@ -498,7 +474,9 @@
                                 <br/>Во избежание возникновения просрочки и ухудшения вашей кредитной истории,
                                 пожалуйста, убедитесь в том, что вы успеете полностью погасить заём
                                 до {$order_data->balance->payment_date|date}.
+                                {if !$friend_restricted_mode}
                                 <br/>Если вы хотите пролонгировать заём, воспользуйтесь кнопкой «Минимальный платеж»
+                                {/if}
                             </p>
                         </div>
                     {/if}
@@ -537,7 +515,8 @@
             {if $payment_methods_btn}
                 <div class="user_payment_form">
                     <div class="action">
-                        <button class="payment_button button button-inverse payment-methods-open" type="button">Возможные способы оплаты
+                        <button class="payment-methods-open payment_button button button-inverse btn-600 btn-fsize-14 btn-line-h-24" type="button">
+                            Возможные способы оплаты
                         </button>
                     </div>
                 </div>
@@ -547,16 +526,12 @@
             {if $canShowRefererBanner && !empty($referer_url)}
                 {include file='partials/referer_banner.tpl' referer_url=$referer_url}
             {/if}
+            <br>
+            {if !$friend_restricted_mode && $order_data->clear_due_days|default:0 >= $findzen_overdue_days}
+                {include file='partials/findzen_banner.tpl' findzen_url=$findzen_url}
+            {/if}
 
         {/if}
-    {/if}
-{elseif !$order_data->order && $order_data->balance->zaim_number == 'Нет открытых договоров'}
-    <div class="about">
-{*        <div>Открытых займов не найдено!</div>*}
-    </div>
-
-    {if $user->file_uploaded || Helpers::isFilesRequired($user)}
-        {loan_form cards=$cards}
     {/if}
 {/if}
 
@@ -664,7 +639,13 @@
       const userDataWhitelistDOP = +"{$user_data['whitelist_dop']|escape:'javascript'}"
       const settingsWhitelistDOP = +"{$settings->whitelist_dop|escape:'javascript'}"
       
+        const srkvTvMedBlocked = {if $srkv_tv_med_blocked}true{else}false{/if};
+
         function calculateTvMedicalPrice(enteredAmount) {
+            if (srkvTvMedBlocked) {
+                return { price: 0, id: 0, value: 0 };
+            }
+
             const tariffs = JSON.parse('{$tv_medical_tariffs|escape:"javascript"}').map(tariff => {
                 return {
                     min: +tariff.from_amount,
@@ -725,13 +706,7 @@
                     setServiceValues(tvMedicalPriceInput, tvMedicalIdInput, tvMedicalValue, price, id, value);
                 }
 
-              if ((additionalServiceSOPartialRepayment == 1 || halfAdditionalServiceSOPartialRepayment == 1) && (!userDataWhitelistDOP || !settingsWhitelistDOP)) {
-                    const { price: originalPrice, id, value } = calculateStarOraclePrice(enteredAmount)
-                    const price = additionalServiceSOPartialRepayment == 1 ? originalPrice : originalPrice / 2
-                    oraclePrice = price
-
-                    setServiceValues(starOraclePriceInput, starOracleIdInput, starOracleValue, price, id, value);
-                }
+              
 
                 // Если рекуррентный платеж включен то ЗО списывается отдельным платежем
                 if(starOracleRecurringPaymentValue && !amountInputIl) {
@@ -739,7 +714,7 @@
                     oraclePrice = 0;
                 }
 
-                hiddenAmountInput.value = enteredAmount + oraclePrice + tvMedPrice
+                hiddenAmountInput.value = enteredAmount + tvMedPrice
 
             } else {
                 hiddenAmountInput.value = enteredAmount

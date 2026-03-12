@@ -1,6 +1,41 @@
 {literal}
     <script>
         jQuery(document).ready(function() {
+            let complaintCaptchaWidgetId = null;
+
+            function initComplaintCaptcha(addAnimation = false) {
+                const container = document.getElementById('smart-captcha-complaint-container');
+                if (!container) return;
+
+                if (!window.smartCaptcha) return;
+
+                try {
+                    complaintCaptchaWidgetId = window.smartCaptcha.render(container, {
+                        sitekey: container.dataset.sitekey,
+                        hl: 'ru',
+                    });
+                    $(container).show();
+                    if (addAnimation) {
+                        $(container).addClass('animate-blink');
+                    } else {
+                        $(container).removeClass('animate-blink');
+                    }
+                } catch (e) {
+                    // ignore
+                }
+            }
+
+            (function ensureCaptchaScriptLoaded() {
+                if (window.smartCaptcha) {
+                    initComplaintCaptcha();
+                    return;
+                }
+                const scriptElement = document.createElement('script');
+                scriptElement.src = 'https://smartcaptcha.yandexcloud.net/captcha.js?render=onload';
+                scriptElement.onload = function() { initComplaintCaptcha(true); };
+                scriptElement.onerror = function() {};
+                document.body.appendChild(scriptElement);
+            })();
 
             // Обновляем placeholder для поля даты рождения на мобильных устройствах
             if ($(window).width() < 480) {
@@ -146,6 +181,26 @@
 
                                 if (response.error === 'empty_required_fields') {
                                     errorMessage = 'Не все обязательные поля заполнены';
+                                } else if (response.error === 'agree_required') {
+                                    errorMessage = 'Необходимо согласиться с обработкой персональных данных.';
+                                } else if (response.error === 'captcha') {
+                                    errorMessage = 'Подтвердите, что вы не робот (капча).';
+                                } else if (response.error === 'csrf') {
+                                    errorMessage = 'Сессия устарела. Обновите страницу и попробуйте снова.';
+                                } else if (response.error === 'spam') {
+                                    errorMessage = 'Запрос отклонен.';
+                                } else if (response.error === 'invalid_name') {
+                                    errorMessage = 'Проверьте ФИО.';
+                                } else if (response.error === 'invalid_phone') {
+                                    errorMessage = 'Проверьте номер телефона.';
+                                } else if (response.error === 'invalid_email') {
+                                    errorMessage = 'Проверьте email.';
+                                } else if (response.error === 'invalid_birth') {
+                                    errorMessage = 'Проверьте дату рождения (требуется возраст 18+).';
+                                } else if (response.error === 'invalid_topic') {
+                                    errorMessage = 'Выберите тему обращения из списка.';
+                                } else if (response.error === 'invalid_text_length') {
+                                    errorMessage = 'Текст обращения должен быть от 50 до 300 символов.';
                                 } else if (response.error === 'max_files') {
                                     errorMessage = 'Вы можете выбрать не более 5 файлов.';
                                 } else if (response.error === 'max_file_size') {
@@ -156,6 +211,8 @@
                                     errorMessage = 'Недопустимый тип файла.';
                                 } else if (response.error === 'time_limit') {
                                     errorMessage = 'В данный момент форма не может быть отправлена. Пожалуйста, попробуйте отправить данные позже.';
+                                } else {
+                                    errorMessage = 'Не удалось отправить обращение. Проверьте данные и попробуйте снова.';
                                 }
                                 progressBar.val(100).attr('data-label', 'Отправлено');
                                 $('#complaint_sended_message').html(errorMessage);
@@ -164,6 +221,10 @@
                                     type: 'inline',
                                     showCloseBtn: true
                                 });
+
+                                if (window.smartCaptcha && complaintCaptchaWidgetId !== null) {
+                                    try { window.smartCaptcha.reset(complaintCaptchaWidgetId); } catch (e) {}
+                                }
                                 return;
                             }
 
@@ -182,8 +243,13 @@
 
                             // Очистка формы
                             $('#complaint').trigger('reset');
+                            $('#btn-send').prop('disabled', true);
                             existingFiles = []; // Очистка массива файлов
                             $('#complaint_file_list').empty().hide();
+
+                            if (window.smartCaptcha && complaintCaptchaWidgetId !== null) {
+                                try { window.smartCaptcha.reset(complaintCaptchaWidgetId); } catch (e) {}
+                            }
                         },
                         error: function(xhr, ajaxOptions, thrownError) {
                             let error = thrownError + "\r\n" + xhr.statusText + "\r\n" + xhr.responseText;

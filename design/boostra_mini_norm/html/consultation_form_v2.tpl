@@ -95,7 +95,7 @@
     						</label>
                         
     						<label id="" class="big readonly">
-                                <input type="text" name="phone" class="form-input" value="" placeholder="Контакный телефон" required=""/>
+                                <input type="text" name="phone" autocomplete="tel" inputmode="tel" class="form-input" value="" placeholder="Контакный телефон" required=""/>
     						</label>
                                                     
                             <button class="button big" type="submit" >Отправить заявку</button>							

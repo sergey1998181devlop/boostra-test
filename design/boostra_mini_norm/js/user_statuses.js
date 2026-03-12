@@ -4,7 +4,11 @@
 
     const orderId = parseInt(hiddenEl.dataset.orderId);
     const orderStatus = parseInt(hiddenEl.dataset.orderStatus);
-    const number = parseInt(hiddenEl.dataset.number);
+    const number = hiddenEl.dataset.number || '';
+    const status1C = hiddenEl.dataset['1cStatus'] || '';
+
+    const isFinalStatus = orderStatus === 10 && status1C === '5.Выдан';
+    if (isFinalStatus) return;
 
     const reloadPage = () => location.reload();
 
@@ -19,14 +23,15 @@
     };
 
     // --- Polling for statuses that require reload ---
-    const reloadPageStatuses = [1, 2, 8, 9, 15, 16];
+    const reloadPageStatuses = [1, 2, 8, 9, 10, 15, 16];
 
     if (reloadPageStatuses.includes(orderStatus)) {
         const checkOrderStatus = async () => {
             const params = new URLSearchParams({
                 order_id: orderId,
                 number: number,
-                order_status: orderStatus
+                order_status: orderStatus,
+                order_1c_status: status1C
             });
 
             const data = await fetchJson(`ajax/check_status.php?${params.toString()}`);

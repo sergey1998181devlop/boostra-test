@@ -25,4 +25,15 @@ return [
         'url_dev' => env('NOTIFICATION_CENTER_URL_DEV', ''),
         'api_token' => env('NOTIFICATION_CENTER_TOKEN', ''),
     ],
-]; 
+
+    'srkv' => [
+        'cache_ttl'               => 2592000, // 30 дней (временно, пока без крона)
+        'min_conversion_issuance' => 23.5,
+        'min_conversion_payment'  => 20.3,
+        'min_return_pct'          => 4.7,
+        'coefficient_thresholds'  => [
+            'no_sale'  => 0.4,
+            'discount' => 0.1,
+        ],
+    ],
+];

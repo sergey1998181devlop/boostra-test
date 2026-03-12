@@ -18,19 +18,33 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 
 $simpla = new Simpla();
 
-$contractNumber = $simpla->request->post('contract_number', 'string');
-$userId = $simpla->request->post('user_id', 'integer');
-$uid = $simpla->request->post('uid', 'string');
-
-if (empty($contractNumber)) {
-    http_response_code(400);
-    echo json_encode(['success' => false, 'error' => 'Не указан номер договора'], JSON_UNESCAPED_UNICODE);
-    exit;
-}
+$userId      = $simpla->request->post('user_id', 'integer');
+$uid         = $simpla->request->post('uid', 'string');
+$overdueDays = $simpla->request->post('overdue_days', 'integer');
+$phone       = $simpla->request->post('phone', 'string');
+$order_id    = $simpla->request->post('order_id', 'integer');
 
 if (empty($userId) || empty($uid)) {
     http_response_code(400);
     echo json_encode(['success' => false, 'error' => 'Не указан пользователь'], JSON_UNESCAPED_UNICODE);
+    exit;
+}
+
+if ($overdueDays === null) {
+    http_response_code(400);
+    echo json_encode(['success' => false, 'error' => 'Не указано количество дней просрочки'], JSON_UNESCAPED_UNICODE);
+    exit;
+}
+
+if (empty($phone)) {
+    http_response_code(400);
+    echo json_encode(['success' => false, 'error' => 'Не указан номер телефона'], JSON_UNESCAPED_UNICODE);
+    exit;
+}
+
+if (empty($order_id)) {
+    http_response_code(400);
+    echo json_encode(['success' => false, 'error' => 'Не указан order_id'], JSON_UNESCAPED_UNICODE);
     exit;
 }
 
@@ -39,28 +53,22 @@ try {
         new NotificationCenterService()
     );
 
-    $link = $shortLinkService->getFriendPaymentLink($userId, $uid, $contractNumber);
+    $shortLink = $shortLinkService->getFriendPaymentLink(
+        $userId,
+        $uid,
+        $overdueDays,
+        $phone,
+        $order_id
+    );
 
-    if ($link) {
-        echo json_encode(['success' => true, 'short_link' => $link], JSON_UNESCAPED_UNICODE);
-        exit;
-    }
-
-    http_response_code(500);
     echo json_encode([
-        'success' => false,
-        'error' => 'Не удалось сгенерировать ссылку',
-        'error_code' => 'FRIEND_LINK_GENERATION_FAILED',
-    ], JSON_UNESCAPED_UNICODE);
+        'success' => true,
+        'short_link' => $shortLink
+    ]);
     exit;
 
 } catch (Exception $e) {
     http_response_code(500);
-    logger('friend_payment')->error(
-        'Ошибка get_friend_payment_link.php:' . PHP_EOL .
-        'File: ' . $e->getFile() . PHP_EOL .
-        'Line: ' . $e->getLine() . PHP_EOL .
-        'Message: ' . $e->getMessage()
-    );
-    echo json_encode(['success' => false, 'error' => 'Ошибка сервера'], JSON_UNESCAPED_UNICODE);
+    logger('friend_payment')->error($e->getMessage());
+    echo json_encode(['success' => false, 'error' => 'Ошибка сервера']);
 }

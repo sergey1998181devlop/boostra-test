@@ -8,7 +8,7 @@
             г. Самара
         </td>
         <td style="text-align: right; border: none;">
-            {$sign_date|date} г.
+            {$eleventh_overdue_date|date} г.
         </td>
     </tr>
 </table>
@@ -29,8 +29,8 @@
             <strong>Кредитор:</strong><br>
             {$organization_name}, ИНН/КПП {$organization_inn}/{$organization_kpp}, ОГРН
             {$organization_ogrn}, юридический адрес: {$organization_address}, почтовый адрес:
-            {$lenderPostAddress}, Тел. {$lenderPhone},
-            ИНН/КПП {$organization_inn}/{$lenderKpp},
+            {$organization_address_post}, Тел. {$organization_phone},
+            ИНН/КПП {$organization_inn}/{$organization_kpp},
             ОГРН {$organization_ogrn}
             Место заключения договора:
             Адрес: {$organization_address}
@@ -349,9 +349,9 @@
         <td style="width: 50%; padding: 10px; vertical-align: top;">
             <strong>Кредитор</strong><br>
             {$organization_name}<br>
-            Почтовый адрес: {$lenderPostAddress}<br>
-            Тел. {$lenderPhone}<br>
-            ИНН/КПП {$organization_inn}/{$lenderKpp}<br>
+            Почтовый адрес: {$organization_address_post}<br>
+            Тел. {$organization_phone}<br>
+            ИНН/КПП {$organization_inn}/{$organization_kpp}<br>
             ОГРН {$organization_ogrn}<br>
             Место заключения договора:<br>
             Адрес: {$organization_address}<br>
@@ -368,8 +368,8 @@
     Ф.И.О: {$full_name}<br>
     Дата рождения: {$birth_date}<br>
     Паспорт: {$passportSeries} {$passportNumber}, выдан {$passport_issued} {$subdivision_code}, дата выдачи {$passport_date}<br>
-    {if !empty($sign_date)}Дата: {$sign_date|date_format:"%d.%m.%Y %H:%M:%S"}<br>{/if}
-    {if !empty($order_signed)}{if !empty($accept_sms)}СМС-код: {$accept_sms}{/if}{/if}
+    {if !empty($eleventh_overdue_date)}Дата: {$eleventh_overdue_date|date_format:"%d.%m.%Y %H:%M:%S"}<br>{/if}
+    {if !empty($accept_sms)}СМС-код: {$accept_sms}{/if}
 </p>
 </div>
 

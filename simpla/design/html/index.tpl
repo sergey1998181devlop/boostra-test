@@ -6,7 +6,7 @@
 <META HTTP-EQUIV="Expires" CONTENT="-1">
 <title>{$meta_title}</title>
 <link rel="icon" href="design/images/favicon.ico" type="image/x-icon">
-<link href="design/css/style.css?v=1.004" rel="stylesheet" type="text/css" />
+<link href="design/css/style.css?v=1.005" rel="stylesheet" type="text/css" />
 
 <script src="design/js/jquery/jquery.js"></script>
 <script src="design/js/jquery/jquery.form.js"></script>

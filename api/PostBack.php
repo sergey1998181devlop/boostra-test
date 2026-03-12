@@ -46,7 +46,30 @@ final class PostBack extends Simpla
      * Статичные данные для leadstech-api
      */
     public const LEADSTECH_API = [
-        'goal_id' => 79,
+        'repeat' => [
+            'goal_ids' => [
+                'create' => 0,
+                'issued' => 531,
+                'reject' => 0,
+            ],
+            'status' => [
+                'create' => 0,
+                'issued' => 1,
+                'reject' => 2,
+            ]
+        ],
+        'new' => [
+            'goal_ids' => [
+                'create' => 0,
+                'issued' => 79,
+                'reject' => 0,
+            ],
+            'status' => [
+                'create' => 0,
+                'issued' => 1,
+                'reject' => 2,
+            ]
+        ]
     ];
 
     /**
@@ -297,8 +320,16 @@ final class PostBack extends Simpla
      */
     public function sendRejectToBankiRuApi($order)
     {
+        $order_id = $this->getActualPing3OrderId($order->id);
+
+        // Првоерим переход если не было постбек не отпарвим
+        $visit_ping3 = $this->order_data->read($order_id, $this->user_data::PING3_VISIT);
+        if (!$visit_ping3) {
+            return;
+        }
+
         $params = [
-            'adv_sub1' => $order->id
+            'adv_sub1' => $order_id
         ];
 
         $link_lead = 'https://tracking.banki.ru/GPBGE?' . http_build_query($params);
@@ -312,13 +343,20 @@ final class PostBack extends Simpla
      */
     public function sendRejectLeadsTechApi($order)
     {
+        $order_id = $this->getActualPing3OrderId($order->id);
+
+        //new / repeat
+        $user_ping_status = $this->order_data->read($order_id, $this->order_data::PING3_USER_STATUS);
+
         $params = [
-            'goal_id' => self::LEADSTECH_API['goal_id'],
-            'status' => 2,
+            'goal_id' => self::LEADSTECH_API[$user_ping_status]['goal_ids']['reject'],
+            'status' => self::LEADSTECH_API[$user_ping_status]['status']['reject'],
             'click_id' => $order->click_hash,
-            'transaction_id' => $order->id,
-            'ping3uuid' => $this->order_data->read($order->id, 'ping3uuid'),
+            'transaction_id' => $order_id,
+            'ping3uuid' => $this->order_data->read($order_id, 'ping3uuid'),
         ];
+
+        $this->logging(__METHOD__, 'Логируем данные для ping3', $params, ['order_id' => $order_id, 'main_order_id' => $order->id], 'leadstech_api_data.txt');
 
         $link_lead = 'https://t.leads.tech/add-conversion/?' . http_build_query($params);
         $this->sendRequest($link_lead, (int)$order->id, 'leadstech_api.txt', self::TYPE_REJECT, false);
@@ -352,8 +390,16 @@ final class PostBack extends Simpla
      */
     public function sendReject($order)
     {
-        if (!empty($order->utm_source)) {
-            switch ($order->utm_source) {
+        // Проверяем если заявка ping3 + (cross_order или автозаявка), то выполним postback по партнеру
+        $ping3partner = $this->ping3_data->getPing3AutoOrderUtmSource($order->id);
+        $utm_source = $order->utm_source;
+
+        if ($ping3partner) {
+            $utm_source = $ping3partner;
+        }
+
+        if (!empty($utm_source)) {
+            switch ($utm_source) {
                 case 'c2m':
                     $this->sendRejectToC2M($order);
                     break;
@@ -420,7 +466,7 @@ final class PostBack extends Simpla
                 case 'mvp_dir':
                     $this->sendRejectToMvpDir($order);
                     break;
-                /** Постбеки партнерского апи */
+                /** Постбеки партнерского апи - Ping3 */
                 case 'bankiru-api':
                     $this->sendRejectToBankiRuApi($order);
                     break;
@@ -442,8 +488,16 @@ final class PostBack extends Simpla
         // Т.к. у нас как попало используются данные преобразуем к единому виду с CRM
         $order = is_object($order_data) ? $order_data : (object)$order_data;
 
-        if (!empty($order->utm_source)) {
-            switch ($order->utm_source) {
+        // Проверяем если заявка ping3 + (cross_order или автозаявка), то выполним postback по партнеру
+        $ping3partner = $this->ping3_data->getPing3AutoOrderUtmSource($order->id);
+        $utm_source = $order->utm_source;
+
+        if ($ping3partner) {
+            $utm_source = $ping3partner;
+        }
+
+        if (!empty($utm_source)) {
+            switch ($utm_source) {
                 case 'c2m':
                     $link_lead = 'https://c2mpbtrck.com/cpaCallback?cid=' . $order->click_hash . '&partner=' . self::PARTNER . '&action=hold&lead_id=' . $order->id;
                     $this->sendRequest($link_lead, (int)$order->id, 'c2m.txt', 'hold', false, '');
@@ -525,6 +579,9 @@ final class PostBack extends Simpla
                     $link_lead = 'https://goto.startracking.ru/api/v1/postback?goal_name=default&transaction_id='.$order->click_hash.'&adv_sub='.$order->id;
                     $this->sendRequest($link_lead, (int)$order->id, 'sravni.txt', 'hold', false, '');
                     break;
+                case 'sravni2':
+                    $this->sendHoldSravni2($order);
+                    break;
                 case 'rafinad':
                     $link_lead = 'https://rfndtrk.com/p/?target=mmmmmc6gre&clickid=' . $order->click_hash . '&order_id'.$order->id.'&api_key=6708d9dba3501b6efff45df2c4403cd6e58acebb';
                     $this->sendRequest($link_lead, (int)$order->id, 'rafinad.txt', 'hold', false, '');
@@ -559,6 +616,11 @@ final class PostBack extends Simpla
                 case 'tpartners':
                     $this->sendHoldTBank($order);
                     break;
+                /** Постбеки партнерского апи - Ping3 */
+                case 'leadstech-api':
+                    $this->sendHoldLeadsTechApi($order);
+                    break;
+                /** ***************************/
             }
         }
     }
@@ -609,6 +671,32 @@ final class PostBack extends Simpla
     }
 
     /**
+     * Новая заявка leadstech-api
+     * @param $order
+     * @return void
+     */
+    public function sendHoldLeadsTechApi($order)
+    {
+        $order_id = $order->id;
+
+        //new / repeat
+        $user_ping_status = $this->order_data->read($order_id, $this->order_data::PING3_USER_STATUS);
+
+        $params = [
+            'goal_id' => self::LEADSTECH_API[$user_ping_status]['goal_ids']['create'],
+            'status' => self::LEADSTECH_API[$user_ping_status]['status']['create'],
+            'click_id' => $order->click_hash,
+            'transaction_id' => $order_id,
+            'ping3uuid' => $this->order_data->read($order_id, 'ping3uuid'),
+        ];
+
+        $this->logging(__METHOD__, 'Логируем данные для ping3', $params, ['order_id' => $order_id, 'main_order_id' => $order->id], 'leadstech_api_data.txt');
+
+        $link_lead = 'https://t.leads.tech/add-conversion/?' . http_build_query($params);
+        $this->sendRequest($link_lead, (int)$order->id, 'leadstech_api.txt', self::TYPE_HOLD, false);
+    }
+
+    /**
      * Отправка постбека о новой заявке в T-Bank  и TPartners
      *
      * @param $order
@@ -628,6 +716,26 @@ final class PostBack extends Simpla
 
         $link_lead = 'https://api.leads.su/advertiser/conversion/createUpdate?' . http_build_query($params);
         $this->sendRequest($link_lead, (int)$order->id, 'LW3.txt', self::TYPE_HOLD, false);
+    }
+
+    /**
+     * Отправка постбека о новой заявке в Sravni2
+     *
+     * @param $order
+     * @return void
+     */
+    public function sendHoldSravni2($order)
+    {
+        $params = [
+            'goal_name' => 'default',
+            'adv_id' => 732,
+            'transaction_id' => $order->click_hash,
+            'adv_sub' => $order->id,
+            'offer_id' => 100648,
+        ];
+
+        $link_lead = 'https://goto.startracking.ru/api/v1/postback?' . http_build_query($params);
+        $this->sendRequest($link_lead, (int)$order->id, 'sravni2.txt', 'hold', false, '');
     }
 
     /**
@@ -720,5 +828,17 @@ final class PostBack extends Simpla
                 $this->sendNewOrder($last_order);
             }
         }
+    }
+
+    /**
+     * Проверяем, была ли заявка создана для Фриды то вернем ее ид иначе как есть
+     *
+     * @param int $order_id
+     * @return int
+     */
+    private function getActualPing3OrderId(int $order_id): int
+    {
+        $result =  $this->order_data->read($order_id, $this->order_data::ORDER_ORG_SWITCH_PARENT_ORDER_ID);
+        return !empty($result) ? (int)$result : $order_id;
     }
 }

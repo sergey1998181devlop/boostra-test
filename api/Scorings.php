@@ -38,6 +38,7 @@ class Scorings extends Simpla
     public const TYPE_CYBERITY = 28;
     public const TYPE_LOCATION_IP = 29;
     public const TYPE_HYPER_C = 30; // см таблицу s_hyper_c (заполняется сервисом hyper-c)
+    public const TYPE_TERRORIST_CHECK = 32;
     // endregion
 
     // region Статусы скорингов (Id)
@@ -85,7 +86,6 @@ class Scorings extends Simpla
     /** @var array Список скорингов для ПК, статус которых проверяется при проверке возможности добавления скористы и акси */
     private const REQUIRED_FOR_SCORISTA_PK = [
         self::TYPE_BLACKLIST,
-
         // Проверяем скористу и акси, чтобы убедиться что их ещё нет
         self::TYPE_SCORISTA,
         self::TYPE_AXILINK_2
@@ -121,7 +121,7 @@ class Scorings extends Simpla
      * Скоринги которые содержат в теле сумму одобрения
      */
     public const APPROVED_SCORING_TYPES = [
-        self::TYPE_HYPER_C,
+//        self::TYPE_HYPER_C,
         self::TYPE_AXILINK_2,
         self::TYPE_AXILINK,
         self::TYPE_SCORISTA,
@@ -1183,18 +1183,41 @@ class Scorings extends Simpla
     public function getAmountByTypeFromBodyScoring(object $scoring): ?int
     {
         $body = $this->get_body_by_type($scoring);
+
+        // Если ВКЛ, то возвращаем сумму в $this->order_data::RCL_AMOUNT
+        $isRcl = (bool)$this->order_data->read((int)$scoring->order_id, $this->order_data::RCL_LOAN);
+        if ($isRcl) {
+            return (int)$this->order_data->read((int)$scoring->order_id, $this->order_data::RCL_AMOUNT);
+        }
+
         switch ($scoring->type) {
+            case self::TYPE_HYPER_C:
+                return $this->getHyperCAmountByOrderId((int)$scoring->order_id);
             case self::TYPE_AXILINK:
                 return (int)$body->sum;
             case self::TYPE_SCORISTA:
                 return (int)$body->additional->decisionSum;
             case self::TYPE_AXILINK_2:
                 return (int)($body->offer_pdl ?? $body->final_limit);
-            case self::TYPE_HYPER_C:
-                return $this->getHyperCAmountByOrderId((int)$scoring->order_id);
             default:
                return null;
         }
+    }
+
+    /**
+     * Получаем сумму одобренную скорингом для ИЛ займа
+     * @param int $user_id
+     * @return int|null
+     */
+    public function getApproveILAmountScoring(int $user_id): ?int
+    {
+        $scoring = $this->getCompleteScoringByTypes($user_id, [self::TYPE_SCORISTA]);
+        if (!empty($scoring)) {
+            $body = $this->get_body_by_type($scoring);
+            return (int)$body->additional->result2->additional->decisionSum;
+        }
+
+        return null;
     }
 
     /**
@@ -1245,37 +1268,46 @@ class Scorings extends Simpla
      */
     public function isHyperEnabledForOrder($order): bool
     {
+        if (empty($order)) {
+            return false;
+        }
+
         $order = (array)$order;
 
-        // Только первичные НК
-        if ($order['first_loan'] != 1) { // Это ПК/НК повторник. Хайпер добавляем, но он не влияет
+        // 1. Включен ли скоринг
+        $hyperCScoringType = $this->scorings->get_type(self::TYPE_HYPER_C);
+        if (empty($hyperCScoringType) || empty($hyperCScoringType->active)) {
             return false;
         }
 
-        // Это должен быть PDL
-        if ($order['loan_type'] != $this->orders::LOAN_TYPE_PDL) { // Это IL
+        // 2. Только первичные заявки НК при регистрации
+//        if ($order['first_loan'] != 1) {
+//            return false;
+//        }
+
+        // 3. Должен быть PDL
+//        if ($order['loan_type'] != $this->orders::LOAN_TYPE_PDL) {
+//            return false;
+//        }
+
+        // 4. Нужный ли utm_source
+//        $utmSource = $order['utm_source'] ?: 'Boostra';
+//        if (empty($hyperCScoringType->params['utm_sources']) || !in_array($utmSource, $hyperCScoringType->params['utm_sources'])) {
+//            return false;
+//        }
+
+        $orderId = (int)$order['order_id'] ?: (int)$order['id'];
+        $axiWithoutCreditReports = $this->order_data->read($orderId, $this->order_data::AXI_WITHOUT_CREDIT_REPORTS);
+
+        // 5. Если по заявке нельзя запрашивать отчеты
+        if (!empty($axiWithoutCreditReports)) {
             return false;
         }
 
-        // Включен ли скоринг
-        $scoringType = $this->scorings->get_type(self::TYPE_HYPER_C);
-        $isScoringEnabled = !empty($scoringType) && !empty($scoringType->active);
-
-        // Только leadstech
-        $orderUtmSource = $order['utm_source'] ?: 'Boostra';
-        if (!in_array($orderUtmSource, $scoringType->params['utm_sources'])) {
-            return false;
-        }
-
-        // Есть ли у клиента уже этот скоринг?
-        $existsScoring = $this->getLastScoring([
-            'type' => self::TYPE_HYPER_C,
-            'user_id' => $order['user_id']
-        ]);
-        $isScoringExists = !empty($existsScoring);
-
-        // Если скоринг выключен И ещё не добавлен в эту заявку - клиент идёт мимо
-        if (!$isScoringEnabled && !$isScoringExists) {
+        // 6. Если ручеек не пройден
+        $orderOrgSwitchParentOrderId = $this->order_data->read($orderId, $this->order_data::ORDER_ORG_SWITCH_PARENT_ORDER_ID);
+        $orderOrgSwitchResult = $this->order_data->read($orderId, $this->order_data::ORDER_ORG_SWITCH_RESULT);
+        if (empty($orderOrgSwitchParentOrderId) && empty($orderOrgSwitchResult)) {
             return false;
         }
 
@@ -1389,6 +1421,28 @@ class Scorings extends Simpla
      */
     public function tryAddHyperC(int $orderId): bool
     {
+        $order = $this->orders->get_crm_order($orderId);
+
+        // 1. Для заявки должен быть скоринг hyper_c
+        if (!$this->isHyperEnabledForOrder($order)) {
+            return false;
+        }
+
+        // 2. Заявка не отказана
+        if ((int)$order->status === $this->orders::ORDER_STATUS_CRM_REJECT) {
+            return false;
+        }
+
+        $hyperCScoring = $this->scorings->get_scorings([
+            'type' => self::TYPE_HYPER_C,
+            'order_id' => $order->order_id,
+        ]);
+
+        // 3. Скоринг уже был добавлен
+        if (!empty($hyperCScoring)) {
+            return false;
+        }
+
         $finishedAxiScorings = $this->scorings->get_scorings([
             'order_id' => $orderId,
             'type' => $this->scorings::TYPE_AXILINK_2,
@@ -1398,44 +1452,18 @@ class Scorings extends Simpla
             ],
         ]);
 
-        // Проверяем, что есть завершенный скоринг акси (если нет, то hyper добавится в crm при завершении акси)
+        // 4. Проверяем, что есть завершенный скоринг акси (если нет, то hyper добавится в crm при завершении акси)
         if (empty($finishedAxiScorings)) {
             return false;
         }
 
-        $scoringType = $this->scorings->get_type(self::TYPE_HYPER_C);
-
-        if (
-            empty($scoringType) ||
-            empty($scoringType->active) ||
-            empty($scoringType->params['utm_sources']) ||
-            !is_array($scoringType->params['utm_sources'])
-        ) {
+        // 5. Добавляем хайпер только 10% заявкам
+        $rand = mt_rand(1, 100);
+        if ($rand > 10) {
+            $this->logging(__METHOD__, '', 'Не добавлен скоринг hyper_c', ['order_id' => $order->order_id, 'rand' => $rand], self::LOG_FILE);
             return false;
-        }
-
-        $order = $this->orders->get_crm_order($orderId);
-
-        // Hyper нужно добавлять только для заявок, созданных при регистрации
-        if ($order->first_loan != 1) {
-            return false;
-        }
-
-        $orderUtmSource = $order->utm_source ?: 'Boostra';
-        if (!in_array($orderUtmSource, $scoringType->params['utm_sources'])) {
-            return false;
-        }
-
-        if ($order->loan_type != $this->orders::LOAN_TYPE_PDL) {
-            return false;
-        }
-
-        $existScoring = $this->scorings->get_scorings([
-            'type' => self::TYPE_HYPER_C,
-            'order_id' => $order->order_id,
-        ]);
-        if (!empty($existScoring)) {
-            return false;
+        } else {
+            $this->logging(__METHOD__, '', 'Добавлен скоринг hyper_c', ['order_id' => $order->order_id, 'rand' => $rand], self::LOG_FILE);
         }
 
         $this->add_scoring([
@@ -1446,7 +1474,7 @@ class Scorings extends Simpla
             'type' => self::TYPE_HYPER_C,
         ]);
 
-        $this->logging(__METHOD__, '', 'Добавлен скоринг hyper_c', ['order_id' => $order->order_id], 'scorings.txt');
+        $this->logging(__METHOD__, '', 'Добавлен скоринг hyper_c', ['order_id' => $order->order_id], self::LOG_FILE);
 
         return true;
     }

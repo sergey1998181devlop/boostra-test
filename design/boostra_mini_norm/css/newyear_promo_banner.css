@@ -1,0 +1,243 @@
+.newyear-promo-banner {
+    margin: 20px 0;
+    width: 600px;
+    max-width: 100%;
+    box-sizing: border-box;
+}
+
+.newyear-promo-banner__bg {
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    border-radius: 12px;
+    padding: 30px 20px;
+    min-height: 200px;
+    position: relative;
+    overflow: hidden;
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
+}
+
+.newyear-promo-banner__content {
+    position: relative;
+    z-index: 2;
+    text-align: center;
+}
+
+.newyear-promo-banner__text,
+.newyear-promo-banner__title {
+    color: #0066cc;
+    font-size: 18px !important;
+    font-weight: 600;
+    margin-bottom: 20px;
+    line-height: 1.4;
+}
+
+.newyear-promo-banner__amount {
+    color: #0066cc;
+    font-weight: 700;
+}
+
+.newyear-promo-banner__countdown {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 2px;
+    margin: 20px 0;
+}
+
+.newyear-promo-banner__countdown-digit {
+    width: 50px !important;
+    height: 60px !important;
+    text-align: center;
+    font-size: 32px;
+    font-weight: 700;
+    border: none;
+    background: #fff;
+    border-radius: 8px;
+    color: #333;
+    padding: 0;
+    margin: 0;
+}
+
+.newyear-promo-banner__countdown-separator {
+    font-size: 32px;
+    font-weight: 700;
+    color: #0066cc;
+    margin: 0 2px;
+    line-height: 1;
+}
+
+.newyear-promo-banner__discount-date {
+    margin: 20px 0;
+    text-align: center;
+}
+
+.newyear-promo-banner__date-text {
+    color: #0066cc;
+    font-size: 18px;
+    font-weight: 600;
+    margin: 0;
+    line-height: 1.4;
+}
+
+.newyear-promo-banner__date-text strong {
+    font-weight: 700;
+    color: #0066cc;
+}
+
+.newyear-promo-banner__btn {
+    background: #e60000;
+    color: #fff;
+    border: none;
+    border-radius: 30px;
+    padding: 14px 30px;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.3s;
+    min-width: 200px;
+    text-decoration: none;
+}
+
+.newyear-promo-banner__btn-small {
+    min-width: auto !important;
+}
+
+.newyear-promo-banner__btn-m0 {
+    margin: 0 !important;
+}
+
+.newyear-promo-banner__btn:hover {
+    background: #cc0000;
+}
+
+.newyear-promo-banner__btn:active {
+    background: #b30000;
+}
+
+.newyear-promo-banner__btn:disabled,
+.newyear-promo-banner__btn[disabled] {
+    background: #999999 !important;
+    color: #ffffff !important;
+    cursor: not-allowed !important;
+    opacity: 0.6;
+    pointer-events: none;
+}
+
+.newyear-promo-banner__btn:disabled:hover,
+.newyear-promo-banner__btn[disabled]:hover {
+    background: #999999 !important;
+}
+
+.newyear-promo-banner__btn:disabled:active,
+.newyear-promo-banner__btn[disabled]:active {
+    background: #999999 !important;
+}
+
+.newyear-promo-banner__initial {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.newyear-promo-banner__activated {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+@media (max-width: 767px) {
+    .newyear-promo-banner {
+        width: 100% !important;
+        max-width: 100% !important;
+        box-sizing: border-box;
+    }
+
+    .newyear-promo-banner__bg {
+        padding: 25px 15px;
+        min-height: 200px;
+        width: 100%;
+        max-width: 100%;
+        box-sizing: border-box;
+    }
+
+    .newyear-promo-banner__text,
+    .newyear-promo-banner__title {
+        font-size: 17px !important;
+    }
+
+    .newyear-promo-banner__countdown {
+        gap: 2px;
+    }
+
+    .newyear-promo-banner__countdown-digit {
+        width: 45px !important;
+        height: 55px !important;
+        font-size: 28px;
+    }
+
+    .newyear-promo-banner__countdown-separator {
+        font-size: 28px;
+        margin: 0 2px;
+    }
+
+    .newyear-promo-banner__btn {
+        padding: 12px 24px;
+        font-size: 14px;
+        min-width: 180px;
+    }
+
+    .newyear-promo-banner__date-text {
+        font-size: 16px;
+    }
+}
+
+@media (max-width: 480px) {
+    .newyear-promo-banner {
+        width: 100% !important;
+        max-width: 100% !important;
+        box-sizing: border-box;
+    }
+
+    .newyear-promo-banner__bg {
+        padding: 20px 10px;
+        min-height: 180px;
+        width: 100%;
+        max-width: 100%;
+        box-sizing: border-box;
+    }
+
+    .newyear-promo-banner__text,
+    .newyear-promo-banner__title {
+        font-size: 16px !important;
+        margin-bottom: 15px;
+    }
+
+    .newyear-promo-banner__countdown {
+        gap: 2px;
+    }
+
+    .newyear-promo-banner__countdown-digit {
+        width: 35px !important;
+        height: 50px !important;
+        font-size: 24px;
+    }
+
+    .newyear-promo-banner__countdown-separator {
+        font-size: 24px;
+        margin: 0 2px;
+    }
+
+    .newyear-promo-banner__btn {
+        padding: 10px 20px;
+        font-size: 13px;
+        min-width: 160px;
+    }
+
+    .newyear-promo-banner__date-text {
+        font-size: 14px;
+    }
+}
+

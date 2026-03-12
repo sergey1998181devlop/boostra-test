@@ -7,8 +7,11 @@
     
     app.init = function(){
         app.$form = $('#personal_data');
-
-
+        if(localStorage.getItem('assumed_gender') === 'FEMALE'){
+            app.$form.find('input[name="gender"][value="female"]').prop('checked', true)
+        } else if(localStorage.getItem('assumed_gender') === 'MALE') {
+            app.$form.find('input[name="gender"][value="male"]').prop('checked', true)
+        }
     };
 
     app.init_events = function(){
@@ -24,6 +27,13 @@
         
         app.$form.find('[name=gender]').change(function(){
             app.$form.find('[name=gender]').closest('label').removeClass('error');
+        })
+
+        app.$form.find('input[name="gender"][value="male"]').on('change', () => {
+            ym(45594498, 'reachGoal', 'gender_changed_manually')
+        })
+        app.$form.find('input[name="gender"][value="female"]').on('change', () => {
+            ym(45594498, 'reachGoal', 'gender_changed_manually')
         })
         
     };
@@ -61,7 +71,8 @@
                     subdivisionCode: true
                 },
                 "passportCode": {
-                    passportCode: true
+                    passportCode: true,
+                    passportNotAllZeros: true
                 },
                 "marital_status": {
                     required: true
@@ -71,6 +82,18 @@
                     required: true
                 },
     		},
+            invalidHandler: function(event, validator) {
+                // Получаем все невалидные поля
+                const invalidFields = validator.invalid;
+                
+                // Отправляем аналитику для каждого невалидного поля
+                Object.keys(invalidFields).forEach(fieldName => {
+                    const fieldElement = validator.findByName(fieldName)[0];
+                    const errorType = validator.errorMap[fieldName] || 'unknown';
+
+                    ym(45594498, 'reachGoal', `validation_error_${fieldName}`);
+                });
+            },
             submitHandler: function(form) {
 
                 if (app.$form.find('[name=gender]').length > 0 && app.$form.find('[name=gender]:checked').length == 0)

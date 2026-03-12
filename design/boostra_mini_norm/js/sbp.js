@@ -5,6 +5,14 @@ function changeSbpBank() {
   openChooseSbpBankModal(true);
 }
 
+function openSbpBanksModal() {
+  if (!sbpBanksModal) {
+    return;
+  }
+
+  openModal();
+}
+
 function openChooseSbpBankModal(canChangeSelectedBank = false) {
   if (!sbpBanksModal) {
     return;
@@ -88,6 +96,10 @@ function saveDefaultBank(bankId) {
         showSelectedBankTitle(bankId);
         closeModal();
         hideChooseBankButton();
+
+        if (resp?.result?.need_reload) {
+          location.reload();
+        }
       } else {
         alert(resp.error || 'Неизвестная ошибка');
       }

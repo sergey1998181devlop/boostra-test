@@ -8,7 +8,7 @@
 {$add_order_css_js = true scope=parent}
 
 {capture name=page_scripts}
-<script src="design/{$settings->theme|escape}/js/user.js?v=1.36" type="text/javascript"></script>
+<script src="design/{$settings->theme|escape}/js/user.js?v=1.45" type="text/javascript"></script>
 <script>
     $(function(){
         $('.toggle_reason').click(function(e){

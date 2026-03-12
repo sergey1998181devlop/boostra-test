@@ -1,7 +1,7 @@
 $(document).ready(function () {
 
     let $modal = $("#myModal");
-    let $btn = $("#myBtn, #js-assign-old-card-btn");
+    let $btn = $("#card_add_btn, #js-assign-old-card-btn, .js-card_add_btn");
 
     let $toggle = $('.js-toggle-cards');
     let $cards = $('.js-cards');

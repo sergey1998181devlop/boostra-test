@@ -1,22 +1,80 @@
 {assign var="active_automation_fail" value=false}
+{assign var="automation_fail_text" value=""}
 {foreach $automation_fails as $item}
     {if $item->is_active}
         {assign var="active_automation_fail" value=true}
+        {assign var="automation_fail_text" value=$item->text}
         {break}
     {/if}
 {/foreach}
+<style>
+    #usedesk-messenger textarea[name="message"] {
+        font-size: 16px !important;
+    }
+</style>
+<!-- Custom usedesk operator avatar -->
+{if $usedesk_config.operatorAvatar}
+    <link rel="stylesheet" type="text/css"
+          href="design/{$settings->theme|escape}/css/usedesk-customizations.css?v=1.04"/>
+    <style>
+        :root {
+            --usedesk-operator-avatar: url('{$usedesk_config.operatorAvatar|escape:'quotes'}');
+        }
 
-{if $active_automation_fail}
-    <div id="inform">
-        <strong>
-            {foreach $automation_fails as $item}
-                {if $item->is_active}
-                    {$item->text|nl2br}.
-                {/if}
-            {/foreach}
-        </strong>
-    </div>
+        /* Агрессивное переопределение для Usedesk аватаров */
+        .uw__avatar,
+        .uw__message-avatar,
+        .uw__operator-avatar {
+            background-image: url('{$usedesk_config.operatorAvatar|escape:'quotes'}') !important;
+            background-size: cover !important;
+            background-position: center !important;
+            background-repeat: no-repeat !important;
+        }
+    </style>
 {/if}
+<script>
+    window.usedeskConfig = {$usedesk_config_json};
+</script>
+<script src="design/{$settings->theme}/js/usedesk-validator.js?v=1.1"></script>
+
+<script>
+    window.serverTimeMsk = {$smarty.now * 1000};
+</script>
+<script>
+    window.settings = window.settings || {literal}{}{/literal};
+    {if $settings->site_warning_banner_config}
+    window.settings.site_warning_banner_config = {$settings->site_warning_banner_config|json_encode};
+    {/if}
+    
+    {if $active_automation_fail}
+    window.settings.automation_fail = {
+        enabled: true,
+        message: {$automation_fail_text|json_encode},
+        style: 'error',
+        position: 'top',
+        show_on_main_page: true,
+        closeable: false,
+        animation: 'slide',
+        desktop: {
+            background_color: '#F44336',
+            text_color: '#ffffff',
+            font_size: '16px',
+            font_weight: 'normal',
+            padding: '12px 20px',
+            border_radius: '4px'
+        },
+        mobile: {
+            background_color: '#F44336',
+            text_color: '#ffffff',
+            font_size: '14px',
+            font_weight: 'normal',
+            padding: '10px 15px',
+            border_radius: '4px'
+        }
+    };
+    {/if}
+</script>
+<script src="design/{$settings->theme|escape}/js/warning-banner.js"></script>
 
 <div class="container">
     <article class="mobileBanner">
@@ -57,6 +115,8 @@
                                      loading="lazy"
                                      src="design/orange_theme/img/landing/logo.svg">
                             </a>
+                            <p class="logo-additional-text-delimiter">/</p>
+                            <p class="logo-additional-text" href="">Каталог финансовых <br> продуктов</p>
                         </div>
 
                         {include 'html_blocks/mobile_nav_menu.tpl'}
@@ -108,6 +168,8 @@
             </div>
         </header>
         <section class="hero">
+            <img class="illustration" id="illustration_up" src="design/orange_theme/img/landing/illustration.png"/>
+            <img class="illustration" id="illustration_down" src="design/orange_theme/img/landing/illustration_under.png"/>
             <div class="container">
                 <div class="hero__inner">
                     <div class="hero__content">
@@ -120,7 +182,7 @@
                         </h1>
                         <div class="hero__text">
                             <ul>
-                                <li>— Более 1 000 000&nbsp;клиентов
+                                <li>— У нас уже {$count_of_clients}&nbsp;клиентов
                                 <li>— Одни из лидеров по выдаче займов в России
                                 <li>— Мгновенное зачисление денежных средств
                             </ul>
@@ -145,115 +207,16 @@
                             </section>
                         </div>
                     </div>
-                    <div class="hero__calculator">
-                        <div class="hero__calculator__slides" style="display: none">
-                            <div class="hero__calculator__slide active" data-id="0">
-                                <p>Займы для физ. лиц</p>
-                            </div>
-                            <div class="hero__calculator__slide" data-id="1">
-                                <p>Займы для ИП</p>
-                            </div>
-                        </div>
-                        <div class="calculator" data-percent="0"> <!--0.8-->
-                            <p class="calculator__title">
-                                Первый заём под 0% <br/> при соблюдении условий
-                            </p>
-                            <div class="zero-percent-notice" style="margin: 10px 0;">
-                                <a href="/files/docs/polozhenie0.pdf" target="_blank">Положение о проведении акции</a>
-                            </div>
-                            <p class="calculator__text">
-                                Высокое одобрение заявок - до 99%
-                            </p>
-                            <div class="calculator__slider">
-                                <div class="calculator__slider-top">
-                                    <span>Выберите сумму</span>
-                                    <b><b class="js-hero-range-output">25 000</b> ₽</b>
-                                </div>
-                                <div class="range">
-                                    <input id="hero-range" max="30000" min="1000" name="sum" step="1000"
-                                           type="range"
-                                           value="30000"/>
-                                </div>
-                                <div class="calculator__slider-bottom">
-                                    <span>1 000</span>
-                                    <span>30 000</span>
-                                </div>
-                            </div>
-                            <div class="calculator__slider" id="period-slider" style="display: none">
-                                <div class="calculator__slider-top">
-                                    <span>Выберите срок</span>
-                                    <b>
-                                        <b class="js-hero-range-long-output">16</b>
-                                        <span class="js-period-unit"> дней</span>
-                                    </b>
-                                </div>
-                                <div class="range">
-                                    <input id="hero-range-long"
-                                           max="16"
-                                           min="5"
-                                           name="long"
-                                           step="1"
-                                           type="range"
-                                           value="16"/>
-                                </div>
-                                <div class="calculator__slider-bottom">
-                                    <span>5</span>
-                                    <span>16</span>
-                                </div>
-                            </div>
-                            <div class="calculator__stat">
-                                <div class="calculator__stat-section">
-                                    <span>Вы вернете</span>
-                                    <b><b class="js-total-output">25 000</b> ₽</b>
-                                </div>
-                                <div class="calculator__stat-section">
-                                    <span>Ставка</span>
-                                    <b class="text-success js-withoutCoeff">Без процентов*</b>
-                                    <b class="js-withCoeff"><b class="js-coeff"></b>&nbsp;%</b>
-                                </div>
-                            </div>
-                            <div class="calculator__footer">
-                                {if $t_bank_button_registration_access || $esia_button_registration_access}
-                                    <div class="auth__buttons">
-                                        {if $t_bank_button_registration_access}
-                                            <a onclick="sendMetric('reachGoal', 'tid_main')" class="tid_button" href="{$t_id_auth_url}">
-                                                Быстрее через
-                                                <img src="/design/boostra_mini_norm/assets/image/tinkoff-id-small.png" alt="" />
-                                                T-ID
-                                            </a>
-                                        {/if}
-                                        {if $esia_button_registration_access}
-                                            <a onclick="sendMetric('reachGoal', 'gu_main')" class="esia_button" href="{$esia_redirect_url}">
-                                                Быстрее через
-                                                <img class="" height="24" src="/design/boostra_mini_norm/assets/image/esia_logo.png" alt="" />
-                                                Госуслуги
-                                            </a>
-                                        {/if}
-                                    </div>
-                                    <div class="divider">
-                                        <span>ИЛИ</span>
-                                    </div>
-                                {/if}
-                                <button class="button button--primary button--big calc_button" id="hero-btn">
-                                    <span class="js-withoutCoeff">Получить бесплатно</span>
-                                    <span class="js-withCoeff">Получить деньги</span>
-                                </button>
-                            </div>
-                        </div>
-                    </div>
+                    {include 'calculator/calculator.tpl'}
                 </div>
             </div>
         </section>
 
         {include './mobile_banners/link_banner.tpl' banner_img_android="/design//boostra_mini_norm/assets/image/banner_rustore_img.png" banner_img_ios="/design//boostra_mini_norm/assets/image/banner_ios_img.png" banner_link='https://apimp.boostra.ru/get_app.php?slot=b2'}
 
-        <button id="floating-hero-btn" class="button button--primary" style="position: fixed; right: 20px; bottom: 30px; display: none; z-index: 1000;">
-            Получить деньги
-        </button>
-
         <main class="tail">
-            {include file='main_page/partners_data.tpl'}
             {if $is_organic}
+                {include file='main_page/partners_data.tpl'}
                 <section class="section" id="about-as-section">
                     <div class="container">
                         <div class="section__inner">
@@ -302,7 +265,7 @@
                                             <div class="step-card__tags">
                                                 <div class="tags">
                                                     <span class="tag tag--primary tag--small">Шаг 1</span>
-                                                    <span class="tag tag--ghost tag--small">за 10 минут</span>
+                                                    <span class="tag tag--ghost tag--small">за 3-4 минуты</span>
                                                 </div>
                                             </div>
                                             <p class="step-card__title">Оформление заявки</p>
@@ -316,7 +279,7 @@
                                             <div class="step-card__tags">
                                                 <div class="tags">
                                                     <span class="tag tag--primary tag--small">Шаг 2</span>
-                                                    <span class="tag tag--ghost tag--small">за 5 минут</span>
+                                                    <span class="tag tag--ghost tag--small">за 1 минуту</span>
                                                 </div>
                                             </div>
                                             <p class="step-card__title">Дождитесь ответа</p>
@@ -329,7 +292,7 @@
                                             <div class="step-card__tags">
                                                 <div class="tags">
                                                     <span class="tag tag--primary tag--small">Шаг 3</span>
-                                                    <span class="tag tag--ghost tag--small">за 3 минуты</span>
+                                                    <span class="tag tag--ghost tag--small">за 30 секунд</span>
                                                 </div>
                                             </div>
                                             <p class="step-card__title">Мгновенный перевод</p>
@@ -342,7 +305,7 @@
                                             <div class="step-card__tags">
                                                 <div class="tags">
                                                     <span class="tag tag--primary tag--small">Шаг 4</span>
-                                                    <span class="tag tag--ghost tag--small">за 10 минут</span>
+                                                    <span class="tag tag--ghost tag--small">за 3 минуты</span>
                                                 </div>
                                             </div>
                                             <p class="step-card__title">Погасите заём</p>
@@ -361,7 +324,7 @@
             <section class="section">
                 <div class="container">
                     <div class="section__inner">
-                        <h2 class="section__title">Нам доверяют более 1&nbsp;000&nbsp;000&nbsp;клиентов</h2>
+                        <h2 class="section__title">Нам доверяют более {$count_of_clients} клиентов</h2>
                         <div class="section__content">
                             <section class="advantages">
                                                            <div class="advantages-card">
@@ -417,6 +380,8 @@
                     </div>
                 </div>
             </section>
+
+            {include file='main_page/partners_trust_us.tpl'}
 
             <section class="section">
                 <div class="container">
@@ -512,7 +477,7 @@
                                                      loading="lazy">
                                             </aside>
                                         </header>
-                                        <p class="feedback-card__title">Очень хорошо</p>
+                                        <p class="feedback-card__title">Удобный сервис для онлайн-займов</p>
                                         <p class="feedback-card__text">Очень удобный сервис для тех, кто ищет микрозайм.
                                             Сейчас есть много МФО и кажется, что взять деньги не проблема, но на самом
                                             деле многие компании не способны предоставить качественную услугу и в тех
@@ -546,7 +511,7 @@
                                                      loading="lazy">
                                             </aside>
                                         </header>
-                                        <p class="feedback-card__title">Очень хорошо</p>
+                                        <p class="feedback-card__title">Оформила займ без проблем</p>
                                         <p class="feedback-card__text">Выражаю благодарность компании. Очень нужны были
                                             деньги, решила взять займ. Заполнила данные и в течении 2-3 минут прислали
                                             денежные средства на карту. Есть возможность пролонгировать кредит.
@@ -580,7 +545,7 @@
                                                      loading="lazy">
                                             </aside>
                                         </header>
-                                        <p class="feedback-card__title">Очень хорошо</p>
+                                        <p class="feedback-card__title">Вопрос решили за пару минут</p>
                                         <p class="feedback-card__text">Я столкнулся с проблемой когда привязывал карту и
                                             мне оперативно помогли по телефону ее решить. После успешного добавления
                                             карты за 5 минут деньги получил. Круто, молодцы! Если вам нужен займ на
@@ -614,7 +579,7 @@
                                                      loading="lazy">
                                             </aside>
                                         </header>
-                                        <p class="feedback-card__title">Очень хорошо</p>
+                                        <p class="feedback-card__title">Пользуюсь регулярно</p>
                                         <p class="feedback-card__text">В последнее время часто пользуюсь займами и
                                             полюбилась именно Бустра! Вроде все как у всех в других сервисах, но быстрее
                                             и удобнее для меня лично. Здесь можно получить займ онлайн быстро и без
@@ -627,12 +592,13 @@
                                         <header class="feedback-card__header">
                                             <div class="feedback-card__user">
                                                 <div class="feedback-card__avatar">
-                                                    <img alt="" src="design/orange_theme/img/landing/ava-7.webp"
+
+                                                    <img alt="" src="design/orange_theme/img/landing/ava-6.png"
                                                          loading="lazy">
                                                 </div>
                                                 <div class="feedback-card__userInfo">
-                                                    <p class="feedback-card__name">Дмитрий Т.</p>
-                                                    <p class="feedback-card__city">Санкт-Петербург</p>
+                                                    <p class="feedback-card__name">Максим С.</p>
+                                                    <p class="feedback-card__city">Екатеринбург</p>
                                                 </div>
                                             </div>
                                             <aside class="feedback-card__rate stars" data-stars="5">
@@ -644,25 +610,26 @@
                                                      loading="lazy">
                                                 <img alt="" src="design/orange_theme/img/landing/star-icon.svg"
                                                      loading="lazy">
-                                                <img alt="" src="design/orange_theme/img/landing/star-icon.svg"
+                                                <img alt="" src="design/orange_theme/img/landing/empty-star-icon.svg"
                                                      loading="lazy">
                                             </aside>
                                         </header>
-                                        <p class="feedback-card__title">Очень быстрое оформление</p>
-                                        <p class="feedback-card__text">Хотел оформить займ онлайн на небольшую сумму и попал на сайт boostra. Процесс оказался настолько простым, что я буквально за 10 минут получил необходимую сумму прямо на карту. Очень удобный сервис для тех, кто не хочет лишний раз ходить в банки.</p>
-                                        <p class="feedback-card__date">03.11.2025</p>
+                                        <p class="feedback-card__title">Выручили в нужный момент</p>
+                                        <p class="feedback-card__text">Понадобились деньги срочно, решил попробовать этот сервис. Оформление не самое простое, но всё получилось сделать с телефона. Деньги пришли быстро, без лишних вопросов. В целом удобно, если нужно решить вопрос здесь и сейчас.</p>
+                                        <p class="feedback-card__date">15.02.2025 </p>
                                     </div>
 
                                     <div class="splide__slide feedback-card">
                                         <header class="feedback-card__header">
                                             <div class="feedback-card__user">
                                                 <div class="feedback-card__avatar">
-                                                    <img alt="" src="design/orange_theme/img/landing/ava-9.webp"
+
+                                                    <img alt="" src="design/orange_theme/img/landing/ava-7.png"
                                                          loading="lazy">
                                                 </div>
                                                 <div class="feedback-card__userInfo">
-                                                    <p class="feedback-card__name">Александр В.</p>
-                                                    <p class="feedback-card__city">Новосибирск</p>
+                                                    <p class="feedback-card__name">Иван В.</p>
+                                                    <p class="feedback-card__city">Казань</p>
                                                 </div>
                                             </div>
                                             <aside class="feedback-card__rate stars" data-stars="5">
@@ -678,21 +645,22 @@
                                                      loading="lazy">
                                             </aside>
                                         </header>
-                                        <p class="feedback-card__title">Отличный сервис для срочных нужд</p>
-                                        <p class="feedback-card__text">Когда понадобился микрозайм онлайн, мне было важно, чтобы не нужно было долго ждать. Boostra меня не разочаровала — оформил займ за несколько кликов, деньги пришли быстро. Теперь буду пользоваться этим сервисом постоянно, если возникнут срочные финансовые потребности.</p>
-                                        <p class="feedback-card__date">02.11.2025</p>
+                                        <p class="feedback-card__title">Быстро и без лишних вопросов</p>
+                                        <p class="feedback-card__text">Нужны были деньги до зарплаты, оформил займ онлайн. Всё прошло спокойно, без навязывания услуг. Деньги пришли на карту быстро, условия понятные. Удобный сервис, буду иметь в виду, если снова понадобится.</p>
+                                        <p class="feedback-card__date">27.05.2025 </p>
                                     </div>
 
                                     <div class="splide__slide feedback-card">
                                         <header class="feedback-card__header">
                                             <div class="feedback-card__user">
                                                 <div class="feedback-card__avatar">
-                                                    <img alt="" src="design/orange_theme/img/landing/ava-11.webp"
+
+                                                    <img alt="" src="design/orange_theme/img/landing/ava-8.png"
                                                          loading="lazy">
                                                 </div>
                                                 <div class="feedback-card__userInfo">
-                                                    <p class="feedback-card__name">Сергей Л.</p>
-                                                    <p class="feedback-card__city">Ростов-на-Дону</p>
+                                                    <p class="feedback-card__name">Виктор П.</p>
+                                                    <p class="feedback-card__city">Тула</p>
                                                 </div>
                                             </div>
                                             <aside class="feedback-card__rate stars" data-stars="5">
@@ -708,9 +676,40 @@
                                                      loading="lazy">
                                             </aside>
                                         </header>
-                                        <p class="feedback-card__title">Простота и удобство</p>
-                                        <p class="feedback-card__text">Не думал, что буду оформлять займы на карту, но ситуация заставила. Процесс оказался простым и быстрым, не потребовались дополнительные документы. Все честно и без скрытых условий. Если снова понадобятся деньги срочно, точно буду обращаться сюда.</p>
-                                        <p class="feedback-card__date">18.10.2025</p>
+                                        <p class="feedback-card__title">Спокойно и без лишней суеты</p>
+                                        <p class="feedback-card__text">Обратился за займом, когда срочно понадобились деньги. Оформление понятное, без сложных шагов. Деньги получил на карту быстро, условия прозрачные. Понравилось, что всё можно сделать не выходя из дома.</p>
+                                        <p class="feedback-card__date">03.08.2025 </p>
+                                    </div>
+
+                                    <div class="splide__slide feedback-card">
+                                        <header class="feedback-card__header">
+                                            <div class="feedback-card__user">
+                                                <div class="feedback-card__avatar">
+
+                                                    <img alt="" src="design/orange_theme/img/landing/ava-9.png"
+                                                         loading="lazy">
+                                                </div>
+                                                <div class="feedback-card__userInfo">
+                                                    <p class="feedback-card__name">Елена М.</p>
+                                                    <p class="feedback-card__city">Ярославль</p>
+                                                </div>
+                                            </div>
+                                            <aside class="feedback-card__rate stars" data-stars="5">
+                                                <img alt="" src="design/orange_theme/img/landing/star-icon.svg"
+                                                     loading="lazy">
+                                                <img alt="" src="design/orange_theme/img/landing/star-icon.svg"
+                                                     loading="lazy">
+                                                <img alt="" src="design/orange_theme/img/landing/star-icon.svg"
+                                                     loading="lazy">
+                                                <img alt="" src="design/orange_theme/img/landing/star-icon.svg"
+                                                     loading="lazy">
+                                                <img alt="" src="design/orange_theme/img/landing/star-icon.svg"
+                                                     loading="lazy">
+                                            </aside>
+                                        </header>
+                                        <p class="feedback-card__title">Понятный сервис и быстрая помощь</p>
+                                        <p class="feedback-card__text">Обращалась за займом впервые, немного переживала. Всё оказалось просто: заполнила заявку, условия сразу понятны. Деньги пришли на карту быстро. Понравилось, что можно продлить срок, если не успеваешь вернуть вовремя.</p>
+                                        <p class="feedback-card__date">07.01.2026 </p>
                                     </div>
                                 </section>
                             </div>
@@ -823,168 +822,55 @@
                    <section class="section">
                        <div class="container">
                            <section class="apps">
+                           <div class="apps_circle"></div>
                                <p class="apps__title">Займы в вашем кармане!</p>
                                <p class="apps__text">Установите наше приложение и&nbsp;получите деньги за&nbsp;пару кликов</p>
                                <div class="apps__list apps-list">
-                                   <a class="apps-list__item"
-                                      href="https://redirect.appmetrica.yandex.com/serve/749596424009746204">
+                                    <a class="apps-list__item rect"
+                                      href="https://redirect.appmetrica.yandex.com/serve/245726716671114815">
                          <span class="apps-list__pic">
-                           <img alt="" loading="lazy" src="design/orange_theme/img/landing/rustore-logo.png">
+                                        <img alt="" loading="lazy" src="design/boostra_mini_norm/assets/image/googlePlay-logo.png">
+                         </span>
+                                       <span class="apps-list__name">Google Play</span>
+                                   </a>
+                                   <a class="apps-list__item rect"
+                                      href="https://redirect.appmetrica.yandex.com/serve/461849392538739421">
+                         <span class="apps-list__pic">
+                                        <img alt="" loading="lazy" src="design/boostra_mini_norm/assets/image/rustore-logo.png">
                          </span>
                                        <span class="apps-list__name">RuStore</span>
                                    </a>
 
-                                   <a class="apps-list__item"
-                                      href="https://redirect.appmetrica.yandex.com/serve/965769215283862779">
+                                   <a class="apps-list__item rect"
+                                      href="https://store.nashstore.ru/store/6655e5700a39b29c04cd5ccf?referrer=appmetrica_tracking_id%3D965769215283862779%26ym_tracking_id%3D8538754551737958223">
                          <span class="apps-list__pic">
-                                 <img alt="" loading="lazy" src="design/orange_theme/img/landing/nashstore-logo.png">
+                                        <img alt="" loading="lazy" src="design/boostra_mini_norm/assets/image/nashstore-logo.png">
                          </span>
                                        <span class="apps-list__name">NashStore</span>
                                    </a>
 
-                                   <a class="apps-list__item"
-                                      href="https://redirect.appmetrica.yandex.com/serve/965769215283862779">
+                                   <a class="apps-list__item rect"
+                                      href="https://redirect.appmetrica.yandex.com/serve/461366054585709806">
                          <span class="apps-list__pic">
-                           <img alt="" loading="lazy" src="design/orange_theme/img/landing/android-logo.png">
+                                        <img alt="" loading="lazy" src="design/boostra_mini_norm/assets/image/android-logo.png">
                          </span>
                                        <span class="apps-list__name">Android</span>
                                    </a>
                                </div>
-                               <picture>
-                                   <source media="(min-width: 991px)" srcset="design/orange_theme/img/landing/apps-pic.png">
-                                   <img alt="" class="apps__pic" loading="lazy"
-                                        src="design/orange_theme/img/landing/apps-pic-m.png">
-                               </picture>
+                               <div class="apps_phone_images">
+                                    <picture>
+                                        <source media="(max-width: 991px)" srcset="design/boostra_mini_norm/assets/image/Apps_iPhone18_mobile.png"/>
+                                        <img src="design/boostra_mini_norm/assets/image/Apps_iPhone18.png" alt="Демонстрация мобильного приложения boostra"/>
+                                    </picture>
+                                    <img src="design/boostra_mini_norm/assets/image/Apps_iPhone19.png" alt="Демонстрация мобильного приложения boostra"/>
+                               </div>
                            </section>
                        </div>
                    </section>
 
         </main>
-        <footer class="footer">
-            <div class="container">
-                <div class="footer__inner">
-                    <section class="footer__top">
-                        <div class="footer__logo">
-                            <a class="logo" href="">
-                                <img alt=""
-                                     loading="lazy"
-                                     src="design/orange_theme/img/landing/logo.svg">
-                            </a>
-                        </div>
-                        <div class="footer__socials">
-                            <section class="socials">
-
-                                <!-- VK -->
-                                <a href="https://vk.com/write-212426324">
-                                    <svg fill="none" height="24" viewBox="0 0 24 24" width="24"
-                                         xmlns="http://www.w3.org/2000/svg">
-                                        <path
-                                                d="M12.7374 18.6331C5.37193 18.6331 1.17229 13.8146 1 5.78373H4.70429C4.82274 11.673 7.53635 14.1646 9.69001 14.6794V5.78373H13.1682V10.8596C15.2895 10.6434 17.5293 8.32683 18.2831 5.77344H21.7505C21.4678 7.09519 20.903 8.347 20.0915 9.45066C19.28 10.5543 18.2391 11.4861 17.034 12.1878C18.3789 12.8278 19.5666 13.7332 20.5188 14.8441C21.471 15.9551 22.166 17.2465 22.5581 18.6331H18.7354C17.917 16.1929 15.871 14.2985 13.1682 14.0411V18.6331H12.7482H12.7374Z"
-                                                fill="#1E262E"/>
-                                    </svg>
-                                </a>
-
-                            </section>
-                        </div>
-                    </section>
-                    <nav class="footer__menu">
-                        <ul>
-                            <li>
-                                <a href="/about/company">О компании</a>
-                            </li>
-                            <li>
-                                <a href="/faq/main">Вопросы и ответы</a>
-                            </li>
-                            <li>
-                                <a onclick="window.history.pushState(null, '', window.location.href)"
-                                    href="#contacts">Контакты</a>
-                            </li>
-                            <li>
-                                <a href="/user/contract">Внести платёж</a>
-                            </li>
-                            <li>
-                                <a style="color: red;" href="/complaint">Пожаловаться</a>
-                            </li>
-                        </ul>
-                    </nav>
-                    <section class="footer__contacts" id="contacts">
-                        <div class="footer__contacts-section">
-                            <span>По всем вопросам</span>
-                            <a href="mailto:info@boostra.ru">info@boostra.ru</a>
-                        </div>
-                        <div class="footer__contacts-section">
-                            <span>Телефон</span>
-                            <a href="tel:88003333073">8 800 333 30 73</a>
-                        </div>
-                    </section>
-                    <section class="footer__disclaimers">
-
-                        <div class="partners-section">
-
-                            <div id="footer-urls-container">
-                                {include 'main_page/page_urls.tpl'}
-                                <div id="footer-copyright">
-                                    <p>ООО «Финтех-Маркет» является правообладателем товарного знака (знака обслуживания) «BOOSTRA» № 575896</p>
-                                </div>
-                            </div>
-
-                            <p>Общество с ограниченной ответственностью «Финтех-Маркет» (ООО «Финтех-Маркет»), ИНН 6317164496,</p>
-                            <p>юридический и фактический адрес: 443001, САМАРСКАЯ ОБЛАСТЬ, Г.О. САМАРА, ВН.Р-Н ЛЕНИНСКИЙ, Г САМАРА, УЛ ЯРМАРОЧНАЯ, Д. 3, КВ. 62;</p>
-                            <p>основной код ОКВЭД 62.01 - разработка компьютерного программного обеспечения</p>
-
-                            <p>ООО «Финтех-Маркет» не является кредитором и не предоставляет финансовые услуги. Финансовые услуги
-                                оказываются непосредственно микрофинансовыми организациями-партнерами ООО «Финтех-Маркет».</p>
-
-                            <p>Все партнеры ООО «Финтех-Маркет» включены в реестр микрофинансовых организаций Банка России.</p>
-
-                            <p>© 2025, ООО «Финтех-Маркет»</p>
-
-                            <p>Физические лица, разрешившие распространение своих персональных данных на этом сайте, запретили их дальнейшую передачу любым третьим лицам, и обработку этими лицами (включая распространение).</p>
-
-                            <p>Официальный сайт Банка России: <a href="https://cbr.ru/" class="cbr_link" id="cbr_link"
-                                                                 target="_blank">https://cbr.ru/</a>
-                            </p>
-
-                            <p>Интернет-приемная Банка России: <a href="https://cbr.ru/Reception" class="cbr_link"
-                                                                  target="_blank">https://cbr.ru/Reception</a></p>
-
-                            <p>Реестр МФО Банка России: <a href="https://cbr.ru/microfinance/registry/" class="cbr_link"
-                                                           target="_blank">https://cbr.ru/microfinance/registry/</a></p>
-
-                            <p>ООО «Финтех-Маркет» осуществляет деятельность в сфере IT</p>
-
-                            {*<p><a href="/info_partners" target="_blank">ПАРТНЕРЫ ООО «ФИНТЕХ-МАРКЕТ»</a></p>*}
-
-                            <p><a href="/files/docs/BEST2PAY_Offer.pdf" target="_blank">ОФЕРТА ОБ ИСПОЛЬЗОВАНИИ
-                                    ПРОЦЕССИНГОВОГО ЦЕНТРА BEST2PAY</a></p>
-
-                            <p><a href="/files/docs/BEST2PAY_Security_Policy.pdf" target="_blank">ПОЛИТИКА БЕЗОПАСНОСТИ
-                                    ПЛАТЕЖЕЙ BEST2PAY</a></p>
-
-                            <p><a href="/files/docs/akvarius/26-uslovia-i-porjadok-predostavlenia-zaimov.pdf" target="_blank">ПОРЯДОК И УСЛОВИЯ ПРЕДОСТАВЛЕНИЯ ЗАЙМОВ</a></p>
-                            <p><a href="/files/docs/akvarius/informatsiya_dlya_klientov_po_dopolnitelnym_platnym_uslugam_ftm.pdf" target="_blank">Информация для клиентов</a></p>
-                        </div>
-                        <br>
-                        <button class="button button--secondary" onclick="submitOrder()">Получить бесплатно</button>
-                        <br>
-                        <br>
-                        <p>На сайте используются файлы cookie и другие технологии, которые позволяют идентифицировать
-                            вас, а также изучать, как вы используете веб-сайт. Дальнейшее использование этого сайта подразумевает
-                            ваше согласие на использование этих технологий.</p>
-                        <p>Оплатить заём можно с помощью банковских карт платёжных систем Visa, MasterCard, МИР. При
-                            оплате банковской картой безопасность платежей гарантирует процессинговый центр Best2Pay. </p>
-                        <p>Приём платежей происходит через защищённое безопасное соединение. Используется протокол TLS
-                            1.2.
-                            Компания Best2Pay соответствует международным требованиями PCI DSS, что обеспечивает безопасность
-                            оплаты. Реквизиты карты, регистрационные данные и др. не поступают в Интернет-магазин. Их обработка
-                            производится на стороне процессингового центра Best2Pay и полностью защищена.
-                            Никто, в том числе ООО «Финтех-Маркет», не может получить банковские и персональные данные плательщика.</p>
-
-                    </section>
-                </div>
-            </div>
-        </footer>
     </section>
+    {include 'html_blocks/landing_footer.tpl'}
     {include 'modals/inactive_user_popup.tpl'}
     <script src="design/orange_theme/js/landing/splide.min.js"></script>
     <script async src="https://s3.usedesk.ru/lib/secure.usedesk.ru/widget_161404_53920.js"></script>
@@ -997,9 +883,9 @@
                 window.addEventListener('popstate', (e) => {
                     if(e.state?.catchHistory) {
                     {if $user}
-                        const href_append = '&p={$user->phone_mobile}'
+                        const href_append = '&p={$user->phone_mobile}&utm_source2={$user->utm_source}'
                     {else}
-                        const href_append = ''
+                        const href_append = '&utm_source2={$smarty.cookies.utm_source}'
                     {/if}
                         e.preventDefault();
                         sendMetric('reachGoal', 'decline_monitoring_1')
@@ -1020,9 +906,9 @@
             {elseif $background_url}
                 setTimeout(() => {
                 {if $user}
-                    const href_append = '&p={$user->phone_mobile}'
+                    const href_append = '&p={$user->phone_mobile}&utm_source2={$user->utm_source}'
                 {else}
-                    const href_append = ''
+                    const href_append = '&utm_source2={$smarty.cookies.utm_source}'
                 {/if}
                     invokeShopview('bonon-background:nk', (back_url ? back_url : "{$background_url}"))
                     sendMetric('reachGoal', 'decline_monitoring_' + source_id)
@@ -1031,285 +917,14 @@
             {/if}
         }
 
-        function submitOrder(_href) {
-            let amount = parseInt($('#hero-range').val()), period = parseInt($('#hero-range-long').val());
-
-            const $activeSlide = $('.hero__calculator__slide.active');
-            const isLegalEntity = $activeSlide.data('id') === 1;
-
-            {if !$is_developer}
-            sendMetric('reachGoal', 'main_page_get_zaim_new_design2')
-            {/if}
-
-            if (isLegalEntity) {
-                const redirectUrl = 'https://freecapital.ru/external?amount=' + amount + '&period=' + period +'&utm_source=boostra_calc';
-
-                {if $smarty.get.utm_source == 'bankiru' || $same_page}
-                window.location.href = (typeof _href === 'string' ? _href : redirectUrl);
-                {else}
-                window.open((typeof _href === 'string' ? _href : redirectUrl), '_blank');
-                clickHunter(3);
-                {/if}
-            } else {
-                const url = '/init_user?amount=' + amount + '&period=' + period;
-
-                {if $smarty.get.utm_source == 'bankiru' || $same_page}
-                window.location.href = (typeof _href == 'string' ? _href : url)
-                {else}
-                window.open((typeof _href == 'string' ? _href : url), '_blank');
-                clickHunter(3);
-                {/if}
-            }
-        }
-
-      function handleCalcSlideClick() {
-        const $el = $(this);
-        const $parent = $($el.parent());
-        const $activeElement = $($parent.find('.active'));
-
-        if ($activeElement.data('id') === $el.data('id')) {
-          return;
-        }
-
-        $('.hero__calculator__slide').toggleClass('active');
-
-        const $input = $('#hero-range');
-        const $inputPeriod = $('#hero-range-long');
-        const $calculator = $('.calculator');
-        const $calculatorCoef = $('.js-coeff');
-        const $calculatorTitle = $('.calculator__title');
-        const $calcRangeLabel = $('.calculator__slider:not("#period-slider") .calculator__slider-bottom');
-        const $calcRangeLabelPeriod = $('#period-slider .calculator__slider-bottom');
-        const $calcRenderedSum = $('.js-hero-range-output');
-        const $calcRenderedPeriod = $('.js-hero-range-long-output');
-        const $calcTotalReturn = $('.js-total-output');
-
-        if ($el.data('id') === 0) {
-          $input.attr('max', 60000);
-          $input.attr('min', 1000);
-          $input.attr('step', 1000);
-          $input.val(30000);
-
-          $inputPeriod.attr('max', 28);
-          $inputPeriod.attr('min', 5);
-          $inputPeriod.attr('step', 1);
-          $inputPeriod.val(16);
-
-          $calculator.data('percent', 0.8);
-          $calculatorTitle.html('Первый заём под 0% <br/>при соблюдении условий');
-          $calcRangeLabel.html('<span>1 000</span><span>30 000</span><span>100 000</span>');
-          $calcRangeLabelPeriod.html('<span>5</span><span>16</span><span>180</span>');
-          $calcRenderedPeriod.html('16');
-          $calcRenderedSum.html('30&nbsp;000');
-          $calcTotalReturn.html('33&nbsp;840');
-          $('.calculator__text__info').show();
-          $('.js-hero-range-long-output').html('16');
-          $('.js-period-unit').text(' дней');
-          $('.calculator input').css('background-size', '50% 100%');
-          $('.zero-percent-notice').show();
-          $('.auth__buttons').show();
-          $('.divider').show();
-        } else {
-          $input.attr('max', 500000);
-          $input.attr('min', 50000);
-          $input.attr('step', 10000);
-          $input.val($input.attr('max'));
-
-          $inputPeriod.attr('max', 26);
-          $inputPeriod.attr('min', 9);
-          $inputPeriod.attr('step', 1);
-          $inputPeriod.val($input.attr('max'));
-
-          $calculator.data('percent', 1.85);
-          $calculatorTitle.html('Онлайн заём от <b>' + $calculator.data('percent') + '%</b>');
-          $calcRangeLabel.html('<span>50 000</span><span>500 000</span>');
-          $calcRangeLabelPeriod.html('<span>9 недель</span><span>26 недель</span>');
-          $calcRenderedPeriod.html('26');
-          $('.js-period-unit').text(' недель');
-          $calcRenderedSum.html('500&nbsp;000');
-          $calcTotalReturn.html('1&nbsp;220&nbsp;000');
-          $('.calculator__text__info').hide();
-          $('.calculator input').css('background-size', '100% 100%');
-
-          $('.zero-percent-notice').hide();
-
-          $('.auth__buttons').hide();
-          $('.divider').hide();
-
-          $('.js-withoutCoeff').hide();
-          $('.js-withCoeff').show();
-        }
-
-        $calculatorCoef.text($calculator.data('percent'));
-      }
-
-      $('#hero-btn').on('click', submitOrder);
-      $('#floating-hero-btn').on('click', submitOrder);
-
-      function initCalculator() {
-
-          // Пересчет суммы к возврату и ставки
-          function recalcCalculator() {
-            const $calculator = $('.calculator');
-            const amount = parseInt($('#hero-range').val(), 10) || 0;
-            const period = parseInt($('#hero-range-long').val(), 10) || 0;
-
-            const $activeSlide = $('.hero__calculator__slide.active');
-            const isLegalEntity = $activeSlide.data('id') === 1;
-
-            let percent = parseFloat($calculator.data('percent')) || 0;
-            if (amount < 30000) {
-              percent = 0.8;
-            }
-            let total = amount;
-
-            if (amount < 30000) {
-              total = amount + Math.round(amount * period * (percent / 100));
-              $('.js-withoutCoeff').hide();
-              $('.js-withCoeff').show();
-              $('.js-coeff').text(percent);
-            } else {
-              if (!isLegalEntity) {
-                $('.js-withCoeff').hide();
-                $('.js-withoutCoeff').show();
-              } else {
-                $('.js-withoutCoeff').hide();
-                $('.js-withCoeff').show();
-              }
-            }
-
-
-            $('.js-total-output').html(total);
-            $('.js-hero-range-output').html(amount);
-            $('.js-hero-range-long-output').html(period.toString());
-          }
-
-          $('#hero-range, #hero-range-long').on('input', function () {
-            recalcCalculator();
-          });
-
-            {if $is_organic }
-          $('.hero__calculator__slide').on('click', handleCalcSlideClick);
-
-          $('.calculator input').change(function () {
-            const $activeMode = $('.hero__calculator__slide.active').data('id');
-
-            if ($activeMode === 0) {
-              const $input = $(this);
-
-              const $inputName = $input.attr('name');
-
-              if ($inputName === 'sum') {
-                if ($input.val() > 30000) {
-                  $input.val(30000);
-                  $('.calculator__text__info').html('Займы на сумму более 30,000 рублей доступны со второго займа');
-                  $input.css('background-size', '50% 100%');
-                  $('.js-hero-range-output').html('30&nbsp;000');
-                } else {
-                  $('.calculator__text__info').html('&nbsp;');
-                }
-              }
-
-              if ($inputName === 'long') {
-                if ($input.val() > 16) {
-                  $input.val(16);
-                  $('.calculator__text__info').html('Займы на срок более 16 суток доступны со второго займа');
-                  $input.css('background-size', '50% 100%');
-                  $('.js-hero-range-long-output').html('16');
-                } else {
-                  $('.calculator__text__info').html('&nbsp;');
-                }
-              }
-            }
-
-            recalcCalculator();
-          });
-
-          $('.hero__calculator__slides').show();
-
-          $('.tradingview-widget-container').show();
-
-          const $input = $('#hero-range');
-          const $inputPeriod = $('#hero-range-long');
-          const $calculator = $('.calculator');
-          const $calculatorTitle = $('.calculator__title');
-          const $calcRangeLabel = $('.calculator__slider:not("#period-slider") .calculator__slider-bottom');
-          const $calcRangeLabelPeriod = $('#period-slider .calculator__slider-bottom');
-          const $calcRenderedSum = $('.js-hero-range-output');
-          const $calcRenderedPeriod = $('.js-hero-range-long-output');
-          const $calcTotalReturn = $('.js-total-output');
-
-          $input.attr('max', 60000);
-          $input.attr('min', 1000);
-          $input.attr('step', 1000);
-          $input.val(30000);
-
-          $inputPeriod.attr('max', 28);
-          $inputPeriod.attr('min', 5);
-          $inputPeriod.attr('step', 1);
-          $inputPeriod.val(16);
-
-          $calculator.data('percent', 0.8);
-          $calculatorTitle.html('Первый заём под 0% <br/>при соблюдении условий');
-          $calcRangeLabel.html('<span>1 000</span><span>30 000</span><span>100 000</span>');
-          $calcRangeLabelPeriod.html('<span>5</span><span>16</span><span>180</span>');
-          $calcRenderedPeriod.html('16');
-          $calcRenderedSum.html('30&nbsp;000');
-          $calcTotalReturn.html('33&nbsp;840');
-          $('.js-hero-range-long-output').html('16');
-          $('.calculator input').css('background-size', '50% 100%');
-          $('.calculator__stat').hide();
-          $('.calculator__text').html('<span class="calculator__text__info">&nbsp;</span>');
-          $('#period-slider').show();
-          $('#partners-section').show();
-            {/if}
-      }
-
-      if (document.readyState === 'complete' || document.readyState === 'interactive') {
-        initCalculator();
-      } else {
-        document.addEventListener('DOMContentLoaded', initCalculator);
-      }
-
       {if $is_after_scorista_sms}
           $(document).ready(function () {
               sendMetric('reachGoal', 'convizvhoda')
           });
       {/if}
 
-      // Показывать/скрывать кнопку в моб версии на главной
-      const heroBtn = document.getElementById('hero-btn');
-      const heroRange = document.getElementById('hero-range');
-      const floatingHeroBtn = document.getElementById('floating-hero-btn');
-
-      function checkFloatingHeroBtnVisibility() {
-          const rectBtn = heroBtn.getBoundingClientRect();
-          const rectRange = heroRange.getBoundingClientRect();
-          const isVisibleBtn = rectBtn.top >= 0 && rectBtn.bottom <= (window.innerHeight || document.documentElement.clientHeight);
-          const isVisibleRange = rectRange.top >= 0 && rectRange.bottom <= (window.innerHeight || document.documentElement.clientHeight);
-
-          const isMobile = window.innerWidth <= 768;
-
-          const popup = document.getElementById('inactive-user-popup');
-          const isPopupVisible = popup && popup.style.display === 'flex';
-
-          if (!isMobile || isPopupVisible) {
-              floatingHeroBtn.style.display = 'none';
-              return;
-          }
-
-          if (isVisibleBtn || isVisibleRange) {
-              floatingHeroBtn.style.display = 'none';
-          } else {
-              floatingHeroBtn.style.display = 'block';
-          }
-      }
-
-      document.addEventListener('scroll', checkFloatingHeroBtnVisibility);
-      window.addEventListener('load', checkFloatingHeroBtnVisibility);
-      window.addEventListener('resize', checkFloatingHeroBtnVisibility);
-
         $(document).ready(function () {
+            $('.is_noindex').removeClass('is_noindex');
             $('#cbr_link').click(function (event) {
                 event.preventDefault();
                 sendMetric('reachGoal', 'cb');
@@ -1351,3 +966,57 @@
         }
     </script>
 </div>
+{* --- Cookie Banner --- *}
+
+{* Захватываем CSS для вставки в <head> основного шаблона *}
+<link rel="stylesheet" type="text/css" href="design/{$settings->theme|escape}/css/cookies.css?v=1.00"/>
+
+{* Баннер *}
+<div class="cookies" data-cookies>
+    <div class="container">
+        <div class="cookies-inner">
+            <div class="cookies-main">
+                <div class="cookies-title">Куки</div>
+                <div class="cookies-desc">
+                    Продолжая использовать данный сайт, Вы соглашаетесь со сбором файлов куки (cookies) для аналитики и корректной работы сайта в соответствии с
+                    <a href="/files/docs/FTM01_2026-1_personal_data_policy_FintechMarket_090226_v4.pdf">
+                        Политикой обработки персональных данных
+                    </a>
+                </div>
+            </div>
+            <button class="cookies-btn btn" data-cookies-close>Понятно</button>
+        </div>
+    </div>
+</div>
+
+{* JavaScript-код *}
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const cookiesBanner = document.querySelector('[data-cookies]');
+        const closeTriggers = document.querySelectorAll('[data-cookies-close]');
+
+        if (!cookiesBanner) {
+            console.error('Баннер куки не найден (селектор [data-cookies])');
+            return;
+        }
+
+        if (localStorage.getItem('cookiesAccepted') === 'true') {
+            cookiesBanner.style.display = 'none';
+            return;
+        }
+
+        cookiesBanner.style.display = 'block';
+
+        closeTriggers.forEach(trigger => {
+            trigger.addEventListener('click', function (e) {
+                e.preventDefault();
+                localStorage.setItem('cookiesAccepted', 'true');
+                cookiesBanner.style.transition = 'opacity 0.4s ease';
+                cookiesBanner.style.opacity = '0';
+                setTimeout(() => {
+                    cookiesBanner.style.display = 'none';
+                }, 400);
+            });
+        });
+    });
+</script>

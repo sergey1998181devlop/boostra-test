@@ -67,6 +67,8 @@ class CheckScoringsNk extends ajaxController
     public function actionCheck(): array
     {
         $this->bonondo->tryToSell($this->user->id);
+        $this->axi->syncBkiConsent($this->user->id);
+
         $is_rejected_nk = $this->user_data->read($this->user->id, 'is_rejected_nk');
 
         if(isset($is_rejected_nk)) {

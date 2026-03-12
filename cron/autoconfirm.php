@@ -15,7 +15,7 @@ class AutoconfirmCron extends Simpla
         parent::__construct();
     	$this->run();
     }
-    
+
     private function run()
     {
         $returnLogRepo = new ReturnLogRepository('__credit_doctor_to_user', 'success');
@@ -26,29 +26,68 @@ class AutoconfirmCron extends Simpla
         ];
         if ($orders = $this->orders->get_orders($filter)) {
             foreach ($orders as $order) {
-                if ($autoconfirm_asp = $this->order_data->read($order->id, $this->order_data::AUTOCONFIRM_ASP)) {
-                    $this->orders->update_order($order->id, [
-                        'accept_sms' => $autoconfirm_asp,
-                        'confirm_date' => date('Y-m-d H:i:s'),
-                        'utm_medium' => 'autoconfirm',
-                    ]);
-                    $this->contracts->accept_credit($order, [
-                        'is_user_credit_doctor' => $returnLogRepo->countByUser($order->user_id, 30) > 0 ? 0 : 1,
-                        'is_star_oracle' => 1,
-                    ]);
-                    
-                } else {
-                    $this->orders->update_order($order->id, [
-                        'status' => $this->orders::STATUS_NOT_ISSUED,
-                        'reject_date' => date('Y-m-d H:i:s'),
-                        'pay_result' => 'Ошибка: Код АСП',
-                    ]);
-                    
-                }
+                $isCrossOrder = $this->orders->isCrossOrder($order);
+                $this->processOrder($order, $returnLogRepo, $isCrossOrder);
             }
-            
         }
     }
-    
+
+    /**
+     * Единый метод обработки заявок (обычных и кросс)
+     */
+    private function processOrder($order, $returnLogRepo, bool $isCrossOrder = false): void
+    {
+        if ($isCrossOrder) {
+            $creditDoctorKey = $this->order_data::AUTOCONFIRM_CROSS_CREDIT_DOCTOR;
+            $tvMedicalKey = $this->order_data::AUTOCONFIRM_CROSS_TV_MEDICAL;
+            $sourceOrderId = (int)$order->utm_medium;
+            $updateData = [
+                'confirm_date' => date('Y-m-d H:i:s'),
+            ];
+        } else {
+            $creditDoctorKey = $this->order_data::AUTOCONFIRM_CREDIT_DOCTOR;
+            $tvMedicalKey = $this->order_data::AUTOCONFIRM_TV_MEDICAL;
+            $sourceOrderId = $order->id;
+            $updateData = [
+                'confirm_date' => date('Y-m-d H:i:s'),
+                'utm_medium' => 'autoconfirm',
+            ];
+        }
+
+        $autoconfirm_asp = $this->order_data->read($order->id, $this->order_data::AUTOCONFIRM_ASP);
+
+        if ($autoconfirm_asp) {
+            $updateData['accept_sms'] = $autoconfirm_asp;
+            $this->orders->update_order($order->id, $updateData);
+
+            // Устанавливаем флаг только для успешно подтверждённых кросс-заявок
+            if ($isCrossOrder) {
+                $this->order_data->set((int)$order->id, $this->order_data::IS_AUTOCONFIRM_CROSS, 1);
+            }
+
+            $isOrganic = $this->users->checkUtmSource($order->user_id);
+
+            if ($isOrganic) {
+                $is_user_credit_doctor = (int)$this->order_data->read($sourceOrderId, $creditDoctorKey);
+                $is_tv_medical = (int)$this->order_data->read($sourceOrderId, $tvMedicalKey);
+            } else {
+                $is_user_credit_doctor = $returnLogRepo->countByUser($order->user_id, 30) > 0 ? 0 : 1;
+                $is_tv_medical = 1;
+            }
+
+            $this->contracts->accept_credit($order, [
+                'is_user_credit_doctor' => $is_user_credit_doctor,
+                'is_tv_medical' => $is_tv_medical,
+            ]);
+        } else {
+            // Если нет АСП — отклоняем заявку
+            $this->orders->update_order($order->id, [
+                'status' => $this->orders::STATUS_NOT_ISSUED,
+                'reject_date' => date('Y-m-d H:i:s'),
+                'pay_result' => 'Ошибка: Код АСП',
+            ]);
+        }
+    }
 }
+
 new AutoconfirmCron();

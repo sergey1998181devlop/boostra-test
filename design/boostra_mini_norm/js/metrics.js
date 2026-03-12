@@ -2,11 +2,17 @@ const counter_number = 45594498;
 
 function sendMetric(type, action) {
     if (!is_developer) {
-        ym(counter_number, type, action);
+        try {
+            if (typeof window.ym === 'function') {
+                ym(counter_number, type, action);
+            }
+        } catch (e) {
+            console.warn('Yandex Metrica error:', e);
+        }
     } else {
         console.info('ym ' + type + ' ' + action);
     }
-
+    
     $.ajax({
         url: 'ajax/save_metrics.php',
         data: {

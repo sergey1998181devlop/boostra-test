@@ -48,6 +48,7 @@ class MainView extends View
         $comeback = $this->partner_href->getActualItem(0, 'bonon-comeback');
         $complaint = $this->partner_href->getActualItem(0, 'bonon-background-complaint');
         $background = $this->partner_href->getActualItem(0, 'bonon-background');
+        $this->design->assign('count_of_clients', $this->settings->count_of_clients ?? '2 000 000');
         $this->design->assign('comeback_url', $comeback->href);
         $this->design->assign('background_url', $background->href);
         $this->design->assign('complaint_background_url', $complaint->href);

@@ -10,7 +10,7 @@ interface ExtraServiceInterface
      * @param int $userId ID пользователя
      * @return array Массив с информацией о видимости сервиса
      */
-    public function checkVisibility(int $userId): array;
+    public function checkVisibility(int $userId, ?int $orderId = null): array;
 
     /**
      * Получить цену сервиса

@@ -33,7 +33,7 @@
 					<fieldset>
 
 						<label>
-							<input type="tel" name="phone" placeholder="Телефон" required=""/>
+							<input type="tel" name="phone" autocomplete="tel" inputmode="tel" placeholder="Телефон" required=""/>
 						</label>
 
                         <label class="medium left">

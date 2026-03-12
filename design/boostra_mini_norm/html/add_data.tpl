@@ -8,7 +8,7 @@
     <script src="design/{$settings->theme}/js/jquery.validate.min.js?v=2.10" type="text/javascript"></script>
 	<link rel="stylesheet" type="text/css" href="design/{$settings->theme|escape}/css/jquery.kladr.min.css?v=1.12"/>
 
-    <script src="design/{$settings->theme}/js/worksheet.validate.js?v=1.7.6" type="text/javascript"></script>
+    <script src="design/{$settings->theme}/js/worksheet.validate.js?v=1.8.1" type="text/javascript"></script>
 	<!--script src="design/{$settings->theme}/js/personal_data.app.js?v=1.72" type="text/javascript"></script-->
 
 
@@ -16,7 +16,7 @@
     <link rel="stylesheet" href="/js/autocomplete/styles.css" />
 
 {if $settings->addresses_is_dadata}{* подсказки через dadata *}
-	<script src="design/{$settings->theme}/js/dadata_init.js?v=1.12" type="text/javascript"></script>
+	<script src="design/{$settings->theme}/js/dadata_init.js?v=1.14" type="text/javascript"></script>
 {else}{* подсказки через kladr *}
 	<script src="design/{$settings->theme}/js/jquery.kladr.min.js" type="text/javascript"></script>
     <script src="design/{$settings->theme}/js/neworder.kladr.js?v=1.62" type="text/javascript"></script>
@@ -24,7 +24,7 @@
     <script src="design/{$settings->theme}/js/additional_data.app.js?v=1.72" type="text/javascript"></script>
 
 
-	<script src="design/{$settings->theme}/js/files_data.app.js?v=1.59" type="text/javascript"></script>
+	<script src="design/{$settings->theme}/js/files_data.app.js?v=1.62" type="text/javascript"></script>
 
 {/capture}
 
@@ -360,9 +360,21 @@
                                 {if $error=='empty_work_scope'}<span class="error">Укажите сферу деятельности</span>{/if}
     						</label>
 
-    						<label class="readonly js-pensioner-hidden {if $error=='empty_profession'}error{/if}" {if $user->work_scope == 'Пенсионер'}style="display:none"{/if}>
+    						{* <label class="readonly js-pensioner-hidden {if $error=='empty_profession'}error{/if}" {if $user->work_scope == 'Пенсионер'}style="display:none"{/if}>
     							<input type="text" name="profession" value="{$user->profession}" placeholder="" />
                                 <span class="floating-label">Должность</span>
+                            </label> OLD*}
+                            <label class="js-pensioner-hidden {if $error=='empty_profession'}error{/if}"
+                                   {if $user->work_scope == 'Пенсионер'}style="display:none"{/if}>
+                                <div class="select">
+                                    <select name="profession">
+                                        {foreach $professions as $profession}
+                                            <option {if $user->profession === $profession} selected {/if} value="{$profession}">{$profession}</option>
+                                        {/foreach}
+                                    </select>
+                                </div>
+                                <span class="floating-label">Ваша должность</span>
+                                {if $error=='empty_profession'}<span class="error">Укажите Вашу должность</span>{/if}
                             </label>
 
                             <label class="js-pensioner-hidden " style="display:none">

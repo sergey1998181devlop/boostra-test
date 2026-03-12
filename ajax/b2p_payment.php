@@ -6,6 +6,11 @@ date_default_timezone_set('Europe/Moscow');
 session_start();
 
 require_once('../api/Simpla.php');
+require_once('../app/Core/Application/Application.php');
+
+use App\Core\Application\Application;
+use App\Modules\NewYearPromotion\Services\NewYearPromotionService;
+use App\Modules\Payment\Services\AddCardService;
 
 class Best2payAjax extends Simpla
 {
@@ -22,10 +27,17 @@ class Best2payAjax extends Simpla
     protected $response = array();
 
     protected $user = null;
+    
+    private NewYearPromotionService $promoService;
+    private AddCardService $addCardService;
 
     public function __construct()
     {
         parent::__construct();
+
+        $app = Application::getInstance();
+        $this->promoService = $app->make(NewYearPromotionService::class);
+        $this->addCardService = $app->make(AddCardService::class);
 
         if (!empty($_SESSION['user_id'])) {
             $this->user = $this->users->get_user((int)$_SESSION['user_id']);
@@ -168,6 +180,32 @@ class Best2payAjax extends Simpla
         if (!($collection_promo > 0 && $this->best2pay->checkDebtAndPromo($user_balance, $collection_promo, $amount, $prolongation))) {
             $collection_promo = 0;
         }
+        
+        // Обработка новогодней скидки
+        // ВАЖНО: Скидка применяется ТОЛЬКО для полного погашения!
+        if (!empty($order_id) && !empty((int)$this->settings->newyear_promotion_enabled)) {
+            // Проверяем, что это полное погашение
+            $is_full_payment = in_array($action_type, [
+                $this->star_oracle::ACTION_TYPE_FULL_PAYMENT,
+                $this->star_oracle::ACTION_TYPE_RECURRING_FULL_PAYMENT
+            ]);
+            
+            if ($is_full_payment) {
+                // Проверяем, что пользователь участвует в акции (единственный источник истины - баланс из 1С)
+                if ($this->promoService->isUserInPromo($user_id, $order_id, $user_balance)) {
+                    // Проверяем, что скидка активна
+                    if ($this->promoService->isDiscountActive($user_balance)) {
+                        // Рассчитываем скидку на сервере (не доверяем значению из запроса)
+                        $newyear_discount = $this->promoService->getDiscountAmount($user_balance);
+
+                        if ($newyear_discount > 0) {
+                            // Добавляем новогоднюю скидку к общей скидке
+                            $collection_promo += $newyear_discount;
+                        }
+                    }
+                }
+            }
+        }
 
         $order = $this->orders->get_crm_order($order_id);
 
@@ -303,15 +341,16 @@ class Best2payAjax extends Simpla
 
         $card_id = $this->request->get('card_id', 'integer');
 
-        if ($organization_id == $this->organizations::BOOSTRA_ID) {
-            $this->response['link'] = $this->best2pay->get_link_add_card(!empty($user_id) ? $user_id : $this->user->id, null, null, $recurring_consent);
-        } elseif ($this->organizations->isCrossOrderOrganizationId($organization_id)) {
-            $sector = $this->best2pay->sectors['LORD_ADD_CARD']; // ранее был FINLAB_ADD_CARD
-            $this->response['link'] = $this->best2pay->get_link_add_card(!empty($user_id) ? $user_id : $this->user->id, $sector, $card_id, $recurring_consent);
-        } else {
-            $sector = $this->best2pay->sectors['RZS_ADD_CARD']; // ранее был AKVARIUS_ADD_CARD
-            $this->response['link'] = $this->best2pay->get_link_add_card(!empty($user_id) ? $user_id : $this->user->id, $sector, null, $recurring_consent);
+        if (empty($user_id)) {
+            $user_id = $this->user->id;
         }
+
+        $this->response['link'] = $this->addCardService->getAddCardLink(
+            $user_id,
+            $organization_id,
+            $card_id,
+            $recurring_consent
+        );
     }
 
     private function attach_sbp()
@@ -319,6 +358,10 @@ class Best2payAjax extends Simpla
         $user_id = $this->request->get('user_id');
         $user_id = (int) $user_id ? $user_id : $this->user->id;
         $recurring_consent = $this->request->get('recurring_consent', 'integer');
+
+        if (empty($user_id)) {
+            $user_id = $this->user->id;
+        }
 
         try {
             // Если пользователь использует СБП ТБанка
@@ -332,12 +375,12 @@ class Best2payAjax extends Simpla
                     'description' => 'Привязка карты к личному кабинету',
                 ], $this->response, date('d-m-Y').'-t-bank-error.txt');
             } else {
-                $this->response['link'] = $this->best2pay->get_link_add_sbp(!empty($user_id) ? $user_id : $this->user->id, $recurring_consent);
+                $this->response['link'] = $this->best2pay->get_link_add_sbp($user_id, $recurring_consent);
             }
         } catch (Throwable $exception) {
             $this->response['error'] = 'Не удалось привязать карту';
             $this->logging(__METHOD__, 'attach_sbp', [
-                'user_id' => !empty($user_id) ? $user_id : $this->user->id,
+                'user_id' => $user_id,
                 'description' => 'Привязка карты к личному кабинету',
             ], ['error' => $exception->getMessage()], date('d-m-Y').'-t-bank-error.txt');
             return;

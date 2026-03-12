@@ -9,6 +9,8 @@ require_once (dirname(__DIR__) . '/api/Simpla.php');
  */
 class TVMedical extends Simpla
 {
+    public const ISSUANCE_AMOUNT = 350;
+    
     /**
      * Статус новой попытки списания средств за телемедицину
      */
@@ -256,6 +258,17 @@ class TVMedical extends Simpla
                 'organization_id' => $organization_id,
             ]
         );
+
+        $this->documents->create_document(
+            [
+                'type' => $this->documents::CONTRACT_TV_MEDICAL,
+                'user_id' => $user->id,
+                'order_id' => $order_id,
+                'contract_number' => $send_payment->contract_number,
+                'params' => $params,
+                'organization_id' => $organization_id,
+            ]
+        );
     }
 
     public function getVitamedConditionByAmount($amount, $is_new = true)
@@ -287,8 +300,16 @@ class TVMedical extends Simpla
      */
     public function getVItaMedPrice(int $amount, bool $is_new_client = true)
     {
-        $query = $this->db->placehold('SELECT id, price FROM __vita_med_conditions WHERE is_new = ? AND to_amount >= ? ORDER BY to_amount ASC LIMIT 1',
-            $is_new_client, $amount);
+        $query = $this->db->placehold(
+            'SELECT id, price FROM __vita_med_conditions 
+                 WHERE is_new      = ?
+                    AND from_amount <= ?
+                    AND to_amount   >= ?
+                 ORDER BY to_amount ASC LIMIT 1',
+            $is_new_client,
+            $amount - 1,
+            $amount - 1
+        );
         $this->db->query($query);
         return $this->db->result();
     }

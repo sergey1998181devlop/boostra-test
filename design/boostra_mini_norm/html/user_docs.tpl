@@ -103,16 +103,16 @@
 
                             {if !$hasClosedLoans}
                                 {assign var="hasClosedLoans" value=true}
-                                <h2 style="text-align: left; margin-left: 60px;">Закрытые займы</h2>
+                                <h2 class="docs-header">Закрытые займы</h2>
                             {/if}
 
                             <div class="loan_docs closed_loan_name">
-                                <h3 style="text-align: left; margin-left: 60px;">{$loan}</h3>
+                                <h3 class="docs-header">{$loan}</h3>
                             </div>
                         {/foreach}
 
                         {if !empty($order_docs)}
-                            <h2 style="text-align: left; margin-left: 60px;">Остальные документы</h2>
+                            <h2 class="docs-header">Остальные документы</h2>
                         {/if}
 
                         <ul class="docs_list">
@@ -335,7 +335,7 @@
             </div>
             <div class="modal-body">
                 <p>Для подтверждения подписания документа введите код, отправленный на ваш номер телефона:</p>
-                <input type="text" id="aspCode" placeholder="Введите код" maxlength="6">
+                <input type="text" autocomplete="one-time-code" inputmode="numeric" id="aspCode" placeholder="Введите код" maxlength="6">
                 <div id="aspError" style="color: red; display: none;"></div>
                 <div id="aspSuccess" style="color: green; display: none;"></div>
             </div>
@@ -347,6 +347,23 @@
     </div>
 
     <style>
+        .docs-header {
+            text-align: left;
+            margin-left: 60px;
+        }
+
+        @media only screen and (max-width: 900px) {
+            .loan_docs h2 {
+                margin-left: 0 !important;
+                width: auto !important;
+            }
+            .docs-header {
+                margin-left: 0 !important;
+            }
+            .panel > ul.docs_list {
+                margin-left: 0 !important;
+            }
+        }
         .modal {
             position: fixed;
             z-index: 1000;

@@ -2,6 +2,8 @@
 
 use App\Core\Application\Application;
 use App\Modules\Referral\Services\ReferralService;
+use App\Modules\NewYearPromotion\Services\NewYearPromotionService;
+use api\services\OrderService;
 
 require_once 'View.php';
 
@@ -13,12 +15,14 @@ class PaymentView extends View
      * @var mixed
      */
     private ReferralService $referralService;
+    private NewYearPromotionService $promoService;
 
     public function __construct()
     {
         $app = Application::getInstance();
         /** @var ReferralService $shortLinkService */
         $this->referralService = $app->make(ReferralService::class);
+        $this->promoService = $app->make(NewYearPromotionService::class);
         parent::__construct();
     }
 
@@ -29,11 +33,14 @@ class PaymentView extends View
         }
 
         $this->jwtAuthValidate();
-        
+
+        $this->design->assign('friend_restricted_mode', (int)($_SESSION['friend_restricted_mode'] ?? 0));
+        $this->design->assign('isTestUser', $this->user_data->isTestUser($this->user->id));
+
         //$b2p_enabled = $this->settings->b2p_enabled || $this->user->use_b2p;
         // для явсех оплата через б2п
         $b2p_enabled = 1;
-        
+
         if ($this->request->method('post'))
         {
             // общие данные
@@ -55,14 +62,14 @@ class PaymentView extends View
         else
             return $this->design->fetch('payment.tpl');
     }
-    
+
     private function tinkoff_payment()
     {
         $amount = str_replace(',', '.', $this->request->post('amount'));
         $user_balance = $this->users->get_user_balance(intval($this->user->id));
-        
+
         $max_payment = $user_balance->ostatok_od + $user_balance->ostatok_percents + $user_balance->ostatok_peni + $user_balance->penalty;
-        
+
         if ($amount > $max_payment)
         {
             $this->design->assign('error', 'Максимальная сумма к оплате: '.$max_payment.' руб');
@@ -70,28 +77,28 @@ class PaymentView extends View
         }
         elseif ($max_payment != $amount && ($max_payment - $amount) < 1)
         {
-            $this->design->assign('error', 'нельзя оставлять долг меньше 1 руб');                
+            $this->design->assign('error', 'нельзя оставлять долг меньше 1 руб');
             $amount = $max_payment;
         }
-        
+
         $this->design->assign('amount', $amount);
-        
-        
+
+
         $card_list = $this->notify->soap_get_card_list($this->user->uid);
 
         $cards = array();
         if($card_list)
         {
-			foreach($card_list as $card)
+            foreach($card_list as $card)
             {
-    			if($card->Status =='A' && !empty($card->RebillId)) 
+                if($card->Status =='A' && !empty($card->RebillId))
                 {
                     $card = (array)$card;
                     $card['ExpDate'] = substr($card['ExpDate'], 0, 2).'/'.substr($card['ExpDate'], 2, 2);
                     $cards[] = $card;
                 }
             }
-		}
+        }
         $this->design->assign('cards', $cards);
 
         // пролонгация
@@ -104,8 +111,8 @@ class PaymentView extends View
         $this->design->assign('insure', $insure + ($amount < $user_balance->penalty ? 0 : $user_balance->penalty));
         $this->design->assign('prolongation', $prolongation);
         $this->design->assign('code_sms', $code_sms);
-        
-        
+
+
         $insurer = $this->orders->get_insure_ip();
         $this->design->assign('insurer', $insurer);
 
@@ -114,7 +121,7 @@ class PaymentView extends View
         {
             $this->design->assign('have_exitpool', 1);
         }
-        
+
         $exitpool_variants = $this->payment_exitpools->get_variants();
         $this->design->assign('exitpool_variants', $exitpool_variants);
 
@@ -123,6 +130,7 @@ class PaymentView extends View
 
     /**
      * @return void
+     * @throws Exception
      */
     private function b2p_payment(): void
     {
@@ -135,6 +143,7 @@ class PaymentView extends View
 
         $amount = !empty($prolongation) && isset($prolongation_data['amount']) ? $prolongation_data['amount'] : str_replace(',', '.', $this->request->post('amount'));
         $gracePayment = $this->request->post('grace_payment', 'boolean');
+        $newyearPayment = $this->request->post('newyear_payment', 'boolean');
         $prolongation_day = $this->request->post('prolongation_day', 'integer');
         $calc_percents = !empty($prolongation) && isset($prolongation_data['calc_percents']) ? $prolongation_data['calc_percents'] : $this->request->post('calc_percents', 'integer');
         $number = !empty($prolongation) && isset($prolongation_data['number']) ? $prolongation_data['number'] : $this->request->post('number');
@@ -162,20 +171,25 @@ class PaymentView extends View
         $payment_logs['additional_service_repayment'] = $this->request->post('additional_service_repayment', 'integer');
         $payment_logs['half_additional_service_so_repayment'] = $this->request->post('half_additional_service_so_repayment', 'integer');
         $payment_logs['additional_service_so_repayment'] = $this->request->post('additional_service_so_repayment', 'integer');
-        
+
         if (!empty($amthash)) {
             $amt = base64_decode($amthash);
             if ($amt != $amount) {
                 $amount = $amt;
             }
         }
-        
+
         $multipolis_amount = ((!empty($prolongation) && isset($prolongation_data['multipolis_amount'])) ? $prolongation_data['multipolis_amount'] : $this->request->post('multipolis_amount', 'integer')) * (int)$order->additional_service_multipolis;
         $tv_medical_id = (!empty($prolongation) && isset($prolongation_data['tv_medical_id'])) ? $prolongation_data['tv_medical_id'] : $this->request->post('tv_medical_id', 'integer');
         $tv_medical_amount = (!empty($prolongation) && isset($prolongation_data['tv_medical_amount'])) ? $prolongation_data['tv_medical_amount'] : $this->request->post('tv_medical_amount', 'integer');
         $star_oracle_amount = (!empty($prolongation) && isset($prolongation_data['star_oracle_amount'])) ? $prolongation_data['star_oracle_amount'] : $this->request->post('star_oracle_amount', 'integer');
         $star_oracle_id = (!empty($prolongation) && isset($prolongation_data['star_oracle_id'])) ? $prolongation_data['star_oracle_id'] : $this->request->post('star_oracle_id', 'integer');
         $star_oracle = (int) $this->request->post('star_oracle', 'integer');
+
+        // Отключение star_oracle на оплатах
+        $star_oracle_amount = 0;
+        $star_oracle_id = 0;
+        $star_oracle = 0;
 
         $i = 1;
 
@@ -189,13 +203,29 @@ class PaymentView extends View
         }
         $full_payment_amount = null;
 
+        $dueDays = 'not';
+
         foreach ($response_balances as $response_balance) {
             if ($response_balance['НомерЗайма'] == $number) {
 
-                $user_balance = $this->users->make_up_user_balance($this->user->id, (object)$response_balance);
-                $full_payment_amount = $response_balance['ОстатокОД'] + $response_balance['ОстатокПроцентов'] + $response_balance['ШтрафнойКД'];
+                $user_balance = $this->users->make_up_user_balance(
+                    $this->user->id,
+                    (object)$response_balance
+                );
+
+                $full_payment_amount =
+                    $response_balance['ОстатокОД']
+                    + $response_balance['ОстатокПроцентов']
+                    + $response_balance['ШтрафнойКД'];
+
+                $dueDays = OrderService::calculateDueDays(
+                    $response_balance['ПланДата'] ?? null
+                );
+
+                break;
             }
         }
+
 
         if (empty($user_balance)) {
             setcookie("error", 'Пожалуйста, попробуйте еще раз.', time() + 60);
@@ -205,13 +235,17 @@ class PaymentView extends View
         setcookie("error", "", time() - 3600);
 
         $restricted_mode = $_SESSION['restricted_mode'] == 1;
+        $this->design->assign('contract_number', $number);
+        $this->design->assign('overdue_days', $dueDays);
+
         if ($restricted_mode && $this->best2pay->checkDebtAndPromo($user_balance, $user_balance->discount_amount, $amount, $prolongation)) {
             $this->design->assign('discount', $user_balance->discount_amount);
         } else {
             $this->design->assign('discount', 0);
         }
 
-        $user_balance->calc_percents = $this->users->calc_percents($user_balance);
+        $is_rcl = !empty($prolongation_data['is_rcl']);
+        $user_balance->calc_percents = $is_rcl ? 0 : $this->users->calc_percents($user_balance);
 
         $organization_id = $this->users->get_organization_id($response_balances, $user_balance);
 
@@ -237,6 +271,10 @@ class PaymentView extends View
             $max_payment = round($user_balance->ostatok_od + $tv_medical_amount + $multipolis_amount + $star_oracle_amount + $user_balance->ostatok_percents + $user_balance->ostatok_peni + $user_balance->penalty, 2);
         }
         if (!empty($gracePayment)) {
+            $amount = str_replace(',', '',number_format($user_balance->sum_od_with_grace + $user_balance->sum_percent_with_grace,2));
+        }
+        // Обработка новогодней акции
+        if (!empty($newyearPayment)) {
             $amount = str_replace(',', '',number_format($user_balance->sum_od_with_grace + $user_balance->sum_percent_with_grace,2));
         }
         if (!empty($calc_percents)) {
@@ -313,59 +351,6 @@ class PaymentView extends View
 
         $star_oracle = ($star_oracle && $star_oracle_amount > 0);
 
-        // На закрытии займа продаем допы со скидкой по тарифу или отключаем полностью
-        if ($user_balance->loan_type == 'PDL' && $action_type === $this->star_oracle::ACTION_TYPE_FULL_PAYMENT) {
-            $amount = $amount - $star_oracle_amount - $tv_medical_amount;
-
-            $tv_medical = $star_oracle = 0;
-            $tv_medical_id = $star_oracle_id = 0;
-            $tv_medical_amount = $star_oracle_amount = 0;
-
-            $userBalance = $this->users->get_user_balance_1c($this->user->uid);
-            $prolongationCount = (int)$userBalance->return->КоличествоПролонгаций;
-
-            $lastScorista = $this->scorings->get_last_scorista_for_user($this->user->id, true);
-            $scoreBall = $lastScorista->scorista_ball ?? 0;
-
-            $tariff = $this->getExtraServicesTariff($order_id, $prolongationCount, $scoreBall);
-
-            if (!empty($tariff)) {
-                $filter = [
-                    'filter_tariff' => $tariff,
-                    'filter_amount' => $amount
-                ];
-
-                $soTariff = $this->star_oracle->getTariffByFilter($filter);
-                $vmTariff = $this->tv_medical->getTariffByFilter($filter);
-
-                if ($vmTariff) {
-                    $tv_medical = 1;
-                    $tv_medical_id = $vmTariff->id;
-                    $tv_medical_amount = $vmTariff->price;
-
-                    if (empty($order->additional_service_repayment) && $order->half_additional_service_repayment) {
-                        $tv_medical_amount = round($tv_medical_amount / 2);
-                    } elseif (empty($order->additional_service_repayment) && empty($order->half_additional_service_repayment)) {
-                        $tv_medical = $tv_medical_id = $tv_medical_amount = 0;
-                    }
-                }
-
-                if ($soTariff) {
-                    $star_oracle = 1;
-                    $star_oracle_id = $soTariff->id;
-                    $star_oracle_amount = $soTariff->price;
-
-                    if (empty($order->additional_service_so_repayment) && $order->half_additional_service_so_repayment ) {
-                        $star_oracle_amount = round($star_oracle_amount / 2);
-                    } elseif (empty($order->additional_service_so_repayment) && empty($order->half_additional_service_so_repayment)) {
-                        $star_oracle = $star_oracle_id = $star_oracle_amount = 0;
-                    }
-                }
-            }
-
-            $amount = $amount + $star_oracle_amount + $tv_medical_amount;
-        }
-
         [$discount, $referralDiscountAmount] = $this->referralService->getReferralDiscountAmount($user_balance, (float) $amount, $prolongation);
 
         $params = [
@@ -400,6 +385,9 @@ class PaymentView extends View
             'referral_discount_amount' => $referralDiscountAmount,
             'payment_type' => $this->request->post('payment_type'),
             'discount' => $discount,
+            'newyearPayment' => $newyearPayment,
+            'order_id' => $order_id,
+            'friend_payment_enabled' => (bool) $this->order_data->read($order_id, 'friend_payment_enabled'),
         ];
 
         $this->logging(__METHOD__, 'payment view assign', (array)$params, ['user_balance' => array($user_balance), 'prolongation_data' => $prolongation_data, 'payment_logs' => $payment_logs, 'max_payment' => $max_payment], 'b2p_payment.txt');

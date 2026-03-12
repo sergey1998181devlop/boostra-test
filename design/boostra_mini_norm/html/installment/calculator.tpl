@@ -244,9 +244,18 @@
             {/if}
         </a>
     {else}
-        <button type="submit" id="repeat_loan_submit"
-                {if $can_add_sbp_account && !empty($b2p_sbp_banks)} onclick="generateAndOpenSbpLink(event)"{/if}
-                class="{if $user->fake_order_error == 0}js-metrics-click-cash{/if} button big {if $config->snow}snow-relative primary{else}green{/if}">
+        <button
+                {if $can_add_sbp_account && !empty($b2p_sbp_banks) && !$organization_id_for_river} onclick="generateAndOpenSbpLink(event)"{/if}
+                {if $organization_id_for_river}
+                    data-organization_id="{$organization_id_for_river}"
+                    type="button"
+                {/if}
+                {if !$organization_id_for_river}
+                    id="repeat_loan_submit"
+                    type="submit"
+                {/if}
+                class="{if $user->fake_order_error == 0}js-metrics-click-cash{/if} button big {if $config->snow}snow-relative primary{else}green{/if} {if $organization_id_for_river}js-card_add_btn{/if}"
+        >
             {if $user->fake_order_error > 0}
                 Отправить повторно
             {else}

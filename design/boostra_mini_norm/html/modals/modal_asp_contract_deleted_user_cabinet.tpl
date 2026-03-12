@@ -13,7 +13,7 @@
         <button id="confirm_remove_account__init">Подписать</button>
         <div id="modal_asp__sms_code_wrapper" style="display: none">
             <div class="input-control">
-                <input name='asp_remove_account_code' value=''/>
+                <input name='asp_remove_account_code' inputmode="numeric" autocomplete="one-time-code" value=''/>
                 <div class="timerOutWrapper"></div>
             </div>
         </div>

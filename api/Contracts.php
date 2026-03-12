@@ -36,6 +36,7 @@ class Contracts extends Simpla
             $this->update_contract($contract->id, $update_contract);
         }
     }
+
     /**
      * Contracts::accept_credit()
      * подпись договора
@@ -69,17 +70,20 @@ class Contracts extends Simpla
         }
 
         $total_amount = $order->amount + $additional_amount;
+        if ($order->loan_type == $this->orders::LOAN_TYPE_PDL && $additional_amount > 0) {
+            $maxPdlAmount = $this->resolvePdlMaxAmount($order);
 
-        if ($additional_amount > 0 && $total_amount > $this->orders::PDL_MAX_AMOUNT && $order->loan_type == $this->orders::LOAN_TYPE_PDL) {
-            $total_amount = $this->orders::PDL_MAX_AMOUNT;
-            $this->orders->update_order($order->id, ['amount' => $total_amount - $additional_amount]);
+            if ($total_amount > $maxPdlAmount) {
+                $total_amount = $maxPdlAmount;
+                $this->orders->update_order($order->id, ['amount' => $total_amount - $additional_amount]);
+            }
         }
 
         $this->update_contract($contract_id, ['amount' => $total_amount]);
 
         $update = [
             'confirm_date' => date('Y-m-d H:i:s'),
-            'status' => $this->orders::STATUS_SIGNED
+            'status' => $this->orders::STATUS_SIGNED,
         ];
 
         $this->orders->update_order($order->id, $update);
@@ -96,7 +100,7 @@ class Contracts extends Simpla
         $total_amount = 0;
 
         $total_amount += (int)$this->addCreditDoctorService($order, $params);
-        $total_amount += $this->addStarOracleService($order, $params);
+        $total_amount += $this->addTvMedicalService($order, $params);
 
         return $total_amount;
     }
@@ -135,25 +139,35 @@ class Contracts extends Simpla
     }
 
     /**
-     * Добавление услуги "Звездный оракул"
+     * Добавление услуги "Звездный оракул" (отключено на выдаче)
      */
     private function addStarOracleService($order, array $params): int
     {
-        if (($params['is_star_oracle'] ?? 0) != 1) {
+        // star_oracle отключен на выдачах
+        return 0;
+    }
+
+    /**
+     * Добавление услуги "Телемедицина" при выдаче
+     */
+    private function addTvMedicalService($order, array $params): int
+    {
+        if (($params['is_tv_medical'] ?? 0) != 1) {
             return 0;
         }
 
-        $this->star_oracle->addStarOracleData([
-            'status' => $this->star_oracle::STAR_ORACLE_STATUS_NEW,
+        $this->tv_medical->addPayment([
+            'tv_medical_id' => 1,
+            'status' => $this->tv_medical::TV_MEDICAL_PAYMENT_STATUS_NEW,
             'user_id' => $order->user_id,
             'order_id' => $order->id,
-            'amount' => $this->star_oracle::AMOUNT,
+            'amount' => $this->tv_medical::ISSUANCE_AMOUNT,
             'payment_method' => $this->orders::PAYMENT_METHOD_B2P,
             'organization_id' => $this->organizations::FINTEHMARKET_ID,
             'action_type' => $this->star_oracle::ACTION_TYPE_ISSUANCE,
         ]);
 
-        return $this->star_oracle::AMOUNT;
+        return $this->tv_medical::ISSUANCE_AMOUNT;
     }
 
     /**
@@ -166,6 +180,26 @@ class Contracts extends Simpla
 
         $this->order_data->set($order->id, $this->order_data::SAFETY_FLOW, $safety_flow);
         $this->order_data->set($order->id, $this->order_data::AGREE_CLAIM_VALUE, $agree_claim_value);
+    }
+
+    private function resolvePdlMaxAmount(object $order): float
+    {
+        $defaultMaxAmount = (float)$this->orders::PDL_MAX_AMOUNT;
+
+        if (!$this->order_data->read((int)$order->id, $this->order_data::RCL_LOAN)) {
+            return $defaultMaxAmount;
+        }
+
+        $tranche = $this->rcl->get_tranche(['order_id' => (int)$order->id]);
+        if (!empty($tranche)) {
+            $rclContract = $this->rcl->get_contract(['id' => (int)$tranche->rcl_contract_id]);
+            if (!empty($rclContract) && (float)$rclContract->max_amount > 0) {
+                return (float)$rclContract->max_amount;
+            }
+        }
+
+        $firstRclMaxAmount = (float)$this->order_data->read((int)$order->id, $this->order_data::RCL_MAX_AMOUNT);
+        return $firstRclMaxAmount > 0 ? $firstRclMaxAmount : $defaultMaxAmount;
     }
     
     public function create_new_contract($order_id)
@@ -188,7 +222,7 @@ class Contracts extends Simpla
                     'peni_percent' => 0,
                     'confirm_date' => $order->confirm_date,
                     'asp' => $order->accept_sms,
-                    'psk' => $order->percent == 0 ? 365 : 365 * $order->percent,
+                    'psk' => $this->calc_psk($order),
                     'pdn' => $pdn,
                 ];
                 $contract_id = $this->update_contract($isset_contract->id, $update_contract);
@@ -213,7 +247,7 @@ class Contracts extends Simpla
                     'confirm_date' => $order->confirm_date,
                     'organization_id' => $order->organization_id,
                     'asp' => $order->accept_sms,
-                    'psk' => $order->percent == 0 ? 365 : 365 * $order->percent,                
+                    'psk' => $this->calc_psk($order),
                     'pdn' => $pdn,
                 ];
                 $contract_id = $this->add_contract($new_contract);
@@ -224,6 +258,24 @@ class Contracts extends Simpla
         }
 
         return 0;
+    }
+
+    private function calc_psk($order)
+    {
+        if ($this->order_data->read($order->id, $this->order_data::RCL_LOAN)) {
+            $contract = $this->rcl->get_contract(['user_id' => $order->user_id, 'organization_id' => $order->organization_id]);
+            if (!empty($contract) && !empty($contract->max_amount)) {
+                $amount = $contract->max_amount;
+            }
+            else {
+                $amount = $this->order_data->read($order->id, $this->order_data::RCL_AMOUNT);
+            }
+
+            return $amount * $order->percent * 160; // Макс.лимит ВКЛ * Процент заявки * 160 дней
+        }
+        else {
+            return $order->percent == 0 ? 365 : 365 * $order->percent;
+        }
     }
     
     public function create_number($order)
@@ -433,4 +485,20 @@ class Contracts extends Simpla
         return $this->db->results('number');
     }
 
+    /** Получаем сумму выдачи в определенной МКК за определенный период (s_contracts.status = 2 - выдача) */
+    public function getIssuanceAmountForPeriod(string $dateStart, string $dateEnd, int $organizationId): int
+    {
+        $query = $this->db->placehold("
+            SELECT SUM(amount) as issuance_amount
+            FROM s_contracts
+            WHERE organization_id = ?
+                AND status = 2
+                AND issuance_date >= ?
+                AND issuance_date < ?
+            ;
+        ", $organizationId, $dateStart, $dateEnd);
+
+        $this->db->query($query);
+        return (int)$this->db->result('issuance_amount');
+    }
 }

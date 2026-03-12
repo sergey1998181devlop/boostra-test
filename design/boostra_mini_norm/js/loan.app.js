@@ -59,16 +59,40 @@ function LoanApp() {
                 $(".mini-stages .progress-bar").css('width', '32%');
                 $(".mini-stages .progress-bs span").text('+ 32% к вероятности одобрения займа');
                 $(".mini-stages ul li:eq(1)").addClass('current');
-
+                console.log(app.$form.valid());
                 if (app.$form.valid()) {
                     $('input, textarea').each(function() {
                         $(this).val(function(_, v){ return v.replace(/[ёЁ]/g, c => c==='ё'?'е':'Е'); });
                     });
                     sendMetric('reachGoal', 'register_contact_click_go_phone');
+                    //predict gender
+                    const fioFields = ['lastname', 'firstname', 'patronymic'];
+                    const fio = fioFields.reduce((acc, el) => acc + ' ' + $(`input[name="${el}"]`).val(), '');
+                    $.ajax({
+                        url: 'ajax/dadata.php',
+                        data: {
+                            action: 'fio',
+                            query: fio,
+                        },
+                        success: function(res) {
+                            localStorage.setItem('assumed_gender', res?.suggestions[0]?.data?.gender)
+                            if(res?.suggestions[0]?.data?.gender === "UNKNOWN" || res?.suggestions[0]?.data?.gender === undefined) ym(45594498, 'reachGoal', 'gender_detection_uncertain')
+                        }
+                    })
                     // _send_code(1);
                     app.$form.find('.step1').hide();
                     app.$form.find('.step2').fadeIn();
                     app.$form.submit();
+                }
+                else {
+                    const fieldsNames = ['lastname', 'firstname', 'patronymic', 'email', 'birthday'];
+                    fieldsNames.forEach((el) => {
+                        const $input = app.$form.find(`[name="${el}"]`);
+            
+                        if ($input.length && !$input[0].validity.valid) {
+                            ym(45594498, 'reachGoal', `validation_error_${el}`) 
+                        }
+                    })
                 }
 
             }
@@ -369,16 +393,16 @@ function LoanApp() {
             errorElement: "span",
             rules: {
                 "firstname": {
-                    russianFullName: true
+                    russianFamilyAndGivenNames: true
                 },
                 "lastname": {
-                    russianFullName: true
+                    russianFamilyAndGivenNames: true
                 },
                 "patronymic": {
                     russian: true
                 },
                 "email": {
-                  user_email:true
+                    user_email:true
                 },
                 "birthday": {
                     Birth: true,

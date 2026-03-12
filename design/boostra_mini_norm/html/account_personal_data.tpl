@@ -9,13 +9,13 @@
 	<script src="design/{$settings->theme}/js/jquery.kladr.min.js" type="text/javascript"></script>
 	<link rel="stylesheet" type="text/css" href="design/{$settings->theme|escape}/css/jquery.kladr.min.css?v=1.12"/>
 
-    <script src="design/{$settings->theme}/js/worksheet.validate.js?v=1.76" type="text/javascript"></script>
+    <script src="design/{$settings->theme}/js/worksheet.validate.js?v=1.81" type="text/javascript"></script>
 
 	{*<script src="design/{$settings->theme}/js/neworder.kladr.js?v=1.64" type="text/javascript"></script>*}
     <script type="text/javascript" src="/js/autocomplete/jquery.autocomplete-min.js"></script>
 
-	<script src="design/{$settings->theme}/js/personal_data.app.js?v=1.76" type="text/javascript"></script>
-    <script src="design/{$settings->theme}/js/dadata_init.js?v=1.12" type="text/javascript"></script>
+	<script src="design/{$settings->theme}/js/personal_data.app.js?v=1.79" type="text/javascript"></script>
+    <script src="design/{$settings->theme}/js/dadata_init.js?v=1.14" type="text/javascript"></script>
 {/capture}
 
 {literal}
@@ -119,12 +119,11 @@
                                 <small class="error">{if $error=='empty_passportWho'}Укажите кем выдан паспорт{/if}</small>
                             </label>
                         </div>
-
-                        <div class="clearfix row">
+                        <div class="clearfix row">   
                             {assign var="selected_gender" value=($gender|default:$user->gender|escape)}
                             <label class="text-left align-center {if $error=='empty_gender'}error{/if}">
                                 <div class="radio pass_data">
-                                    <input type="radio" name="gender" value="female" checked="true" />
+                                    <input type="radio" name="gender" value="female" />
                                     <span></span>
                                 </div>
                                 Женщина
@@ -138,30 +137,6 @@
                             </label>
                         </div>
 
-                        <div class="clearfix">
-                            <label class="medium {if $error=='empty_birth_place'}error{/if}">
-    							<input type="text" name="birth_place" class="js-uppercase js-cirylic js-cirylic-plus" value="{if $birth_place}{$birth_place|escape}{else}{$user->birth_place|escape}{/if}" placeholder="" required=""/>
-                                <span class="floating-label">Место рождения</span>
-                                <small class="error"></small>
-                                {if $error=='empty_birth_place'}<span class="error">Укажите место рождения</span>{/if}
-    						</label>
-
-{*                            <label class="{if $error=='empty_marital'}error{/if}">*}
-{*    							<div class="select">*}
-{*                                    <select name="marital_status">*}
-{*                                        <option value="" {if !$user->marital_status}selected="true"{/if}>Выберите значение</option>*}
-{*                                        <option value="женат/замужем" {if $user->marital_status == 'женат/замужем'}selected=""{/if}>женат/замужем</option>*}
-{*                                        <option value="разведен/разведена" {if $user->marital_status == 'разведен/разведена'}selected=""{/if}>разведен/разведена</option>*}
-{*                                        <option value="гражданский брак" {if $user->marital_status == 'гражданский брак'}selected=""{/if}>гражданский брак</option>*}
-{*                                        <option value="вдовец/вдова" {if $user->marital_status == 'вдовец/вдова'}selected=""{/if}>вдовец/вдова</option>*}
-{*                                        <option value="не замужем/холост" {if $user->marital_status == 'не замужем/холост'}selected=""{/if}>не замужем/холост</option>*}
-{*                                    </select>*}
-{*                                </div>*}
-{*                                <span class="floating-label">Семейное положение</span>*}
-{*    						</label>*}
-
-                        </div>
-						
                         <div class="next">
 							<button class="button big" id="doit" type="submit" name="neworder">Далее</button>	
 						</div>

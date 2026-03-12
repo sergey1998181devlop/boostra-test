@@ -24,7 +24,7 @@
                 {/if}
                 <label>
 					<span>Авторизация производится с помощью<br/> мобильного телефона, который Вы указывали<br/> при получении займа</span>
-					<div><input type="tel" name="phone" placeholder="Номер телефона" required="" {if $phone}value="{$phone}"{/if}/></div>
+					<div><input type="tel" inputmode="tel" autocomplete="tel" name="phone" placeholder="Номер телефона" required="" {if $phone}value="{$phone}"{/if}/></div>
 				</label>
 				
 				<button class="big">Отправить</button>
@@ -48,7 +48,7 @@
 				<input type="submit" name="login" class="big button" value="Отправить"/>
 				<br/><br/>
                 <div class="repeat_sms">
-    				{*}<a href="#" class="new_sms">Отправить код еще раз</a>{*}
+    				{*<a href="#" class="new_sms">Отправить код еще раз</a>*}
                 </div>
 			</form>
 			{if isset($smarty.get.tid)}

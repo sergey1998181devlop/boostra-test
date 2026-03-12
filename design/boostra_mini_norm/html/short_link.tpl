@@ -1,5 +1,5 @@
 {$canonical="/pay" scope=parent}
-<script src="design/{$settings->theme|escape}/js/prolongation.app.js?v=1.06" type="text/javascript"></script>
+<script src="design/{$settings->theme|escape}/js/prolongation.app.js?v=1.18" type="text/javascript"></script>
 
 <style>
     .main-div {

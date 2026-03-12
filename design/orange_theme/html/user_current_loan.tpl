@@ -448,7 +448,7 @@
             {if $cards}
                 <div class="about">
                     <div>Доступные карты</div>
-                    {*}<div class="annotacion" >(для погашения задолженности по займам через личный кабинет)</div>{*}
+                    {*<div class="annotacion" >(для погашения задолженности по займам через личный кабинет)</div>*}
                 </div>
 
                 <div class="split">
@@ -486,10 +486,10 @@
 
             {if $settings->b2p_enabled || $user->use_b2p}
 {*                <a href="{$user->add_card}" class="button medium js-b2p-add-card" style="margin-top:5px;">Добавить карту</a>*}
-                <button id="myBtn" class="button medium" style="margin-top:5px;">Добавить карту</button>
+                <button id="card_add_btn" class="button medium" style="margin-top:5px;">Добавить карту</button>
             {elseif $user->add_card}
 {*                <a href="{$user->add_card}" class="button medium" style="margin-top:5px;">Добавить карту</a>*}
-                <button id="myBtn" class="button medium" style="margin-top:5px;">Добавить карту</button>
+                <button id="card_add_btn" class="button medium" style="margin-top:5px;">Добавить карту</button>
             {/if}
 
 

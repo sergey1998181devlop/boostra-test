@@ -14,7 +14,7 @@
 	<script src="design/{$settings->theme}/js/neworder.kladr.js?v=1.64" type="text/javascript"></script>
     <script type="text/javascript" src="/js/autocomplete/jquery.autocomplete-min.js"></script>
 
-	<script src="design/{$settings->theme}/js/personal_data.app.js?v=1.73" type="text/javascript"></script>
+	<script src="design/{$settings->theme}/js/personal_data.app.js?v=1.78" type="text/javascript"></script>
 {/capture}
 
 {literal}
@@ -111,13 +111,13 @@
                                 <span class="floating-label">Кем выдан</span>
                                 <small class="error">{if $error=='empty_passportWho'}Укажите кем выдан паспорт{/if}</small>
                             </label>
-                            {*}
+                            {*
                             <label class="{if $error=='empty_email'}error{/if}">
     							<input class="js-input-email" type="text" name="email" id="email" placeholder="" data-email="{$email}" value="{if $is_developer}admin@test.ru{else}{$email}{/if}" >
     							<small class="err error" id="err-email">{if $error=='empty_email'}Укажите электронную почту{/if}</small>
     							<span class="floating-label">Электронная почта</span>
                             </label>
-                            {*}
+                            *}
                         </div>
                         
                         <div class="clearfix">

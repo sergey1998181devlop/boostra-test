@@ -3,6 +3,7 @@
 use api\helpers\BrowserDataParser;
 use api\helpers\UserHelper;
 use App\Core\Application\Application;
+use App\Modules\NewYearPromotion\Services\NewYearPromotionService;
 use App\Modules\OrderData\Services\OrderDataService ;
 use App\Modules\ShortLink\Repositories\ShortLinkRepository;
 
@@ -12,12 +13,14 @@ class ShortLinkView extends View
 {
     private ShortLinkRepository $shortLinkRepo;
     private OrderDataService $orderDataService;
+    private NewYearPromotionService $promoService;
 
     public function __construct()
     {
         $app = Application::getInstance();
         $this->shortLinkRepo = $app->make(ShortLinkRepository::class);
-        $this->orderDataService = $app->make(OrderDataService ::class);
+        $this->orderDataService = $app->make(OrderDataService::class);
+        $this->promoService = $app->make(NewYearPromotionService::class);
         parent::__construct();
     }
 
@@ -29,6 +32,12 @@ class ShortLinkView extends View
          */
         if ($utm_source = $this->request->get('source_for_pay')) {
             setcookie('source_for_pay', $utm_source, 0, '/');
+
+            if (strpos($utm_source, 'payment_by_a_friend_') === 0) {
+                $_SESSION['friend_restricted_mode'] = 1;
+            } else {
+                unset($_SESSION['friend_restricted_mode']);
+            }
         }
 
         unset($_SESSION['restricted_mode']);
@@ -43,11 +52,35 @@ class ShortLinkView extends View
         }
 
         if (empty($linkData)) {
+
             header('Location:/user');
             exit;
         }
 
         UserHelper::getJWTToken($this->config->jwt_secret_key, $linkData->user_id, 'auth_jwt_token', $this->config->jwt_expiration_time, true);
+
+        // Обработка UTM для новогодней акции (только если акция включена)
+        if (!empty((int)$this->settings->newyear_promotion_enabled)) {
+            $utm_campaign = $this->request->get('source_for_pay', 'string');
+
+            if (!empty($utm_campaign)) {
+                if (strpos($utm_campaign, $this->promoService::PROMO_PREFIX) === 0) {
+                    $utmData = $this->promoService->parseUtm($utm_campaign);
+                    if (!empty($utmData) && !empty($linkData->order_id)) {
+                        // Сохраняем UTM в order_data (для каждого займа своя скидка)
+                        $this->order_data->set($linkData->order_id, 'newyear26_utm', $utm_campaign);
+
+                        // Создаем запись об участии в акции и логируем переход по ссылке
+                        $this->promoService->logLinkClicked($linkData->user_id, $linkData->order_id, [
+                            'utm' => $utm_campaign,
+                            'mkk' => $utmData['mkk'] ?? null,
+                            'bucket' => $utmData['bucket'] ?? null,
+                            'send_date' => $utmData['date'] ?? null,
+                        ]);
+                    }
+                }
+            }
+        }
 
         if ($linkData->type === 'lk') {
             $smsData = new stdClass();
@@ -57,17 +90,21 @@ class ShortLinkView extends View
             $smsData->order_id = $linkData->order_id;
             
             $this->handleLkLink($smsData);
+
             header('Location:/user');
             exit;
         }
 
         if (!$linkData->contract_id || !in_array($linkData->type, ['sms-payment', 'sms-prolongation', 'sms-payment-sbp'])) {
+
             header('Location:/user');
             exit;
         }
 
         // Установка restricted mode для займа
         if ($linkData->order_id) {
+
+
             $_SESSION['user_id'] = $linkData->user_id;
             $_SESSION['restricted_mode'] = 1;
 
@@ -75,6 +112,7 @@ class ShortLinkView extends View
                 $_SESSION['restricted_mode_logout_hint'] = 1;
             }
         }
+
 
         $params = [];
         if ($linkData->type === 'sms-prolongation') {
@@ -132,20 +170,10 @@ class ShortLinkView extends View
 
             $additionalData = $this->orderDataService->getAdditionalData((int) $linkData->order_id);
             $action_type = $amount == $fullAmount ? $this->star_oracle::ACTION_TYPE_FULL_PAYMENT : $this->star_oracle::ACTION_TYPE_PARTIAL_PAYMENT;
+
+            // star_oracle отключен
             $oracle_amount = 0;
-            if (!$instalment && $starOracle = $this->star_oracle->getStarOraclePrice($amount)) {
-                if ($amount == $fullAmount) {
-                    if ($additionalData->additional_service_so_repayment) {
-                        $oracle_amount = $starOracle->price;
-                    } elseif ($additionalData->half_additional_service_so_repayment) {
-                        $oracle_amount = round($starOracle->price / 2);
-                    }
-                } elseif ($additionalData->additional_service_so_partial_repayment) {
-                    $oracle_amount = $starOracle->price;
-                } elseif ($additionalData->half_additional_service_so_partial_repayment) {
-                    $oracle_amount = round($starOracle->price / 2);
-                }
-            }
+           
 
             $tv_med_amount = 0;
             $tv_medical = null;

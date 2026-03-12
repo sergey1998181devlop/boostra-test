@@ -24,16 +24,10 @@
 
 {* Расчет всех доп. услуг в одном блоке *}
 {if !$user_data['whitelist_dop'] || !$settings->whitelist_dop}
-
-    {* Oracle price *}
-    {if $order_data->order->additional_service_so_repayment}
-        {assign var="oracle_price" value=$star_oracle->price}
-    {elseif $order_data->order->half_additional_service_so_repayment}
-        {math equation="floor(oracle_price / 2)" oracle_price=$star_oracle->price assign="oracle_price"}
-    {/if}
+    
 
     {* Multipolis для полного погашения *}
-    {if $order_data->order->additional_service_multipolis|intval}
+    {if $order_data->order->additional_service_multipolis|intval && !$srkv_concierge_blocked}
         {math
         assign="full_payment_multipolis_amount"
         equation="floor((a - b) * c)"
@@ -45,7 +39,7 @@
 
 {/if}
 
-{assign var="full_amount_value" value=$pdp + $price + $oracle_price + $full_payment_multipolis_amount}
+{assign var="full_amount_value" value=$pdp + $price + $full_payment_multipolis_amount}
 
 
 {if $pdp>0}
@@ -149,7 +143,7 @@
                 <p></p>
 
                 <div style="padding-bottom:10px">
-                    <input type="text" inputmode="numeric" name="sms_code" class="js-il-chdp-code" value="" placeholder="Код из СМС" />
+                    <input type="text" inputmode="numeric" name="sms_code" autocomplete="one-time-code" class="js-il-chdp-code" value="" placeholder="Код из СМС" />
                     <div class="js-il-chdp-code-error" style="color:red"></div>
                     <br />
                     <a href="javascript:void(0);" class="js-il-chdp-code-repeat">отправить код еще раз</a>
@@ -180,9 +174,7 @@
             <input type="hidden" name="tv_medical_amount" value="{$price}"/>
             <input type="hidden" name="tv_medical" value="{$price > 0|intval}"/>
             <input type="hidden" name="tv_medical_id" value="{$vita_med->id}"/>
-            <input type="hidden" name="star_oracle_amount" value="{$oracle_price}"/>
-            <input type="hidden" name="star_oracle" value="1"/>
-            <input type="hidden" name="star_oracle_id" value="{$star_oracle->id}"/>
+            
             <input type="hidden" name="multipolis_amount" value="{$full_payment_multipolis_amount}"/>
             <input type="hidden" name="multipolis" value="1"/>
 
@@ -198,7 +190,7 @@
                 <p></p>
 
                 <div style="padding-bottom:10px">
-                    <input type="text" inputmode="numeric" name="sms_code" class="js-il-pdp-code" value="" placeholder="Код из СМС" />
+                    <input type="text" inputmode="numeric" autocomplete="one-time-code" name="sms_code" class="js-il-pdp-code" value="" placeholder="Код из СМС" />
                     <div class="js-il-pdp-code-error" style="color:red"></div>
                     <br />
                     <a href="javascript:void(0);" class="js-il-pdp-code-repeat">отправить код еще раз</a>

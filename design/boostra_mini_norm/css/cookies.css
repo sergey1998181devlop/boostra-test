@@ -1,0 +1,101 @@
+/* Cookies Banner Styles */
+.cookies {
+    display: none;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    z-index: 800;
+    background: #1a1f2e; /* Темный фон, как у шапки сайта */
+    border-top: 1px solid #2d3748;
+    box-shadow: 0 -4px 30px rgba(0, 0, 0, 0.4);
+    animation: slideUp 0.6s ease-out;
+    font-family: "Inter", "Open Sans", Arial, sans-serif;
+}
+
+@keyframes slideUp {
+    from { transform: translateY(100%); opacity: 0; }
+    to   { transform: translateY(0); opacity: 1; }
+}
+
+.cookies-inner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 30px;
+    max-width: 1160px;
+    margin: 0 auto;
+    padding: 24px 20px;
+    color: #e2e8f0;
+}
+
+.cookies-main {
+    flex: 1;
+}
+
+.cookies-title {
+    font-weight: 700;
+    font-size: 19px;
+    line-height: 1.3;
+    color: #ffffff;
+    margin-bottom: 6px;
+}
+
+.cookies-desc {
+    font-size: 14px;
+    line-height: 1.55;
+    color: #94a3b8;
+    max-width: 800px;
+}
+
+.cookies-desc a {
+    color: #60a5fa;
+    text-decoration: underline;
+    font-weight: 500;
+}
+
+.cookies-desc a:hover {
+    color: #93bbfc;
+    text-decoration: none;
+}
+
+.cookies-btn {
+    min-width: 160px;
+    padding: 14px 32px;
+    background: #ff7700; /* Оранжевый цвет в стиле сайта */
+    color: white !important;
+    border: none;
+    border-radius: 232px; /* Скругление как у кнопок на сайте */
+    font-weight: 600;
+    font-size: 15px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: -5px 5px 1rem rgba(0, 0, 0, .2); /* Тень как у кнопок на сайте */
+    white-space: nowrap;
+}
+
+.cookies-btn:hover {
+    background: #da6600; /* Цвет при наведении */
+    transform: translateY(-2px);
+    text-decoration: none;
+    box-shadow: -5px 8px 1.2rem rgba(0, 0, 0, .25);
+}
+
+.cookies-btn:active {
+    transform: translateY(-1px);
+}
+
+/* Responsive Styles */
+@media (max-width: 767px) {
+    .cookies-inner {
+        flex-direction: column;
+        text-align: center;
+        gap: 20px;
+        padding: 24px 16px;
+    }
+    .cookies-btn {
+        width: 100%;
+        max-width: 340px;
+        padding: 16px 32px;
+    }
+}

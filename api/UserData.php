@@ -35,11 +35,8 @@ class UserData extends Simpla
      */
     public const IS_REJECTED_NK = 'is_rejected_nk';
 
-    /** Новый пользователь идёт по автовыдачи */
+    /** Новый пользователь идёт по автовыдаче */
     public const AUTOCONFIRM_FLOW = 'autoconfirm_flow';
-
-    /** Поставлено ли скрытие уведомлений у пользователя от ВсеВернем*/
-    public const VSEV_DEBT_NOTIFICATIONS_DISABLED = 'vsev_debt_notification_disabled';
 
     /** Новый пользователь идёт по автовыдачи 2.0 */
     public const AUTOCONFIRM_2_FLOW = 'autoconfirm_2_flow';
@@ -79,9 +76,9 @@ class UserData extends Simpla
     public const PARTNER_USER_RESPONSE = 'partner_user_response';
 
     /**
-     * @var string Утм партнера по которому перешел пользователь
+     * @var string Признак что пользователь перешел по ссылке
      */
-    public const PING3_VISIT_UTM = 'ping3_visit_utm';
+    public const PING3_VISIT = 'ping3_visit';
 
     /**
      * Флаг, при котором мы проставляем шаг фото
@@ -92,6 +89,16 @@ class UserData extends Simpla
      * Флаг, при котором мы проставляем шаг работа
      */
     const FLAG_STEP_ADDITIONAL_DATA = 'scorista_step_additional_data';
+
+    /** Флаг, открывал ли клиент договор индивидуальных условий */
+    const DID_USER_OPEN_IND_USLOVIYA_DOCUMENT = 'did_user_open_ind_usloviya_document';
+
+    /**
+     * Согласие клиента на запрос в БКИ (определяется из Axi)
+     * JSON: {"consent": true, "timestamp": "Y-m-d H:i:s", "order_id": int}
+     * Наличие записи = согласие дано
+     */
+    public const BKI_CONSENT = 'bki_consent';
 
     /**
      * Получение доп.поля из заявки.
@@ -190,9 +197,13 @@ class UserData extends Simpla
 
     private function replace(int $userId, string $key, $value)
     {
-        $query = $this->db->placehold("REPLACE INTO __user_data (`user_id`, `key`, `value`) VALUES (?, ?, ?)", $userId, $key, $value);
+        $query = $this->db->placehold(
+            "INSERT INTO __user_data (`user_id`, `key`, `value`) VALUES (?, ?, ?) ON DUPLICATE KEY UPDATE `value`=?",
+            $userId, $key, $value, $value
+        );
         return $this->db->query($query);
     }
+
 
     private function delete(int $userId, string $key)
     {

@@ -32,17 +32,17 @@
 				<div id="steps">
 					<fieldset>
 						<label>
-							<input type="text" name="lastname" id="lastname" placeholder="" value="" required="" aria-required="true">
+							<input type="text" autocomplete="family-name" name="lastname" id="lastname" placeholder="" value="" required="" aria-required="true">
 							<small class="err error" id="err-lastname"></small>
 							<span class="floating-label">Фамилия</span>
 						</label>
 						<label>
-							<input type="text" name="firstname" id="firstname" placeholder="" value="" required="" aria-required="true">
+							<input type="text" autocomplete="given-name" name="firstname" id="firstname" placeholder="" value="" required="" aria-required="true">
 							<small class="err error" id="err-firstname"></small>
 							<span class="floating-label">Имя</span>
 						</label>
 						<label>
-							<input type="text" name="patronymic" id="patronymic" placeholder="" value="" required="" aria-required="true">
+							<input type="text" autocomplete="additional-name" name="patronymic" id="patronymic" placeholder="" value="" required="" aria-required="true">
 							<small class="err error" id="err-patronymic"></small>
 							<span class="floating-label">Отчество</span>
 						</label>

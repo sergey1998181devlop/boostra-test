@@ -7,6 +7,9 @@ use App\Providers\LoggingServiceProvider;
 use App\Providers\ReferralServiceProvider;
 use App\Providers\UserServiceProvider;
 use App\Providers\ShortLinkServiceProvider;
+use App\Providers\FindzenBannerServiceProvider;
+use App\Providers\NewYearPromotionServiceProvider;
+use App\Providers\PaymentServiceProvider;
 
 return [
     'env' => env('APP_ENV', 'local'),
@@ -21,6 +24,9 @@ return [
         LoggingServiceProvider::class,
         UserServiceProvider::class,
         ReferralServiceProvider::class,
+        FindzenBannerServiceProvider::class,
+        NewYearPromotionServiceProvider::class,
+        PaymentServiceProvider::class,
     ],
 
     'middleware' => [

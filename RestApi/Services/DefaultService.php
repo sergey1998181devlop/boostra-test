@@ -8,6 +8,7 @@ use RestApi\Helpers\ServiceHelper;
 use RestApi\Interfaces\PartnerServiceInterface;
 use RestApi\PartnerApi;
 use Simpla;
+use stdClass;
 
 require_once dirname(__DIR__, 2) . '/api/Simpla.php';
 
@@ -135,12 +136,12 @@ class DefaultService extends Simpla implements PartnerServiceInterface
 
         // Проверяем флоу крос ордера cross_order, если пометили заявку на обработку то вернем ее
         if ($cross_order_order_id = $this->ping3_data->getPing3Data($this->ping3_data::REPEAT_HAS_CRM_CROSS_ORDER, $user_id)) {
-            return $this->autoOrderProcess($cross_order_order_id, $user_id, $user_status);
+            return $this->autoOrderProcess($cross_order_order_id, $user_status);
         }
 
         // Проверяем флоу автозаявки crm_auto_approve, если пометили заявку на обработку то вернем ее
         if ($crm_auto_approve_order_id = $this->ping3_data->getPing3Data($this->ping3_data::REPEAT_HAS_CRM_AUTO_APPROVE, $user_id)) {
-            return $this->autoOrderProcess($crm_auto_approve_order_id, $user_id, $user_status);
+            return $this->autoOrderProcess($crm_auto_approve_order_id, $user_status);
         }
 
         // Создаем заявку
@@ -157,7 +158,8 @@ class DefaultService extends Simpla implements PartnerServiceInterface
 
         return [
             "status" => $status,
-            "application-id" => $order_id
+            "application-id" => $order_id,
+            "user_type" => $user_status,
         ];
     }
 
@@ -165,22 +167,29 @@ class DefaultService extends Simpla implements PartnerServiceInterface
      * Если найден cross_order или автозаявка crm_auto_approve выполним общие действия
      *
      * @param int $order_id
-     * @param int $user_id
      * @param string $user_status
      * @return array
      */
-    private function autoOrderProcess(int $order_id, int $user_id, string $user_status): array
+    private function autoOrderProcess(int $order_id, string $user_status): array
     {
         // добавим статус, который отдали при создании заявки
         $this->order_data->set($order_id, $this->order_data::PING3_USER_STATUS, $user_status);
 
         // присваиваем автозаявке признак ping3, для сбора статистики
         $this->order_data->set($order_id, $this->order_data::ORDER_FROM_PARTNER, $this->getPartner());
-        return [
-            "link" => ServiceHelper::getUserAuthLink($this, $user_id, $this->partner),
-            "status" => $this->rest_api_partner::STATUS_ORDER_APPROVED,
-            "application-id" => $order_id
-        ];
+
+        $order = $this->orders->get_order($order_id);
+
+        // Сохраним мета данные
+        $this->saveOrderMetaData($order_id);
+
+        // Отправим постбек для пк
+        $this->post_back->sendNewOrder($order);
+
+        $responseData = $this->getOrderData($order, $this->rest_api_partner::STATUS_ORDER_APPROVED);
+        $responseData['user_type'] = $user_status;
+
+        return $responseData;
     }
 
     public function checkDecisions(): array
@@ -204,14 +213,50 @@ class DefaultService extends Simpla implements PartnerServiceInterface
 
         $this->rest_api_partner->addOrderStatusLog($order_id, $order_status);
 
-        return [
+        return $this->getOrderData($order, $order_status);
+    }
+
+    /**
+     * Формируем данные для возврата по апи
+     *
+     * @param stdClass $order
+     * @param string $order_status
+     * @return array
+     */
+    private function getOrderData(StdClass $order, string $order_status): array
+    {
+        $data = [
             "application-id" => $order->id,
             "status" => $order_status,
             "limit" => $order->amount,
             "duration-days" => $order->period,
             "ratePercentPerDay" => $order->percent,
-            "link" => $this->visibleLink($order_status) ? ServiceHelper::getUserAuthLink($this, $order->user_id, $this->partner) : null,
+            "link" => $this->visibleLink($order_status) ? ServiceHelper::getUserAuthLink($this, $order->user_id, $this->partner, ['order_id' => $order->id]) : null,
         ];
+
+        // Дополнительные поля для bankiru-api
+        if ($this->partner === 'bankiru-api') {
+            $creditDoctor = $this->credit_doctor->getCreditDoctorByPrice($order->amount);
+
+            $data['offers'] = [
+                [
+                    'offerId' => $order->id,
+                    'limitMax' => $order->amount,
+                    'limitMin' => $order->amount,
+                    'durationMaxDays' => $order->period,
+                    'durationMinDays' => $order->period,
+                    'durationZeroRate' => $order->percent == 0 ? $order->period : 0,
+                    'ratePercentPerDay' => $order->percent,
+                    'insuranceFlag' => true,
+                    'insuranceCost' => $creditDoctor->price,
+                    'insurrenceName' => 'Кредитный доктор',
+                    'productCode' => $order->loan_type,
+                    'PSK' => 292, // Годовой процент
+                ]
+            ];
+        }
+
+        return $data;
     }
 
     /**
@@ -508,6 +553,15 @@ class DefaultService extends Simpla implements PartnerServiceInterface
             $have_close_credits = (int)!empty($credits_history);
         }
 
+        $params = [];
+        $lastOrder = $this->orders->get_last_order($user_id);
+
+        if (!empty($lastOrder)) {
+            $params = ['check_last_report_date' => 1, 'order_id' => $lastOrder->id];
+        }
+
+        $baseOrganizationId = $this->organizations->get_base_organization_id($params);
+
         return array_merge([
             'user_id' => $user_id,
             'utm_source' => $this->partner,
@@ -522,7 +576,7 @@ class DefaultService extends Simpla implements PartnerServiceInterface
             'date' => date('Y-m-d H:i:s'),
             'order_uid' => exec($this->config->root_dir . 'generic/uidgen'),
             'ip' => $_SERVER['REMOTE_ADDR'],
-            'organization_id' => $this->organizations->get_base_organization_id(),
+            'organization_id' => $baseOrganizationId,
         ], $orderFields);
     }
 

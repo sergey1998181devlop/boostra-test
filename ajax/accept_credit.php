@@ -19,8 +19,10 @@ $uid = $simpla->request->get('uid');
 $insure_amount = 0;//$simpla->request->get('insure', 'string');
 $new_nk_flow_path = $simpla->request->get('new_nk_flow_path', 'string');
 $is_user_credit_doctor = $simpla->request->get('is_user_credit_doctor', 'integer');
+$is_tv_medical = $simpla->request->get('is_tv_medical', 'integer');
 $is_star_oracle = $simpla->request->get('is_star_oracle', 'integer');
 $agree_claim_value = (int)$simpla->request->get('agree_claim_value');
+
 
 $order_id = $simpla->request->get('order_id');
 
@@ -39,7 +41,7 @@ if ($user = $simpla->users->get_user_by_uid($uid)) {
 
     //Отключаем ДОПы если пользователь в whitelist
     if ($simpla->users->allowedByWhitelist((int)$user->id)) {
-        $is_star_oracle = 0;
+        $is_tv_medical = 0;
         $is_user_credit_doctor = 0;
     }
 
@@ -65,28 +67,32 @@ if ($user = $simpla->users->get_user_by_uid($uid)) {
     elseif (checkHasUserSelfDec($simpla, $order)) {
         // $response обновляется внутри метода
     } else {
-       if ($order->card_type != $simpla->orders::CARD_TYPE_SBP) {
-           $sbp_account = $simpla->best2pay->getSbpAccount(
-               [
-                   ['user_id', '=', $order->user_id],
-                   ['deleted', '=', 0],
-               ],
-               ['id'],
-               ['id DESC']
-           );
-
-           $simpla->orders->update_order($order->id, [
-               'card_type' => $simpla->orders::CARD_TYPE_SBP,
-               'card_id' => $sbp_account->id ?? null,
-           ]);
-       }
-
-        $simpla->orders->update_order($order->id, array(
+        $updateData = [
             'insure_amount' => $insure_amount,
             'insurer' => $insurer,
             'accept_sms' => $sms_code,
             'is_user_credit_doctor' => $is_user_credit_doctor,
-        ));
+        ];
+
+        if ($order->card_type != $simpla->orders::CARD_TYPE_SBP) {
+            $sbp_account = $simpla->best2pay->getSbpAccount(
+                [
+                    ['user_id', '=', $order->user_id],
+                    ['deleted', '=', 0],
+                ],
+                ['id'],
+                ['id DESC']
+            );
+
+            $updateData['card_type'] = $simpla->orders::CARD_TYPE_SBP;
+            $updateData['card_id'] = $sbp_account->id ?? null;
+        }
+
+        if ((int)$simpla->user_data->read($user->id, "is_virtual_card_consent") === 1) {
+            $updateData['card_type'] = $simpla->orders::CARD_TYPE_VIRT;
+        }
+
+        $simpla->orders->update_order($order->id, $updateData);
 
         $insure_percent = round($insure_amount / $order->amount * 100, 3);
 
@@ -187,6 +193,7 @@ if ($user = $simpla->users->get_user_by_uid($uid)) {
                 
                 $simpla->contracts->accept_credit($order, compact(
                     'is_user_credit_doctor',
+                    'is_tv_medical',
                     'is_star_oracle',
                     'agree_claim_value'
                 ));
@@ -196,18 +203,25 @@ if ($user = $simpla->users->get_user_by_uid($uid)) {
                 // для кросс ордеров добавляем скоринги
                 if ($order->utm_source == 'cross_order') {
 
-                    $scoring_data = [
-                        'user_id' => $order->user_id,
+                    $exists_axinbki = $simpla->scorings->get_scorings([
                         'order_id' => $order->id,
-                        'status' => $simpla->scorings::STATUS_NEW,
-                        'created' => date('Y-m-d H:i:s'),
-                    ];
+                        'type' => $simpla->scorings::TYPE_AXILINK_2,
+                    ]);
 
-                    $scoring_data['type'] = $simpla->scorings::TYPE_PYTON_NBKI;
-                    $simpla->scorings->add_scoring($scoring_data);
+                    if (!$exists_axinbki) {
+                        $scoring_data = [
+                            'user_id' => $order->user_id,
+                            'order_id' => $order->id,
+                            'status' => $simpla->scorings::STATUS_NEW,
+                            'created' => date('Y-m-d H:i:s'),
+                        ];
 
-                    $scoring_data['type'] = $simpla->scorings::TYPE_PYTON_SMP;
-                    $simpla->scorings->add_scoring($scoring_data);
+                        $scoring_data['type'] = $simpla->scorings::TYPE_PYTON_NBKI;
+                        $simpla->scorings->add_scoring($scoring_data);
+
+                        $scoring_data['type'] = $simpla->scorings::TYPE_PYTON_SMP;
+                        $simpla->scorings->add_scoring($scoring_data);
+                    }
 
                     if (needAddCardForCrossOrder($order, $simpla)) {
                         $simpla->orders->update_order($order->id, [
@@ -236,7 +250,7 @@ if ($user = $simpla->users->get_user_by_uid($uid)) {
             if (!$simpla->is_developer) {
                 try {
                     if ($is_user_credit_doctor == 1) {
-                        $credit_doctor = $simpla->credit_doctor->getCreditDoctor((int)$order->amount, $order->have_close_credits == 0);
+                        $credit_doctor = $simpla->credit_doctor->getCreditDoctor((int)$order->amount, $order->have_close_credits == 0, (int)$order->user_id, (int)$order->id);
 
                         $credit_doctor_data = [
                             'status' => $simpla->credit_doctor::CREDIT_DOCTOR_STATUS_NEW,
@@ -383,6 +397,7 @@ function checkHasUserSelfDec(Simpla $simpla, stdClass $order): bool {
         $selfDecDecision = $simpla->self_dec::NO_DECISION;
     }
 
+    $simpla->logging(__METHOD__, '', 'Решение проверки на самозапрет', ['order' => $order, 'self_dec_decision' => $selfDecDecision], 'accept_credit.txt');
     $simpla->order_data->set((int)$order->id, $simpla->order_data::SELF_DEC_DECISION, $selfDecDecision);
 
     switch ($selfDecDecision) {
@@ -396,7 +411,7 @@ function checkHasUserSelfDec(Simpla $simpla, stdClass $order): bool {
             $simpla->self_dec->rejectOrder($order->id);
             break;
         case $simpla->self_dec::NO_DECISION:
-            $response['error'] = 'Проверяем наличие текущего самозапрета в кредитной истории. Повторите позднее';
+            $response['error'] = 'Проверяем наличие текущего самозапрета в кредитной истории. Повторите позднее или обратитесь в поддержку';
             $response['need_reload'] = true;
             break;
         case $simpla->self_dec::APPROVE_DECISION:

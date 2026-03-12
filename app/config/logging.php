@@ -101,6 +101,23 @@ return [
             'days' => 7,
             'permission' => 0664,
         ],
+
+        /** New Year Promotion */
+        'newyear_promo' => [
+            'driver' => 'daily',
+            'path' => APP_ROOT . '/logs/app/newyear_promo.log',
+            'level' => 'info',
+            'days' => 30,
+            'permission' => 0664,
+        ],
+
+        'newyear_promo_check' => [
+            'driver' => 'daily',
+            'path' => APP_ROOT . '/logs/app/newyear_promo_check.log',
+            'level' => 'info',
+            'days' => 30,
+            'permission' => 0664,
+        ],
     ],
 
     /*

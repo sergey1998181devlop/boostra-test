@@ -217,7 +217,7 @@ $("input[name='coupon_code']").keypress(function(event){
 	<input name="email" type="text" value="{$email|escape}" data-format="email" data-notice="Введите email" />
 
 	<label>Телефон</label>
-	<input name="phone" type="text" value="{$phone|escape}" />
+	<input name="phone" autocomplete="tel" inputmode="tel" type="text" value="{$phone|escape}" />
 	
 	<label>Адрес доставки</label>
 	<input name="address" type="text" value="{$address|escape}"/>

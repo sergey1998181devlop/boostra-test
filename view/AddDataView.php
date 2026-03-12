@@ -259,7 +259,7 @@ if ($this->is_developer)
         }
 
         $this->design->assign('regions', (new RegionService())->getRegions());
-
+        $this->design->assign('professions', \api\enums\ProfessionEnum::getAvailableValues());
         return $this->design->fetch('add_data.tpl');
     }
 

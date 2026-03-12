@@ -1,0 +1,27 @@
+/**
+ * Usedesk Widget Customizations
+ * Custom branding overrides for support chat widget
+ */
+
+/* CSS Variable for dynamic avatar (can be overridden via inline style in index.tpl) */
+:root {
+    --usedesk-operator-avatar: url("https://secure.usedesk.ru/images/icons/chat-svg/operator.svg");
+}
+
+/* Operator Avatar Override - используем CSS переменную как fallback */
+/* Usedesk использует DIV с атрибутом href вместо IMG, поэтому работаем с background */
+.uw__avatar,
+.uw__message-avatar,
+.uw__operator-avatar {
+    background-image: var(--usedesk-operator-avatar) !important;
+    background-size: cover !important;
+    background-position: center !important;
+    background-repeat: no-repeat !important;
+}
+
+/* Скрываем любые вложенные элементы (SVG, IMG), если они есть */
+.uw__avatar *,
+.uw__message-avatar *,
+.uw__operator-avatar * {
+    display: none !important;
+}

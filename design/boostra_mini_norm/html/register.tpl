@@ -18,12 +18,12 @@
 </div>
 {/if}
 
-<form class="form register_form" method="post">
+<form class="form register_form" method="post" style="margin-bottom: 50px;">
 	<label>Имя</label>
 	<input type="text" name="name" data-format=".+" data-notice="Введите имя" value="{$name|escape}" maxlength="255" />
 	
 	<label>Email</label>
-	<input type="text" name="email" data-format="email" data-notice="Введите email" value="{$email|escape}" maxlength="255" />
+	<input type="text" autocomplete="email" name="email" data-format="email" data-notice="Введите email" value="{$email|escape}" maxlength="255" />
 
     <label>Пароль</label>
     <input type="password" name="password" data-format=".+" data-notice="Введите пароль" value="" />

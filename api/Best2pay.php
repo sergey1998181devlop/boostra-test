@@ -8,17 +8,9 @@ use boostra\domains\Transaction\GatewayResponse;
 class Best2pay extends Simpla
 {
     /**
-     * Тестовые карты
-     * 
-        * 2200200111114591, 05/2022, 426 // отмена
-        * 5570725111081379, 05/2022, 415 с 3ds // проведена
-        * 4809388889655340, 05/2022, 195 // проведена
-     *
-     * тестовые карты для бустры сектора аквариуса
-     * 4809388886227309 02/23 856
-     * 5570725111394269 03/27 589
-     * 2200200111114104 11/25 424
+     * Время жизни ссылки на оплату в секундах
      */
+    private $life_period = 3600;
 
     /**
      * Тип оплаты для Кредитного рейтинга
@@ -222,7 +214,7 @@ class Best2pay extends Simpla
             $this->sectors['LORD_PAY_CREDIT_SBP_FEE_15'],
         ];
     }
-    
+
     public function get_frida_sectors()
     {
         return [
@@ -232,6 +224,18 @@ class Best2pay extends Simpla
             $this->sectors['FRIDA_PAY_CREDIT_SBP'],
             $this->sectors['FRIDA_PAY_CREDIT_SBP_FEE_10'],
             $this->sectors['FRIDA_PAY_CREDIT_SBP_FEE_15'],
+        ];
+    }
+
+    public function get_fastfinance_sectors()
+    {
+        return [
+            $this->sectors['FASTFINANCE_PAYMENT'],
+            $this->sectors['FASTFINANCE_SBP_TOKEN'],
+            $this->sectors['FASTFINANCE_PAY_CREDIT'],
+            $this->sectors['FASTFINANCE_PAY_CREDIT_SBP'],
+            $this->sectors['FASTFINANCE_PAY_CREDIT_SBP_FEE_10'],
+            $this->sectors['FASTFINANCE_PAY_CREDIT_SBP_FEE_15'],
         ];
     }
 
@@ -339,6 +343,7 @@ class Best2pay extends Simpla
                     'description' => $description,
                     'mode' => 1,
                     'url' => $this->config->root_url.'/best2pay_callback/payment',
+                    'life_period' => $this->life_period,
                 );
 
                 if (!empty($params['recurring_data'])) {
@@ -531,6 +536,7 @@ class Best2pay extends Simpla
                     'payment_method' => $this->orders::PAYMENT_METHOD_B2P,
                     'payment_id' => (int)$payment_id,
                     'organization_id' => $service_organization_id,
+                    'action_type' => $params['action_type'] ?? '',
                 ];
 
                 $this->multipolis->addItem($data_multipolis);
@@ -546,7 +552,8 @@ class Best2pay extends Simpla
                     'status' => $this->tv_medical::TV_MEDICAL_PAYMENT_STATUS_NEW,
                     'payment_method' => $this->orders::PAYMENT_METHOD_B2P,
                     'payment_id' => (int)$payment_id,
-                    'organization_id' => $service_organization_id,
+                    'organization_id' => $params['action_type'] === $this->star_oracle::ACTION_TYPE_PARTIAL_PAYMENT ? $this->organizations::FINTEHMARKET_ID : $service_organization_id,
+                    'action_type' => $params['action_type'] ?? '',
                 ];
 
                 $this->tv_medical->addPayment($data_tv_medical_payment);
@@ -779,7 +786,7 @@ class Best2pay extends Simpla
      * @param integer $sector
      * @return string $link
      */
-    public function get_link_add_card($user_id, $sector = NULL, $cardId = null, $recurring_consent = 1)
+    public function get_link_add_card($user_id, $sector = NULL, $cardId = null, $recurring_consent = 1, $params = [])
     {
         if (empty($sector))
             $sector = $this->sectors['ADD_CARD'];
@@ -817,10 +824,11 @@ class Best2pay extends Simpla
             'first_name' => $user->firstname,
             'last_name' => $user->lastname,
             'patronymic' => $user->patronymic,
-            'url' => $this->config->root_url.'/best2pay_callback/add_card',
-            'failurl' => $this->config->root_url.'/best2pay_callback/add_card',
+            'url' => $this->config->root_url . (!empty($params['url']) ? $params['url'] : '/best2pay_callback/add_card'),
+            'failurl' => $this->config->root_url . (!empty($params['failurl']) ? $params['failurl'] : '/best2pay_callback/add_card'),
 //            'recurring_period' => 0,
 //            'mode' => 1
+            'life_period' => $this->life_period,
         );
         $data['signature'] = $this->get_signature(array($data['sector'], $data['amount'], $data['currency'], $password));
 
@@ -1155,79 +1163,7 @@ $this->logging('Reverse', '', (array)$data, $reverse, 'b2p_reverse.txt');
         
         return $reverse;
     }
-    
-    public function get_link_add_card_OLD($user_id, $sector = NULL)
-    {
-        if (empty($sector))
-            $sector = $this->sectors['ADD_CARD'];
-        $password = $this->passwords[$sector];
-                
-        $amount = 100; 
-        $description = 'Привязка карты'; // описание операции
-        
-        if (!($user = $this->users->get_user((int)$user_id)))
-            return false;
-        
-        $user_address = $user->Regstreet_shorttype.' '.$user->Regstreet.', д.'.$user->Reghousing;
-        if (!empty($user->Regbuilding))
-            $user_address .= ', стр.'.$user->Regbuilding;
-        if (!empty($user->Regroom))
-            $user_address .= ', кв.'.$user->Regroom;
-        
-        $user_city = $user->Regregion_shorttype.' '.$user->Regregion.' '.$user->Regcity_shorttype.' '.$user->Regcity;
-        $user_city = str_replace('"', '', $user_city);
-        
-        // регистрируем оплату
-        $data = array(
-            'sector' => $sector,
-            'amount' => $amount,
-            'currency' => $this->currency_code,
-            'reference' => $user_id,
-            'client_ref' => $user_id,
-            'description' => $description,
-            'address' => $user_address,
-            'city' => $user_city,
-//            'phone' => $user->phone_mobile,
-//            'email' => $user->email,
-            'first_name' => $user->firstname,
-            'last_name' => $user->lastname,
-            'patronymic' => $user->patronymic,
-            'url' => $this->config->front_url.'/best2pay_callback/add_card',
-            'recurring_period' => 0,
-//            'mode' => 1
-        );
-        $data['signature'] = $this->get_signature(array($data['sector'], $data['amount'], $data['currency'], $password));
-        
-        $b2p_order = $this->send('Register', $data);
-echo __FILE__.' '.__LINE__.'<br /><pre>';var_dump($b2p_order);echo '</pre><hr />';
-        $xml = simplexml_load_string($b2p_order);
-        $b2p_order_id = (string)$xml->id;
 
-        $transaction_id = $this->transactions->add_transaction(array(
-            'user_id' => $user_id,
-            'amount' => $amount,
-            'sector' => $sector,
-            'register_id' => $b2p_order_id,
-            'reference' => $user_id,
-            'description' => $description,
-            'created' => date('Y-m-d H:i:s'),
-        ));
-
-        // получаем ссылку на оплату 10руб для привязки карты
-        $data = array(
-            'sector' => $sector,
-            'id' => $b2p_order_id,
-            'get_token' => 1,
-        );
-        $data['signature'] = $this->get_signature(array($sector, $b2p_order_id, $password));
-
-        $link = $this->url.'webapi/Purchase?'.http_build_query($data);
-//echo b2p_FILEb2p_.' '.b2p_LINEb2p_.'<br /><pre>';echo(htmlspecialchars($b2p_order));echo '</pre><hr />';  
-        
-        return $link;
-
-    }
-        
     /**
      * Best2pay::pay_contract()
      * Переводит сумму займа на карту клиенту
@@ -3010,6 +2946,10 @@ echo __FILE__.' '.__LINE__.'<br /><pre>';var_dump($b2p_order);echo '</pre><hr />
             return $this->sectors['LORD_PAYMENT'];
         }
 
+        if ($organization_id == $this->organizations::FASTFINANCE_ID) {
+            return $this->sectors['FASTFINANCE_PAYMENT'];
+        }
+
         if ($organization_id == $this->organizations::VIPZAIM_ID) {
             return $this->sectors['VIPZAIM_PAYMENT'];
         }
@@ -3058,5 +2998,24 @@ echo __FILE__.' '.__LINE__.'<br /><pre>';var_dump($b2p_order);echo '</pre><hr />
         }
 
         return $filtersString;
+    }
+
+    /**
+     * Получает баланс сектора
+     * @return false|string
+     */
+    public function getBalance(string $sector_name = 'AKVARIUS_PAY_CREDIT')
+    {
+        $sector = $this->sectors[$sector_name];
+        $password = $this->passwords[$sector];
+        $nonce = time();
+
+        $data = array(
+            'sector' => $sector,
+            'nonce' => $nonce,
+            'signature' => $this->get_signature(compact('sector', 'nonce', 'password')),
+        );
+
+        return $this->send('P2PCreditBalance', $data);
     }
 }

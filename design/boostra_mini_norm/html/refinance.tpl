@@ -1,5 +1,5 @@
 <link href="design/{$settings->theme|escape}/css/refinance.css" />
-<script src="design/{$settings->theme|escape}/js/refinance.app.js"></script>
+<script src="design/{$settings->theme|escape}/js/refinance.app.js?v=1.003"></script>
 
 {if isset($orderData)}
     {assign var="refinance_default_day" value=intval(date('d'))}
@@ -95,7 +95,7 @@
                     <div class="accept_credit_actions">
                         <div>
                             <label for="refinance_sms_code">Код из СМС</label>
-                            <input type="text" inputmode="numeric" id="refinance_sms_code" name="sms_code" maxlength="6" required placeholder="Введите код" autocomplete="off" />
+                            <input type="text" inputmode="numeric" id="refinance_sms_code" name="sms_code" maxlength="6" required placeholder="Введите код" autocomplete="one-time-code" />
                             <div class="sms-code-error" style="color: #f11; margin-top: 0.5em;"></div>
                             <p class="error-info" style="display:none"></p>
                         </div>

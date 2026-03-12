@@ -20,6 +20,20 @@
     </p>
 {/function}
 
+{if $rcl_loan}
+    {$rcl_params = array_merge($mfo_params, ['order_id' => $rcl_order_id, 'params' => [
+            'amount' => $amount,
+            'amount_string' => $amount_string,
+            'rcl_amount' => $rcl_amount,
+            'rcl_amount_string' => $rcl_amount_string,
+            'rcl_max_amount' => $rcl_max_amount,
+            'rcl_max_amount_string' => $rcl_max_amount_string
+        ]
+    ])}
+{else}
+    {$rcl_params = []}
+{/if}
+
 {if $user_order['organization_id'] == $ORGANIZATION_FINLAB}
     {$accept_documents = [
         'agreed_1' => ['verify' => 1, 'filename' => '/files/docs/finlab/Obshchie-usloviya-OOO-MKK-FINLAB-ot-01.06.2024.docx', 'docname' => 'Общими условиями договора потребительского микрозайма', 'class' => ''],
@@ -28,13 +42,15 @@
         'agreed_5' => ['verify' => 1, 'filename' => '/user/docs?action=micro_zaim&organization_id=11', 'docname' => 'Заявлением о предоставлении микрозайма', 'link_class' => 'micro-zaim-doc-js'],
         'agreed_6' => ['verify' => 1, 'filename' => "/files/docs/finlab/Politika-konfidencial'nosti.docx", 'docname' => 'Политикой конфиденциальности ООО МКК «ФИНЛАБ»', 'class' => ''],
         'credit_doctor_checkbox' => [],
-        'star_oracle' => [],
+        'tv_medical' => [],
         'service_recurent_check' => ['verify' => 0, 'filename' => '/files/docs/soglashenie-o-regulyarnyh-rekurentnyh-platezhah.pdf', 'docname' => 'Соглашением о применении регулярных (рекуррентных) платежах', 'class' => 'js-service-recurent'],
         'agreed_7' => ['verify' => 1, 'filename' => '/user/docs?action=soglasie_na_bki_finlab', 'docname' => 'на запрос кредитного отчета в бюро кредитных историй'],
         'agreed_offer_docs' => ['verify' => 1, 'docname' => "<a href=\"/user/docs?action=offer_agreement&order_id={$user_order['id']}\" target=\"_blank\">Соглашение об акцепте оферты</a>, <a href=\"/user/docs?action=asp_agreement&order_id={$user_order['id']}\" target=\"_blank\">Соглашение об АСП</a>, <a href=\"/user/docs?action=arbitration_agreement&order_id={$user_order['id']}\" target=\"_blank\">Арб.соглашение</a>, <a href=\"/user/docs?action=offer_arbitration_cessionary&order_id={$user_order['id']}\" target=\"_blank\">Оферта</a>"],
         'agreed_8' => ['verify' => 1, 'filename' => '/files/docs/finlab/Politika-bezopasnosti-platezhej-Best2Pay.pdf', 'docname' => 'Договором об условиях предоставления Акционерное общество «Сургутнефтегазбанк» услуги по переводу денежных средств с использованием реквизитов банковской карты с помощью Интернет-ресурса ООО «Бест2пей» (Публичная оферта)', 'class' => ''],
         'agreed_9' => ['verify' => 0, 'docname' => 'подключением ПО «ВитаМед» стоимостью 600 рублей, предоставляемой в соответствии с <a href="user/docs?action=additional_service_vita-med" target="_blank">заявлением о предоставлении дополнительных услуг.</a>'],
-        'agreed_10' =>['verify' => 0, 'docname' => 'на уступку права требования', 'class' => 'js-agree-claim-value', 'show_only_safety_flow' => true]
+        'agreed_10' =>['verify' => 0, 'docname' => 'на уступку права требования', 'class' => 'js-agree-claim-value', 'show_only_safety_flow' => true],
+        'rcl_limit' => ['verify' => 1, 'filename' => "/preview/rcl_limit?{http_build_query($rcl_params)}", 'docname' => 'Заявление на установку расходного кредитного лимита'],
+        'rcl_transh' => ['verify' => 1, 'filename' => "/preview/rcl_transh?{http_build_query($rcl_params)}", 'docname' => 'Заявление на получение транша']
         ]}
 {elseif $user_order['organization_id'] == $ORGANIZATION_VIPZAIM}
     {$accept_documents = [
@@ -44,37 +60,66 @@
         'agreed_5' => ['verify' => 1, 'filename' => '/files/docs/viploan/zayavlenie-o-predostavlenii-mikrozai-ma-vipzai-m.docx', 'docname' => 'Заявлением о предоставлении микрозайма', 'class' => ''],
         'agreed_6' => ['verify' => 1, 'filename' => "/files/docs/viploan/politika-konfidencialnosti.docx", 'docname' => 'Политикой конфиденциальности ООО МКК «ВИПЗАЙМ»', 'class' => ''],
         'credit_doctor_checkbox' => [],
-        'star_oracle' => [],
+        'tv_medical' => [],
         'service_recurent_check' => ['verify' => 0, 'filename' => '/files/docs/soglashenie-o-regulyarnyh-rekurentnyh-platezhah.pdf', 'docname' => 'Соглашением о применении регулярных (рекуррентных) платежах', 'class' => 'js-service-recurent'],
         'agreed_7' => ['verify' => 1, 'filename' => '/user/docs?action=soglasie_na_bki', 'docname' => 'на запрос кредитного отчета в бюро кредитных историй'],
         'agreed_offer_docs' => ['verify' => 1, 'docname' => "<a href=\"/user/docs?action=offer_agreement&order_id={$user_order['id']}\" target=\"_blank\">Соглашение об акцепте оферты</a>, <a href=\"/user/docs?action=asp_agreement&order_id={$user_order['id']}\" target=\"_blank\">Соглашение об АСП</a>, <a href=\"/user/docs?action=arbitration_agreement&order_id={$user_order['id']}\" target=\"_blank\">Арб.соглашение</a>, <a href=\"/user/docs?action=offer_arbitration_cessionary&order_id={$user_order['id']}\" target=\"_blank\">Оферта</a>"],
         'agreed_8' => ['verify' => 1, 'filename' => 'files/docs/viploan/politika-bezopasnosti-platezhei-best2pay.pdf', 'docname' => 'Договором об условиях предоставления Акционерное общество «Сургутнефтегазбанк» услуги по переводу денежных средств с использованием реквизитов банковской карты с помощью Интернет-ресурса ООО «Бест2пей» (Публичная оферта)', 'class' => ''],
         'agreed_9' => ['verify' => 0, 'docname' => 'подключением ПО «ВитаМед» стоимостью 600 рублей, предоставляемой в соответствии с <a href="user/docs?action=additional_service_vita-med" target="_blank">заявлением о предоставлении дополнительных услуг.</a>'],
-        'agreed_10' =>['verify' => 0, 'docname' => 'на уступку права требования', 'class' => 'js-agree-claim-value', 'show_only_safety_flow' => true]
+        'agreed_10' =>['verify' => 0, 'docname' => 'на уступку права требования', 'class' => 'js-agree-claim-value', 'show_only_safety_flow' => true],
+        'rcl_limit' => ['verify' => 1, 'filename' => "/preview/rcl_limit?{http_build_query($rcl_params)}", 'docname' => 'Заявление на установку расходного кредитного лимита'],
+        'rcl_transh' => ['verify' => 1, 'filename' => "/preview/rcl_transh?{http_build_query($rcl_params)}", 'docname' => 'Заявление на получение транша']
         ]}
 {elseif ($user_order['organization_id'] == $ORGANIZATION_RZS || $docs_default)}
     {$accept_documents = [
         'agreed_1' => ['verify' => 1, 'filename' => "/files/docs/rzs/accept_documents/obschie-usloviya.pdf", 'docname' => 'Общие условия договора займа'],
         'agreed_2' => ['verify' => 1, 'filename' => "/files/docs/rzs/accept_documents/pravila-predostavleniya.pdf", 'docname' => 'Правила предоставления займов'],
         'agreed_3' => ['verify' => 1, 'filename' => "/files/docs/rzs/register_user_docs/polozhenie-asp.pdf", 'docname' => 'Положение АСП'],
-        'soglasie_recurrent' => ['verify' => 0, 'filename' => "/user/docs?action=soglasie_recurrent", 'docname' => 'Соглашение о регулярных (рекуррентных) платежах'],
+        'soglasie_recurrent' => ['verify' => 0, 'filename' => "/user/docs?action=soglasie_recurrent&organization_id={$user_order['organization_id']}", 'docname' => 'Соглашение о регулярных (рекуррентных) платежах'],
         'agreed_offer_docs' => ['verify' => 1, 'docname' => "<a href=\"/user/docs?action=offer_agreement&order_id={$user_order['id']}\" target=\"_blank\">Соглашение об акцепте оферты</a>, <a href=\"/user/docs?action=asp_agreement&order_id={$user_order['id']}\" target=\"_blank\">Соглашение об АСП</a>, <a href=\"/user/docs?action=arbitration_agreement&order_id={$user_order['id']}\" target=\"_blank\">Арб.соглашение</a>, <a href=\"/user/docs?action=offer_arbitration_cessionary&order_id={$user_order['id']}\" target=\"_blank\">Оферта</a>"],
         'agreed_4' => ['verify' => 1, 'filename' => "/files/docs/rzs/get_loan_user_docs/Договор_об_условиях_предоставления_Акционерное_общество_«Сургутнефтегазбанк».pdf", 'docname' => 'Договором об условиях предоставления Акционерное общество «Сургутнефтегазбанк» услуги по переводу денежных средств с использованием реквизитов банковской карты с помощью Интернет-ресурса ООО «Бест2пей» (Публичная оферта)'],
         'agreed_5' => ['verify' => 1, 'filename' => "user/docs?action=micro_zaim&organization_id={$ORGANIZATION_RZS}", 'docname' => 'Заявлением о предоставлении микрозайма'],
         'credit_doctor_checkbox' => [],
-        'star_oracle' => []
+        'tv_medical' => [],
+        'rcl_limit' => ['verify' => 1, 'filename' => "/preview/rcl_limit?{http_build_query($rcl_params)}", 'docname' => 'Заявление на установку расходного кредитного лимита'],
+        'rcl_transh' => ['verify' => 1, 'filename' => "/preview/rcl_transh?{http_build_query($rcl_params)}", 'docname' => 'Заявление на получение транша'],
+
+        'rcl_transh' => ['verify' => 1, 'filename' => "/files/docs/rzs/accept_documents/Pravila_predostavleniya_zajmov.pdf", 'docname' => 'Правила предоставления займов' , 'class' => 'js-agree-claim-value' ],
+        'rcl_transh' => ['verify' => 1, 'filename' => "/files/docs/rzs/accept_documents/politika-bezopasnosti-platezhei-best2pay.pdf", 'docname' => 'Политика безопасности платежей' , 'class' => 'js-agree-claim-value' ],
+        'rcl_transh' => ['verify' => 1, 'filename' => "/files/docs/rzs/accept_documents/Soglashenie_ob_ispolzovanii_ASP.pdf", 'docname' => 'Соглашение об использовании аналога собственноручной подписи' , 'class' => 'js-agree-claim-value' ]
     ]}
 {elseif $user_order['organization_id'] == $ORGANIZATION_LORD}
     {$accept_documents = [
         'agreed_1' => ['verify' => 1, 'filename' => "/files/docs/lord/accept_documents/obschie-usloviya.pdf", 'docname' => 'Общие условия договора займаа'],
         'agreed_2' => ['verify' => 1, 'filename' => "/files/docs/lord/accept_documents/pravila-predostavleniya.pdf", 'docname' => 'Правила предоставления займов'],
         'agreed_3' => ['verify' => 1, 'filename' => "/files/docs/lord/register_user_docs/polozhenie-asp.pdf", 'docname' => 'Положение АСП'],
-        'soglasie_recurrent' => ['verify' => 0, 'filename' => "/user/docs?action=soglasie_recurrent", 'docname' => 'Соглашение о регулярных (рекуррентных) платежах'],
+        'soglasie_recurrent' => ['verify' => 0, 'filename' => "/user/docs?action=soglasie_recurrent&organization_id={$user_order['organization_id']}", 'docname' => 'Соглашение о регулярных (рекуррентных) платежах'],
         'agreed_offer_docs' => ['verify' => 1, 'docname' => "<a href=\"/user/docs?action=offer_agreement&order_id={$user_order['id']}\" target=\"_blank\">Соглашение об акцепте оферты</a>, <a href=\"/user/docs?action=asp_agreement&order_id={$user_order['id']}\" target=\"_blank\">Соглашение об АСП</a>, <a href=\"/user/docs?action=arbitration_agreement&order_id={$user_order['id']}\" target=\"_blank\">Арб.соглашение</a>, <a href=\"/user/docs?action=offer_arbitration_cessionary&order_id={$user_order['id']}\" target=\"_blank\">Оферта</a>"],
-        'agreed_4' => ['verify' => 1, 'filename' => '/files/docs/lord/Договор_об_условиях_предоставления_Акционерное_общество_«Сургутнефтегазбанк».pdf', 'docname' => 'Договором об условиях предоставления Акционерное общество «Сургутнефтегазбанк» услуги по переводу денежных средств с использованием реквизитов банковской карты с помощью Интернет-ресурса ООО «Бест2пей» (Публичная оферта)'],
-        'agreed_5' => ['verify' => 1, 'filename' => "user/docs?action=micro_zaim&organization_id={$ORGANIZATION_LORD}", 'docname' => 'Заявлением о предоставлении микрозайма'],
+        'agreed_4' => ['verify' => 1, 'filename' => '/files/docs/Договор_об_условиях_предоставления_Акционерное_общество_«Сургутнефтегазбанк».pdf', 'docname' => 'Договором об условиях предоставления Акционерное общество «Сургутнефтегазбанк» услуги по переводу денежных средств с использованием реквизитов банковской карты с помощью Интернет-ресурса ООО «Бест2пей» (Публичная оферта)'],
+        'agreed_5' => ['verify' => 1, 'filename' => "user/docs?action=micro_zaim&organization_id={$user_order['organization_id']}", 'docname' => 'Заявлением о предоставлении микрозайма'],
         'credit_doctor_checkbox' => [],
-        'star_oracle' => []
+        'tv_medical' => [],
+        'rcl_limit' => ['verify' => 1, 'filename' => "/preview/rcl_limit?{http_build_query($mfo_params)}&rcl_amount={$rcl_amount}&rcl_amount_string={$rcl_amount_string}", 'docname' => 'Заявление на установку расходного кредитного лимита'],
+        'rcl_transh' => ['verify' => 1, 'filename' => "/preview/rcl_transh?{http_build_query($mfo_params)}&rcl_amount={$rcl_amount}&rcl_amount_string={$amount_string}", 'docname' => 'Заявление на получение транша']
+    ]}
+{elseif $user_order['organization_id'] == $ORGANIZATION_FASTFINANCE}
+    {$accept_documents = [
+        'agreed_1' => ['verify' => 1, 'filename' => "/files/docs/fastfinance/accept_documents/obschie-usloviya.pdf", 'docname' => 'Общие условия договора займаа'],
+        'agreed_2' => ['verify' => 1, 'filename' => "/files/docs/fastfinance/accept_documents/pravila-predostavleniya.pdf", 'docname' => 'Правила предоставления займов'],
+        'agreed_3' => ['verify' => 1, 'filename' => "/files/docs/fastfinance/register_user_docs/polozhenie-asp.pdf", 'docname' => 'Соглашение об АСП'],
+        'soglasie_recurrent' => ['verify' => 0,
+                                 'filename' => "/user/docs?action=soglasie_recurrent&organization_id={$user_order['organization_id']}",
+                                 'docname' => 'Соглашение о регулярных (рекуррентных) платежах'],
+        'agreed_offer_docs' => ['verify' => 1, 'docname' => "<a href=\"/user/docs?action=offer_agreement&order_id={$user_order['id']}\" target=\"_blank\">Соглашение об акцепте оферты</a>,
+                                                                <a href=\"/user/docs?action=asp_agreement&order_id={$user_order['id']}\" target=\"_blank\">Соглашение об АСП</a>,
+                                                                <a href=\"/user/docs?action=arbitration_agreement&order_id={$user_order['id']}\" target=\"_blank\">Арб.соглашение</a>,
+                                                                <a href=\"/user/docs?action=offer_arbitration_cessionary&order_id={$user_order['id']}\" target=\"_blank\">Оферта</a>"],
+        'agreed_4' => ['verify' => 1, 'filename' => '/files/docs/Договор_об_условиях_предоставления_Акционерное_общество_«Сургутнефтегазбанк».pdf', 'docname' => 'Договором об условиях предоставления Акционерное общество «Сургутнефтегазбанк» услуги по переводу денежных средств с использованием реквизитов банковской карты с помощью Интернет-ресурса ООО «Бест2пей» (Публичная оферта)'],
+        'agreed_5' => ['verify' => 1, 'filename' => "user/docs?action=micro_zaim&organization_id={$ORGANIZATION_FASTFINANCE}", 'docname' => 'Заявлением о предоставлении микрозайма'],
+        'credit_doctor_checkbox' => [],
+        'tv_medical' => [],
+        'rcl_limit' => ['verify' => 1, 'filename' => "/preview/rcl_limit?{http_build_query($rcl_params)}", 'docname' => 'Заявление на установку расходного кредитного лимита'],
+        'rcl_transh' => ['verify' => 1, 'filename' => "/preview/rcl_transh?{http_build_query($rcl_params)}", 'docname' => 'Заявление на получение транша']
     ]}
 {elseif ($user_order['organization_id'] == $ORGANIZATION_MOREDENEG)}
     {$accept_documents = [
@@ -86,19 +131,23 @@
         'agreed_4' => ['verify' => 1, 'filename' => "/files/docs/moredeneg/get_loan_user_docs/Politika-bezopasnosti-platezhej-Best2Pay.pdf", 'docname' => 'Договором об условиях предоставления Акционерное общество «Сургутнефтегазбанк» услуги по переводу денежных средств с использованием реквизитов банковской карты с помощью Интернет-ресурса ООО «Бест2пей» (Публичная оферта)'],
         'agreed_5' => ['verify' => 1, 'filename' => "user/docs?action=micro_zaim&organization_id={$ORGANIZATION_MOREDENEG}", 'docname' => 'Заявлением о предоставлении микрозайма'],
         'credit_doctor_checkbox' => [],
-        'star_oracle' => []
+        'tv_medical' => [],
+        'rcl_limit' => ['verify' => 1, 'filename' => "/preview/rcl_limit?{http_build_query($rcl_params)}", 'docname' => 'Заявление на установку расходного кредитного лимита'],
+        'rcl_transh' => ['verify' => 1, 'filename' => "/preview/rcl_transh?{http_build_query($rcl_params)}", 'docname' => 'Заявление на получение транша']
     ]}
 {elseif $user_order['organization_id'] == $ORGANIZATION_FRIDA}
     {$accept_documents = [
         'agreed_1' => ['verify' => 1, 'filename' => "/files/docs/frida/accept_documents/obschie-usloviya.pdf", 'docname' => 'Общие условия договора займаа'],
         'agreed_2' => ['verify' => 1, 'filename' => "/files/docs/frida/accept_documents/pravila-predostavleniya.pdf", 'docname' => 'Правила предоставления займов'],
         'agreed_3' => ['verify' => 1, 'filename' => "/files/docs/frida/register_user_docs/polozhenie-asp.pdf", 'docname' => 'Положение АСП'],
-        'soglasie_recurrent' => ['verify' => 0, 'filename' => "/user/docs?action=soglasie_recurrent", 'docname' => 'Соглашение о регулярных (рекуррентных) платежах'],
+        'soglasie_recurrent' => ['verify' => 0, 'filename' => "/user/docs?action=soglasie_recurrent&organization_id={$user_order['organization_id']}", 'docname' => 'Соглашение о регулярных (рекуррентных) платежах'],
         'agreed_offer_docs' => ['verify' => 1, 'docname' => "<a href=\"/user/docs?action=offer_agreement&order_id={$user_order['id']}\" target=\"_blank\">Соглашение об акцепте оферты</a>, <a href=\"/user/docs?action=asp_agreement&order_id={$user_order['id']}\" target=\"_blank\">Соглашение об АСП</a>, <a href=\"/user/docs?action=arbitration_agreement&order_id={$user_order['id']}\" target=\"_blank\">Арб.соглашение</a>, <a href=\"/user/docs?action=offer_arbitration_cessionary&order_id={$user_order['id']}\" target=\"_blank\">Оферта</a>"],
         'agreed_4' => ['verify' => 1, 'filename' => '/files/docs/frida/get_loan_user_docs/Oferta-ob-usloviyah-ispolzovanie-servisa-processingovogo-centra.pdf', 'docname' => 'Оферта об использовании процессингового центра BEST2PAY'],
         'agreed_5' => ['verify' => 1, 'filename' => "user/docs?action=micro_zaim&organization_id={$ORGANIZATION_FRIDA}", 'docname' => 'Заявлением о предоставлении микрозайма'],
         'credit_doctor_checkbox' => [],
-        'star_oracle' => []
+        'tv_medical' => [],
+        'rcl_limit' => ['verify' => 1, 'filename' => "/preview/rcl_limit?{http_build_query($rcl_params)}", 'docname' => 'Заявление на установку расходного кредитного лимита'],
+        'rcl_transh' => ['verify' => 1, 'filename' => "/preview/rcl_transh?{http_build_query($rcl_params)}", 'docname' => 'Заявление на получение транша']
     ]}
 {else}
     {$accept_documents = [
@@ -109,23 +158,35 @@
         'agreed_5' => ['verify' => 1, 'filename' => '/user/docs?action=micro_zaim', 'docname' => 'Заявлением о предоставлении микрозайма','link_class' => "micro-zaim-doc-js"],
         'agreed_6' => ['verify' => 1, 'filename' => '/files/docs/politikakonfidentsialnosti.pdf', 'docname' => 'Политикой конфиденциальности ООО МКК «Аквариус»'],
         'credit_doctor_checkbox' => [],
-        'star_oracle' => [],
+        'tv_medical' => [],
         'service_recurent_check' => ['verify' => 0, 'filename' => '/files/docs/soglashenie-o-regulyarnyh-rekurentnyh-platezhah.pdf', 'docname' => 'Соглашением о применении регулярных (рекуррентных) платежах', 'class' => 'js-service-recurent'],
-        'agreed_7' => ['verify' => 1, 'filename' => '/preview/agreement_disagreement_to_receive_ko', 'docname' => 'на запрос кредитного отчета в бюро кредитных историй'],
+        'agreed_7' => ['verify' => 1, 'filename' => '/user/docs?action=soglasie_na_bki', 'docname' => 'на запрос кредитного отчета в бюро кредитных историй'],
         'agreed_offer_docs' => ['verify' => 1, 'docname' => "<a href=\"/user/docs?action=offer_agreement&order_id={$user_order['id']}\" target=\"_blank\">Соглашение об акцепте оферты</a>, <a href=\"/user/docs?action=asp_agreement&order_id={$user_order['id']}\" target=\"_blank\">Соглашение об АСП</a>, <a href=\"/user/docs?action=arbitration_agreement&order_id={$user_order['id']}\" target=\"_blank\">Арб.соглашение</a>, <a href=\"/user/docs?action=offer_arbitration_cessionary&order_id={$user_order['id']}\" target=\"_blank\">Оферта</a>"],
         'agreed_8' => ['verify' => 1, 'filename' => '/files/docs/Договор_об_условиях_предоставления_Акционерное_общество_«Сургутнефтегазбанк».pdf', 'docname' => 'Договором об условиях предоставления Акционерное общество «Сургутнефтегазбанк» услуги по переводу денежных средств с использованием реквизитов банковской карты с помощью Интернет-ресурса ООО «Бест2пей» (Публичная оферта)'],
         'agreed_9' => ['verify' => 0, 'docname' => 'подключением ПО «ВитаМед» стоимостью <span id="tv_med_amount">600</span> рублей, предоставляемой в соответствии с <a href="user/docs?action=additional_service_vita-med" target="_blank">заявлением о предоставлении дополнительных услуг.</a>', 'class' => 'js-agree-claim-value'],
-        'agreed_10' =>['verify' => 1, 'docname' => 'на уступку права требования', 'class' => 'js-agree-claim-value', 'show_only_safety_flow' => false]
+        'agreed_10' =>['verify' => 1, 'docname' => 'на уступку права требования', 'class' => 'js-agree-claim-value', 'show_only_safety_flow' => false],
+        'rcl_limit' => ['verify' => 1, 'filename' => "/preview/rcl_limit?{http_build_query($rcl_params)}", 'docname' => 'Заявление на установку расходного кредитного лимита'],
+        'rcl_transh' => ['verify' => 1, 'filename' => "/preview/rcl_transh?{http_build_query($rcl_params)}", 'docname' => 'Заявление на получение транша']
         ]}
 {/if}
 
 {if !$isSafetyFlow && $isAllowedTestLeadgid}
-    {assign var="accept_documents" value=$accept_documents|@array_diff_key:['agreed_8' => '', 'service_recurent_check' => '', 'agreed_4' => '', 'soglasie_recurrent' => '']}
+    {assign var="accept_documents" value=$accept_documents|@array_diff_key:['agreed_8' => '', 'service_recurent_check' => '', 'agreed_4' => '', 'soglasie_recurrent' => '', 'rcl_limit' => '', 'rcl_transh' => '']}
 {/if}
 
 <div class="docs_wrapper">
     <div class="conditions">
         {foreach $accept_documents as $accept_document_key => $accept_document}
+            {* Пропускаем документы по ВКЛ, если заявка не ВКЛ *}
+            {if in_array($accept_document_key, ['rcl_limit', 'rcl_transh'])}
+                {if !empty($rcl_loan)}
+                    <div>
+                        {print_document accept_document_key=$accept_document_key accept_document=$accept_document}
+                    </div>
+                {/if}
+                {continue}
+            {/if}
+
             {if $accept_document_key == 'agreed_10'}
                 {if $isSafetyFlow}
                     {* безопасный флоу: видно и не отмечено *}
@@ -174,9 +235,9 @@
                 {/if}
                 {continue}
             {/if}
-            {if $accept_document_key == 'star_oracle'}
-                {if $showExtraService['star_oracle']['show']}
-                    {include file="star_oracle/star_oracle_checkbox.tpl" idkey=$user_order['id']}
+            {if $accept_document_key == 'tv_medical'}
+                {if $showExtraService['tv_medical']['show']}
+                    {include file="tv_medical/tv_medical_checkbox.tpl" idkey=$user_order['id']}
                 {/if}
                 {continue}
             {/if}
@@ -203,7 +264,11 @@
                         </div>
                     </label>
                     <p>Я согласен с
-                        {if $accept_contract_url}
+                        {if $rcl_loan}
+                            <a  class="accept_confirm_href"
+                                href="/preview/rcl_ind_usloviya?{http_build_query($rcl_params)}"
+                                target="_blank">Индивидуальные условия договора займа</a>
+                        {elseif $accept_contract_url}
                             <a class="accept_confirm_href" href="{$accept_contract_url}" target="_blank">Индивидуальными условиями
                                 договором займа</a>
                         {else}
@@ -213,10 +278,13 @@
                         {/if}
                     </p>
                 </div>
+                {if $rcl_loan}
+                    <div class="rcl_disclaimer" style="text-align: left!important;">В договоре указана максимально доступная сумма Кредитной линии</div>
+                {/if}
             {/if}
         {/foreach}
 
-        {if $isSafetyFlow}
+        {if $isSafetyFlow && empty($has_closed_tranche)}
             <div>
                 <label class="spec_size">
                     <div class="checkbox" style="border-width: 1px;width: 16px !important;height: 16px !important;">
@@ -226,7 +294,11 @@
                     </div>
                 </label>
                 <p>Я согласен с
-                    {if $accept_contract_url}
+                    {if $rcl_loan}
+                    <a  class="accept_confirm_href"
+                        href="/preview/rcl_ind_usloviya?{http_build_query($rcl_params)}"
+                        target="_blank">Индивидуальные условия договора займа</a>
+                    {elseif $accept_contract_url}
                         <a class="accept_confirm_href" href="{$accept_contract_url}" target="_blank">Индивидуальными условиями
                             договором займа</a>
                     {else}
@@ -236,6 +308,9 @@
                     {/if}
                 </p>
             </div>
+            {if $rcl_loan}
+                <div class="rcl_disclaimer" style="text-align: left!important;">В договоре указана максимально доступная сумма Кредитной линии</div>
+            {/if}
         {/if}
 
         <div id="not_checked_info" style="display:none">

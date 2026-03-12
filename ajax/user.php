@@ -176,6 +176,10 @@ return false;
             ]
         );
         break;
+    case 'bki_consent':
+        // Чекбокс только для UI, согласие определяется из Axi
+        $response['success'] = true;
+        break;
 }
 
 header("Content-type: application/json; charset=UTF-8");

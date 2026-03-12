@@ -1,6 +1,8 @@
 <?php
 
 use api\asp\AspHelper;
+use App\Core\Application\Application;
+use App\Services\ReturnCoefficientService;
 
 session_start();
 chdir('..');
@@ -25,6 +27,9 @@ class LoanAjax extends Simpla
             case 'check_user':
                 $this->check_user_action();
             break;
+            case 'convert_order_to_il':
+                $this->convert_order_to_il();
+                break;
             case 'change_period_and_percent':
                 $this->change_period_and_percent();
             break;
@@ -421,8 +426,10 @@ class LoanAjax extends Simpla
         });
         $balance_1c = (object)array_shift($order_balance);
         $user->balance = $this->users->make_up_user_balance($user_id, $balance_1c);
-        $user->balance->calc_percents = $this->users->calc_percents($user->balance);
+        $is_rcl = $this->rcl->isRclTranche($order_id);
+        $user->balance->calc_percents = $is_rcl ? 0 : $this->users->calc_percents($user->balance);
         $user->order = (array)$order;
+
 
         $today = strtotime(date('Y-m-d 00:00:00'));
         if (strtotime($user->balance->payment_date) >= $today) {
@@ -457,6 +464,7 @@ class LoanAjax extends Simpla
                 'calc_percents' => $user->balance->calc_percents,
                 'amount' => $user->balance->ostatok_percents + $user->balance->ostatok_peni + $user->balance->calc_percents
                     + $multipolis_final_amount + $tv_medical_final_amount,
+                'is_rcl' => $is_rcl,
             ] + ($order->additional_service_multipolis ? [
                 'multipolis' => 1,
                 'multipolis_amount' => $multipolis_final_amount,
@@ -493,10 +501,13 @@ class LoanAjax extends Simpla
             'user' => $user,
             'expired_days' => $user->balance->expired_days,
             'order_id' => $order_id,
-            'new_prolongation_flow' => $newProlongationFlow
+            'new_prolongation_flow' => $newProlongationFlow,
+            'is_rcl' => $is_rcl,
+            'rcl_new_payment_date' => $is_rcl ? $this->rcl->getNewPaymentDate($user->balance->zaim_date) : null,
         ]);
 
         $this->design->assign('restricted_mode', $_SESSION['restricted_mode'] == 1);
+        $this->design->assign('friend_restricted_mode', $_SESSION['friend_restricted_mode'] == 1);
 
         $html = $this->design->fetch('prolongation.tpl');
         $this->request->html_output($html);
@@ -596,6 +607,21 @@ class LoanAjax extends Simpla
             return 0;
         }
 
+        // СРКВ: блокировка ВМ на оплате если конверсия оплаты, выдачи и возврата>= целевой + клиент ранее возвращал ВМ
+        try {
+            /** @var ReturnCoefficientService $srkv */
+            $srkv = Application::getInstance()->make(ReturnCoefficientService::class);
+            if ($srkv->shouldBlockService(
+                (int)$user->id,
+                ReturnCoefficientService::SERVICE_TV_MEDICAL,
+                ReturnCoefficientService::STAGE_PAYMENT
+            )) {
+                return 0;
+            }
+        } catch (\Throwable $e) {
+            log_warning('SRKV: tv_medical block check failed on payment', ['error' => $e->getMessage()]);
+        }
+
         $paymentDate = new DateTime($user->balance->payment_date);
         $paymentDate->setTime(0, 0);
 
@@ -628,6 +654,62 @@ class LoanAjax extends Simpla
         return $activeTariff->price;
     }
 
+    /**
+     * Конвертируем заём в ИЛ займ и обновляем сумму
+     * @return void
+     * @throws SoapFault
+     */
+    private function convert_order_to_il()
+    {
+        if (empty($_SESSION['user_id'])) {
+            http_response_code(401);
+            $this->request->json_output(
+                [
+                    'error' => 'User Unauthorized'
+                ]
+            );
+        }
+
+        $amount = $this->request->post('amount', 'integer');
+        $order_id = $this->request->post('order_id', 'integer');
+        $last_order = $this->orders->get_order($order_id);
+        $update_data = [
+            'amount' => $amount,
+            'period' => Orders::BASE_IL_PERIOD,
+            'percent' => Orders::BASE_PERCENTS,
+            'loan_type' => Orders::LOAN_TYPE_IL,
+        ];
+
+        $result = $this->orders->update_order($order_id, $update_data);
+
+        if ($result) {
+            // Получаем только ключи из update_data
+            $old_data = array_intersect_key((array)$last_order, $update_data);
+
+            $this->changelogs->add_changelog(
+                [
+                    'manager_id' => 0,
+                    'created' => date('Y-m-d H:i:s'),
+                    'type' => 'edit_amount',
+                    'old_values' => serialize($old_data),
+                    'new_values' => serialize($update_data),
+                    'order_id' => $last_order->id,
+                    'user_id' => $last_order->user_id,
+                ]
+            );
+
+            // Проверим есть ли у заявки cross_order, и поменяем у него срок
+            if ($cross_orders = $this->orders->get_cross_orders($last_order->id)) {
+                foreach ($cross_orders as $co) {
+                    $this->orders->update_order((int)$co->id, [
+                        'period' => 25
+                    ]);
+                }
+            }
+        }
+
+        $this->request->json_output(['success' => $result]);
+    }
 }
 
 $loan = new LoanAjax();

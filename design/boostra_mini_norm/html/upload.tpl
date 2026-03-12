@@ -8,7 +8,15 @@
 {$add_order_css_js = true scope=parent}
 
 {assign var="access_modified_file" value="{empty(count($user->loan_history)) && !in_array($last_order['1c_status'], ['3.Одобрено', '5.Выдан'])}"}
-
+{capture_array key="footer_page_scripts"}
+    <script type="module">
+        import * as pdfjsLib from '/js/pdf.mjs';
+        
+        pdfjsLib.GlobalWorkerOptions.workerSrc = '/js/pdf.worker.mjs';
+        
+        window.pdfjsLib = pdfjsLib;
+    </script>
+{/capture_array}
 {literal}
 <style>
     #img_modal {
@@ -64,7 +72,7 @@
         width: 100%;
     }
 
-    #passport1_list, #passport-other_list {
+    #passport1_list, #passport-other_list, #passport4_list {
         margin-left:auto;
         margin-right:auto;
         background-color: #038AEE;
@@ -97,15 +105,16 @@ function UploadApp()
 {
     let app = this;
     const access_modified_file = "{/literal}{$access_modified_file|escape:'javascript'}{literal}";
-
+    app.lastUploadError = undefined;
     app.init = function(){
         $(document).on('change', '[type=file]', function(){
-            app.upload(this);
+            app.upload(this, false);
         });
 
         const $label = $('.file-label-with-svg');
         const $userFiles = $('#files_form .passport-files .user_files');
-        
+
+
         if ($userFiles.children().length === 0) {
             $label.show();
         }
@@ -213,20 +222,39 @@ function UploadApp()
         
     };
     
-    app.upload = function(input) {
+    app.upload = async function(input) {
         $('#files_form').addClass('loading');
 
         let self = $(input),
             fileBlock = self.closest('.file-block'),
             _type = self.data('type'),
+            file = input.files[0],
             form_data = new FormData();
-
         fileBlock = fileBlock.length !== 0 ? fileBlock : $('.passport-files');
 
         form_data.append('file', input.files[0])
         form_data.append('type', _type);
         form_data.append('action', 'add');
-
+        if (!file) return;
+        let pageCount;
+        let pdfError;
+        if(input.files[0].type === "application/pdf") {
+            try {
+                const arrayBuffer = await file.arrayBuffer();
+                const pdf = await window.pdfjsLib.getDocument({ data: new Uint8Array(arrayBuffer) }).promise;
+                pageCount = pdf.numPages;
+            } catch(error) {
+                if(error?.name === "PasswordException"){
+                    fileBlock.find('.alert').html('Не удалось прочитать PDF или файл защищён паролем').fadeIn();
+                    app.lastUploadError = error.name;
+                }
+            }
+        }
+        let pdfPages = pageCount === 2 ? [1, 2] : [1];
+        form_data.append('pdf_pages', JSON.stringify(pdfPages));
+        if(pageCount > 2) {
+            fileBlock.find('.alert').html('PDF содержит больше 2 страниц').fadeIn();
+        } else {
         $.ajax({
             url        : 'ajax/upload.php',
             data       : form_data,
@@ -238,6 +266,7 @@ function UploadApp()
                 fileBlock.addClass('loading');
             },
             success    : function (resp) {
+                input.value = ''
                 if (!!resp.error) {
                     var error_text = '';
                     if (resp.error == 'max_file_size')
@@ -306,6 +335,8 @@ function UploadApp()
             $('#files_form').removeClass('loading');
         });
     }
+    app.lastUploadError = undefined;
+    }
     
     ;(function(){
         app.init();
@@ -369,7 +400,7 @@ new UploadApp();
                                         </svg>
                                         <p class="files-form__label-par">Загрузить файл</p>
                                     </div>
-                                    <input type="file" name="passport1" accept="image/jpeg,image/png" data-type="passport1" />
+                                    <input type="file" name="passport1" accept="image/jpeg,image/png,image/heic,application/pdf" data-type="passport1" />
                                 </label>
                             </div>
                             
@@ -380,7 +411,7 @@ new UploadApp();
                                     {/if}
                                     <label class="file-label">
                                         <span id="passport1_list">Заменить файл</span>
-                                        <input type="file" name="passport1_replace" class="js-replace" accept="image/jpeg,image/png" data-type="passport1" data-replace="{$passport1_file->id}" />
+                                        <input type="file" name="passport1_replace" class="js-replace" accept="image/jpeg,image/png,image/heic,application/pdf" data-type="passport1" data-replace="{$passport1_file->id}" />
                                     </label>
                                 </div>
                             {/if}
@@ -420,7 +451,7 @@ new UploadApp();
                                             {/if}
                                             <label class="file-label">
                                                 <span id="passport4_list">Заменить файл</span>
-                                                <input type="file" name="passport4_replace" class="js-replace" accept="image/jpeg,image/png" data-type="passport4" data-replace="{$passport4_file->id}" />
+                                                <input type="file" name="passport4_replace" class="js-replace" accept="image/jpeg,image/png,image/heic,application/pdf" data-type="passport4" data-replace="{$passport4_file->id}" />
                                             </label>
                                         </div>
                                     {/if}
@@ -437,7 +468,7 @@ new UploadApp();
                                         </svg>
                                         <p class="files-form__label-par">Загрузить файл</p>
                                     </div>
-                                    <input type="file" name="passport4" accept="image/jpeg,image/png" data-type="passport4" />
+                                    <input type="file" name="passport4" accept="image/jpeg,image/png,image/heic,application/pdf" data-type="passport4" />
                                 </label>
                             </div>
                         </fieldset>
@@ -485,7 +516,7 @@ new UploadApp();
 
                                 <label class="file-label passport-label">
                                     <span id="passport-other_list">Добавить Файл</span>
-                                    <input type="file" class="passport-input" id="passport[]" name="passport[]" accept="image/jpeg,image/png" data-type="passport" />
+                                    <input type="file" class="passport-input" id="passport[]" name="passport[]" accept="image/jpeg,image/png,image/heic,application/pdf" data-type="passport" />
                                 </label>
                             </div>
                             
@@ -503,25 +534,14 @@ new UploadApp();
                                 }
                             }
                         </style>
-                        <div class="clearfix">
-                            <label class="add_file-label" for="add_file">Добавить еще файл</label>
-                            <input id="add_file"
-                                   name="passport[]"
-                                   class="button button-inverse small"
-                                   type="file"
-                                   style="display: none;"
-                                   accept="image/jpeg,image/png"
-                                   data-type="passport"
-                                   value="Добавить еще файл"/>
-                        </div>
                         <p
-                                class="form-help mobile-green-bg"
+                                class="form-help "
                                 style="font-weight: bold; text-align: left;"
                         >
                             Сделайте качественные фото, <span
                                     style="color: red;">и вероятность одобрения повысится!</span>
                         <ul
-                                class="mobile-green-bg"
+                                class=""
                                 style="font-weight: bold; text-align: left;"
                         >
                             <li>располагайте документы так, чтобы они полностью помещались на фотографии;</li>
