@@ -1,0 +1,31 @@
+version: "3.7"
+services:
+  boostra-crm:
+    image: boostra-crm
+    hostname: boostra-crm
+    container_name: boostra-crm
+    build:
+      context: ./
+      dockerfile: .docker/images/local.Dockerfile
+    volumes:
+      - ./config/config.php:/config/config.php
+      - ./design:/var/www/html/design
+      - ./:/var/www/html
+    ports:
+      - 8089:8089
+    depends_on:
+      - redis
+
+  redis:
+    container_name: boostra-crm-redis
+    image: redis:7.0.7
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:6379:6379"
+    environment:
+      - ALLOW_EMPTY_PASSWORD=yes
+    volumes:
+      - redis-data:/data
+
+volumes:
+  redis-data:

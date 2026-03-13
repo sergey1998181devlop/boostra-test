@@ -1,0 +1,63 @@
+/* Стили для кнопок и форм */
+.input-div {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 15px;
+    height: 15px;
+}
+
+.main-input-div {
+    display: flex;
+}
+
+.employs-div-buttons {
+    width: 100%;
+    display: flex;
+    gap: 7px;
+}
+
+.replace-operator-button {
+    width: 200px;
+    height: 50px;
+    border-radius: 10px;
+    background: #7460ee;
+    color: white;
+    border: none;
+}
+
+.left-side > .left-side-buttons {
+    width: 100%;
+}
+
+.left-side-buttons > button {
+    width: 200px;
+    height: 50px;
+    background: grey;
+    border: 1px solid black;
+    border-radius: 10px;
+}
+
+.employs-div {
+    margin-top: 10px;
+}
+
+.employs-list {
+    list-style: none;
+}
+
+.apply-button,
+.vox-div > button {
+    width: 200px;
+    height: 50px;
+    border-radius: 10px;
+    background: #28a745;
+    color: white;
+    border: none #28a745;
+}
+
+.form_zero_payment.loading {
+    opacity: 0.5;
+    pointer-events: none;
+}
+

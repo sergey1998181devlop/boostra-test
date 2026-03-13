@@ -1,0 +1,51 @@
+/* Утилиты и общие стили */
+.loader-icon {
+    border: 5px solid #f3f3f3; /* Light grey */
+    border-top: 5px solid #3498db; /* Blue */
+    border-radius: 50%;
+    width: 50px;
+    height: 50px;
+    animation: spin 2s linear infinite;
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    margin: auto;
+    display: none;
+}
+
+#form_distribute {
+    position: relative;
+}
+
+.div-float-right {
+    display: flex;
+    justify-content: flex-end;
+    align-items: flex-end;
+    gap: 10px;
+}
+
+.div-float-right-main {
+    display: flex;
+    gap: 5px;
+}
+
+.div-float-right-main > div {
+    display: flex;
+    flex-direction: column;
+}
+
+.robo-number {
+    cursor: default !important;
+}
+
+@keyframes spin {
+    0% {
+        transform: rotate(0deg);
+    }
+    100% {
+        transform: rotate(360deg);
+    }
+}
+

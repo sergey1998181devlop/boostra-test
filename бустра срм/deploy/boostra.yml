@@ -1,0 +1,8 @@
+- hosts: deploy
+  vars:
+    temp_repo_path: "/home/boostra-crm/deploy-folder-crm"
+    repo_path: "/home/boostra-crm/crm"
+    branch: "master"
+  #remote_user: rucred-crm
+  roles:
+    - { role: boostra }

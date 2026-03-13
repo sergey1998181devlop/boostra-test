@@ -1,0 +1,78 @@
+/**
+    В этом файле определяются ПЕРЕМЕННЫЕ с настройками для различных сайтов на основе их site_id.
+    ПОСТАРАЙТЕСЬ не пихать сюда стили - выносите их в отдельные css-файлы, а здесь добавляйте переменную.
+
+    При добавлении новой переменной убедитесь, что она присутствует в блоке каждого сайта.
+    Если переменная не нужна для какого-то сайта - лучше дублировать значение по-умолчанию, иначе она может потеряться.
+**/
+
+/**
+    * BOOSTRA (default)
+ */
+:root,
+[data-site_id="boostra"]{
+    /** Цвет фона шапки сайта */
+    --header-bg-color: linear-gradient(to right, #01c0c8 0%, #1f72a2 100%);
+    /** Цвет текста темы - Заголовки, активные вкладки из бокового меню */
+    --text-theme-color: #009efb;
+    /** Цвет ссылок в тексте */
+    --text-link-color: #01c0c8;
+}
+
+/** Скрытие элементов, если выбран boostra (или нет site_id), а элемент не предназначен для boostra */
+[data-site_id]:not([data-site_id="boostra"]) [data-site_required="boostra"],
+[data-site_id="boostra"] [data-site_required]:not([data-site_required="boostra"]),
+body:not([data-site_id]) [data-site_required]:not([data-site_required="boostra"]) {
+    display: none !important;
+}
+
+/**
+    * SOYAPLACE
+ */
+[data-site_id="soyaplace"] {
+    /** Цвет фона шапки сайта */
+    --header-bg-color: linear-gradient(to right, #e87501 0%, #b55a02 100%);;
+    /** Цвет текста темы - Заголовки, активные вкладки из бокового меню */
+    --text-theme-color: #ff8c1d;
+    /** Цвет ссылок в тексте */
+    --text-link-color: #f2a65b;
+}
+
+/** Скрытие элементов, если выбран soyaplace, а элемент не предназначен для soyaplace */
+[data-site_id="soyaplace"] [data-site_required]:not([data-site_required="soyaplace"]) {
+    display: none !important;
+}
+
+/**
+    * NEOMANI
+ */
+[data-site_id="neomani"] {
+    /** Цвет фона шапки сайта */
+    --header-bg-color: linear-gradient(to right, #01c0c8 0%, #1f72a2 100%);
+    /** Цвет текста темы - Заголовки, активные вкладки из бокового меню */
+    --text-theme-color: #009efb;
+    /** Цвет ссылок в тексте */
+    --text-link-color: #01c0c8;
+}
+
+/** Скрытие элементов, если выбран neomani, а элемент не предназначен для neomani */
+[data-site_id="neomani"] [data-site_required]:not([data-site_required="neomani"]) {
+    display: none !important;
+}
+
+/**
+    * RUBL
+ */
+[data-site_id="rubl"] {
+    /** Цвет фона шапки сайта */
+    --header-bg-color: linear-gradient(to right, #01c0c8 0%, #1f72a2 100%);
+    /** Цвет текста темы - Заголовки, активные вкладки из бокового меню */
+    --text-theme-color: #009efb;
+    /** Цвет ссылок в тексте */
+    --text-link-color: #01c0c8;
+}
+
+/** Скрытие элементов, если выбран rubl, а элемент не предназначен для rubl */
+[data-site_id="rubl"] [data-site_required]:not([data-site_required="rubl"]) {
+    display: none !important;
+}

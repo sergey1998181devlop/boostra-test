@@ -1,0 +1,374 @@
+/* ===== СТИЛИ ДЛЯ СТРАНИЦЫ СТАТИСТИКИ ТИКЕТОВ ===== */
+
+/* ===== ОБЩИЕ СТИЛИ ТАБЛИЦ ===== */
+.ticket-statistics table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.ticket-statistics th, 
+.ticket-statistics td {
+    border: 1px solid black;
+    padding: 8px;
+    text-align: center;
+}
+
+/* ===== СТИЛИ ДЛЯ ВКЛАДКИ "СТАТИСТИКА ПО СТАТУСАМ" ===== */
+#statistics-by-status-tab .table {
+    border-collapse: collapse;
+}
+
+#statistics-by-status-tab .table th,
+#statistics-by-status-tab .table td {
+    vertical-align: middle;
+    white-space: nowrap;
+    border: 1px solid #2d3338;
+}
+
+#statistics-by-status-tab .table th {
+    background-color: #2d3338;
+    color: #fff;
+    padding: 8px;
+    border: 1px solid #404850;
+}
+
+#statistics-by-status-tab .table tbody tr:hover td {
+    background-color: rgba(255,255,255,0.05);
+}
+
+/* Стили для статусов в заголовке */
+#statistics-by-status-tab .table th[style^="background-color:"] {
+    border: 1px solid #404850;
+}
+
+/* ===== СТИЛИ ДЛЯ ВКЛАДКИ "ВРЕМЯ ОБРАБОТКИ" ===== */
+.repeat-complaints .stat-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 8px 12px;
+    background-color: #8B4513;
+    color: white;
+    margin-bottom: 1px;
+}
+
+/* Стили для строк месяцев и дней */
+.month-row {
+    font-weight: bold;
+    cursor: pointer;
+}
+
+.month-row:hover {
+    background-color: #e9ecef;
+}
+
+.day-row {
+    display: none;
+    background-color: #252529;
+}
+
+.day-row:hover {
+    background-color: #f8f9fa;
+}
+
+.toggle-icon {
+    margin-right: 5px;
+}
+
+#processing-time-table .month-row {
+    font-weight: bold;
+    cursor: pointer;
+}
+
+#processing-time-table .month-row:hover {
+    background-color: #2a2e33;
+}
+
+#processing-time-table .daily-details-row, 
+#reaction-time-table .daily-details-row {
+    background-color: #1f1f23;
+}
+
+#processing-time-table .toggle-icon {
+    margin-right: 5px;
+    color: #fff;
+}
+
+/* Обеспечиваем видимость текста в ячейках */
+#processing-time-table .daily-details-row td,
+#processing-time-table .type-detail-row td {
+    color: #e2e2e2 !important;
+}
+
+#processing-time-table .daily-details-row td .text-muted,
+#processing-time-table .type-detail-row td .text-muted {
+    color: #8a8a8a !important;
+}
+
+/* ===== СТИЛИ ДЛЯ ВКЛАДКИ "СТАТИСТИКА ПО ТЕМАМ" ===== */
+#statistics-by-subject-tab table {
+    border-collapse: collapse;
+    font-size: 13px;
+    width: 100%;
+}
+
+#statistics-by-subject-tab table th,
+#statistics-by-subject-tab table td {
+    vertical-align: middle;
+    white-space: nowrap;
+    border: 1px solid #2d3338;
+    padding: 8px;
+}
+
+#statistics-by-subject-tab table thead th {
+    background-color: #2d3338;
+    color: #fff;
+    border-color: #404850;
+}
+
+#statistics-by-subject-tab table thead th[style^="background-color:"] {
+    border-color: #404850;
+    color: #fff;
+}
+
+#statistics-by-subject-tab table tbody td {
+    border-color: #2d3338;
+}
+
+#statistics-by-subject-tab table tbody tr td {
+    background-color: #212529;
+    color: #c8c8c8;
+}
+
+#statistics-by-subject-tab table tbody tr:nth-child(even) td {
+    background-color: #272b30;
+}
+
+#statistics-by-subject-tab table tbody tr:hover td {
+    background-color: rgba(255,255,255,0.05);
+    color: #f0f0f0;
+}
+
+#statistics-by-subject-tab table .count-main,
+#statistics-by-subject-tab table .count-cell {
+    color: #01c0c8;
+}
+
+#statistics-by-subject-tab table .percent-cell {
+    color: #8a8a8a;
+    font-size: 0.9em;
+}
+
+#statistics-by-subject-tab table .text-muted-custom {
+    color: #6c757d;
+}
+
+#statistics-by-subject-tab table tbody tr.total-row td {
+    background-color: #1a1d20;
+    color: #f0f0f0;
+    border-top: 2px solid #404850;
+}
+
+#statistics-by-subject-tab table tbody tr.total-row:hover td {
+    background-color: rgba(255,255,255,0.08);
+    color: #ffffff;
+}
+
+#statistics-by-subject-tab table .type-data-cell {
+    text-align: left;
+}
+
+/* ===== СТИЛИ ДЛЯ ВКЛАДКИ "СТАТИСТИКА АВТОНАЗНАЧЕНИЯ" ===== */
+#statistics-by-assignment-tab .table {
+    border-collapse: collapse !important;
+    font-size: 13px !important;
+    width: 100% !important;
+}
+
+#statistics-by-assignment-tab .table th,
+#statistics-by-assignment-tab .table td {
+    vertical-align: middle !important;
+    white-space: nowrap !important;
+    border: 1px solid #2d3338 !important;
+    padding: 8px !important;
+}
+
+#statistics-by-assignment-tab .table thead th {
+    background-color: #2d3338 !important;
+    color: #fff !important;
+    border-color: #404850 !important;
+}
+
+#statistics-by-assignment-tab .table tbody td {
+    border-color: #2d3338 !important;
+}
+
+#statistics-by-assignment-tab .table tbody tr td {
+    background-color: #212529 !important;
+    color: #c8c8c8 !important;
+}
+
+#statistics-by-assignment-tab .table tbody tr:nth-child(even) td {
+    background-color: #272b30 !important;
+}
+
+#statistics-by-assignment-tab .table tbody tr:hover td {
+    background-color: rgba(255,255,255,0.05) !important;
+    color: #f0f0f0 !important;
+}
+
+#statistics-by-assignment-tab .table .count-main,
+#statistics-by-assignment-tab .table .count-cell {
+    color: #01c0c8 !important;
+}
+
+#statistics-by-assignment-tab .table .load-cell {
+    color: #ffc107 !important;
+}
+
+#statistics-by-assignment-tab .table .coefficient-cell {
+    color: #28a745 !important;
+}
+
+#statistics-by-assignment-tab .table tbody tr.total-row td {
+    background-color: #1a1d20 !important;
+    color: #f0f0f0 !important;
+    border-top: 2px solid #404850 !important;
+}
+
+#statistics-by-assignment-tab .table tbody tr.total-row:hover td {
+    background-color: rgba(255,255,255,0.08) !important;
+    color: #ffffff !important;
+}
+
+/* ===== СТИЛИ ДЛЯ ВКЛАДОК "ЖАЛОБЫ ПО МЕНЕДЖЕРАМ" И "ЖАЛОБЫ ПО ОТВЕТСТВЕННЫМ" ===== */
+#complaints-by-manager-tab .table,
+#complaints-by-responsible-tab .table {
+    border-collapse: collapse !important;
+    font-size: 13px !important;
+    width: 100% !important;
+}
+
+#complaints-by-manager-tab .table th,
+#complaints-by-manager-tab .table td,
+#complaints-by-responsible-tab .table th,
+#complaints-by-responsible-tab .table td {
+    vertical-align: middle !important;
+    white-space: nowrap !important;
+    border: 1px solid #2d3338 !important;
+    padding: 8px !important;
+}
+
+#complaints-by-manager-tab .table thead th,
+#complaints-by-responsible-tab .table thead th {
+    background-color: #2d3338 !important;
+    color: #fff !important;
+    border-color: #404850 !important;
+}
+
+#complaints-by-manager-tab .table tbody td,
+#complaints-by-responsible-tab .table tbody td {
+    border-color: #2d3338 !important;
+}
+
+#complaints-by-manager-tab .table tbody tr td,
+#complaints-by-responsible-tab .table tbody tr td {
+    background-color: #212529 !important;
+    color: #c8c8c8 !important;
+}
+
+#complaints-by-manager-tab .table tbody tr:nth-child(even) td,
+#complaints-by-responsible-tab .table tbody tr:nth-child(even) td {
+    background-color: #272b30 !important;
+}
+
+#complaints-by-manager-tab .table tbody tr:hover td,
+#complaints-by-responsible-tab .table tbody tr:hover td {
+    background-color: rgba(255,255,255,0.05) !important;
+    color: #f0f0f0 !important;
+}
+
+#complaints-by-manager-tab .table tbody tr.total-row td,
+#complaints-by-responsible-tab .table tbody tr.total-row td {
+    background-color: #1a1d20 !important;
+    color: #f0f0f0 !important;
+    border-top: 2px solid #404850 !important;
+}
+
+#complaints-by-manager-tab .table tbody tr.total-row:hover td,
+#complaints-by-responsible-tab .table tbody tr.total-row:hover td {
+    background-color: rgba(255,255,255,0.08) !important;
+    color: #ffffff !important;
+}
+
+/* ===== СТИЛИ ДЛЯ ФИЛЬТРОВ ===== */
+.assignment-filters {
+    background-color: #2d3338 !important;
+    border: 1px solid #404850 !important;
+    border-radius: 5px !important;
+    padding: 15px !important;
+    margin-bottom: 20px !important;
+}
+
+.assignment-filters label {
+    color: #fff !important;
+    font-weight: 500 !important;
+}
+
+.assignment-filters .form-control {
+    background-color: #212529 !important;
+    border-color: #404850 !important;
+    color: #fff !important;
+}
+
+.assignment-filters .form-control:focus {
+    background-color: #2a2e33 !important;
+    border-color: #01c0c8 !important;
+    color: #fff !important;
+    box-shadow: 0 0 0 0.2rem rgba(1, 192, 200, 0.25) !important;
+}
+
+.complaints-filters {
+    background-color: #2d3338 !important;
+    border: 1px solid #404850 !important;
+    border-radius: 5px !important;
+    padding: 15px !important;
+    margin-bottom: 20px !important;
+}
+
+.complaints-filters label {
+    color: #fff !important;
+    font-weight: 500 !important;
+}
+
+.complaints-filters .form-control {
+    background-color: #212529 !important;
+    border-color: #404850 !important;
+    color: #fff !important;
+}
+
+.complaints-filters .form-control:focus {
+    background-color: #2a2e33 !important;
+    border-color: #01c0c8 !important;
+    color: #fff !important;
+    box-shadow: 0 0 0 0.2rem rgba(1, 192, 200, 0.25) !important;
+}
+
+/* ===== СТИЛИ ДЛЯ УРОВНЕЙ СЛОЖНОСТИ ===== */
+.level-soft {
+    background-color: rgba(40, 167, 69, 0.1) !important;
+}
+
+.level-middle {
+    background-color: rgba(255, 193, 7, 0.1) !important;
+}
+
+.level-hard {
+    background-color: rgba(220, 53, 69, 0.1) !important;
+}
+
+/* ===== СТИЛИ ДЛЯ ЗАГРУЗКИ ===== */
+.loading-container {
+    text-align: center !important;
+    padding: 40px !important;
+    color: #8a8a8a !important;
+}

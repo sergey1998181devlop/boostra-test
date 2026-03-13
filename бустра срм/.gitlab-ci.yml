@@ -1,0 +1,502 @@
+variables:
+  DOCKER_TLS_CERTDIR: ""
+  DOCKER_REGISTRY: cr.yandex/crpbmo0llrf3kifjdq43
+  CONTAINER_BASE_IMAGE: ${DOCKER_REGISTRY}/base-boostra-crm:latest
+  CONTAINER_IMAGE_CRM: ${CI_REGISTRY}/${CI_PROJECT_PATH}/crm:${CI_COMMIT_SHA}
+  CONTAINER_IMAGE_CRM_LATEST: ${CI_REGISTRY}/${CI_PROJECT_PATH}/crm:latest
+  CONTAINER_IMAGE_CRM_CHECKER: ${CI_REGISTRY}/${CI_PROJECT_PATH}/crm-checker:${CI_COMMIT_SHA}
+  CONTAINER_IMAGE_CRM_CHECKER_LATEST: ${CI_REGISTRY}/${CI_PROJECT_PATH}/crm-checker:latest
+  NODE_VERSION: 12.22.8
+  DOCKER_VERSION: 20.10.17
+  STACK_NAME: dev-boostra-crm
+  APP_VERSION: ${CI_COMMIT_SHORT_SHA}
+  SWARM_STACK_NAME: dev
+
+stages:
+  - deploy-prod
+  - build-base
+  - build-crm
+  - deploy-swarm-dev
+  - deploy-swarm-prod
+  - migrations
+
+
+.deployment: &deploy_script
+  script:
+    - echo ${CONTAINER_IMAGE_CRM}
+    - echo ${SWARM_STACK_NAME}
+    - sed -i -e 's/CONTAINER_IMAGE_APP/${CONTAINER_IMAGE_CRM}/g' .docker/swarm/docker-compose.${SWARM_STACK_NAME}.yml
+    - echo ${CI_KEY} | docker login --username json_key --password-stdin ${CI_REGISTRY}
+    - docker service ls | grep ${STACK_NAME}-${ENV_NAME} || true
+    - docker stack deploy ${STACK_NAME}-${ENV_NAME} --compose-file=.docker/swarm/docker-compose.${SWARM_STACK_NAME}.yml --with-registry-auth --prune
+    - apk add --no-cache bash
+    - bash .docker/swarm/docker-stack-wait-deploy.sh ${STACK_NAME}-${ENV_NAME}
+    - docker service ls | grep ${STACK_NAME}-${ENV_NAME} || true
+    - docker system prune -a -f
+
+build-base-image:
+  stage: build-base
+  image: docker:${DOCKER_VERSION}-dind-alpine3.16
+  services:
+    - docker:${DOCKER_VERSION}-dind-alpine3.16
+  when: manual
+  except:
+    refs:
+      - master
+  variables:
+    GIT_CLEAN_FLAGS: none
+  tags:
+    - develop-crm
+  script:
+    - echo ${CI_KEY} | docker login --username json_key --password-stdin ${CI_REGISTRY}
+    - docker build -t ${CONTAINER_BASE_IMAGE} --no-cache -f .docker/images/base.Dockerfile .
+    - docker push ${CONTAINER_BASE_IMAGE}
+
+build-crm-dev:
+  stage: build-crm
+  image: docker:${DOCKER_VERSION}-dind-alpine3.16
+  services:
+      - docker:${DOCKER_VERSION}-dind-alpine3.16
+  when: manual
+  except:
+    refs:
+      - master
+  variables:
+    GIT_CLEAN_FLAGS: none
+  tags:
+    - develop-crm
+  script:
+    - echo ${CI_KEY} | docker login --username json_key --password-stdin ${CI_REGISTRY}
+    - docker pull ${CONTAINER_IMAGE_CRM_LATEST} || true
+    - docker build --build-arg COMPOSER_AUTH="$COMPOSER_AUTH" -t ${CONTAINER_IMAGE_CRM}  --cache-from ${CONTAINER_IMAGE_CRM_LATEST} -f .docker/images/Dockerfile .
+    - docker rmi ${CONTAINER_IMAGE_CRM_LATEST} || true
+    - docker push ${CONTAINER_IMAGE_CRM}
+    - docker image prune -af
+
+build-crm-aqa:
+  stage: build-crm
+  image: docker:${DOCKER_VERSION}-dind-alpine3.16
+  services:
+      - docker:${DOCKER_VERSION}-dind-alpine3.16
+  only:
+      - master
+  variables:
+    GIT_CLEAN_FLAGS: none
+  tags:
+    - develop-sites
+  script:
+    - echo ${CI_KEY} | docker login --username json_key --password-stdin ${CI_REGISTRY}
+    - docker pull ${CONTAINER_IMAGE_CRM_LATEST} || true
+    - docker build --build-arg COMPOSER_AUTH="$COMPOSER_AUTH" -t ${CONTAINER_IMAGE_CRM}  --cache-from ${CONTAINER_IMAGE_CRM_LATEST} -f .docker/images/Dockerfile .
+    - docker rmi ${CONTAINER_IMAGE_CRM_LATEST} || true
+    - docker push ${CONTAINER_IMAGE_CRM}
+    - docker tag ${CONTAINER_IMAGE_CRM} ${CONTAINER_IMAGE_CRM_LATEST}
+    - docker push ${CONTAINER_IMAGE_CRM_LATEST}
+    - docker image prune -af
+
+build-crm-prod-checker:
+  stage: build-crm
+  image: docker:${DOCKER_VERSION}-dind-alpine3.16
+  services:
+    - docker:${DOCKER_VERSION}-dind-alpine3.16
+  only:
+    - master
+  variables:
+    GIT_CLEAN_FLAGS: none
+  tags:
+    - develop-sites
+  environment:
+    name: checker.boostra.ru
+    url: https://checker.boostra.ru
+  script:
+    - echo ${CI_KEY} | docker login --username json_key --password-stdin ${CI_REGISTRY}
+    - cp "${CONFIG}" ./config/config.php
+    - docker pull ${CONTAINER_IMAGE_CRM_CHECKER_LATEST} || true
+    - docker build -t ${CONTAINER_IMAGE_CRM_CHECKER}  --cache-from ${CONTAINER_IMAGE_CRM_CHECKER_LATEST} -f .docker/images/Dockerfile .
+    - docker rmi ${CONTAINER_IMAGE_CRM_CHECKER_LATEST} || true
+    - docker push ${CONTAINER_IMAGE_CRM_CHECKER}
+    - docker tag ${CONTAINER_IMAGE_CRM_CHECKER} ${CONTAINER_IMAGE_CRM_CHECKER_LATEST}
+    - docker push ${CONTAINER_IMAGE_CRM_CHECKER_LATEST}
+    - docker image prune -af
+
+deploy-prod-checker:
+  stage: deploy-swarm-prod
+  variables:
+    ENV_NAME: prod
+    SERVER_FILES_ROOT_DIR: "/home/boostra-adm/www-files/checker.boostra.ru"
+    SWARM_STACK_NAME: client_checker
+    STACK_NAME: boostra-checker
+    DOMAIN: checker.boostra.ru
+    SWARM_NODE_TYPE: 's-node-site'
+    SWARM_NODE: 'yes'
+    APP_REPLICAS: 1
+  #    CROWDSEC_KEY: pBh83sp/YVB3iabfMb7lTdHFl8u2HPyygE/sJadQR/M
+  tags:
+    - production-deploy
+  environment:
+    name: checker.boostra.ru
+    url: https://checker.boostra.ru
+  only:
+    - master
+  needs:
+    - build-crm-prod-checker
+  script:
+    - echo ${CONTAINER_IMAGE_CRM}
+    - echo ${SWARM_STACK_NAME}
+    - sed -i -e 's/CONTAINER_IMAGE_APP/${CONTAINER_IMAGE_CRM_CHECKER}/g' .docker/swarm/docker-stack.client_checker.yml
+    - echo ${CI_KEY} | docker login --username json_key --password-stdin ${CI_REGISTRY}
+    - docker service ls | grep ${STACK_NAME}-${ENV_NAME} || true
+    - docker stack deploy ${STACK_NAME}-${ENV_NAME} --compose-file=.docker/swarm/docker-stack.client_checker.yml --with-registry-auth --prune
+    - apk add --no-cache bash
+    - bash .docker/swarm/docker-stack-wait-deploy.sh ${STACK_NAME}-${ENV_NAME}
+    - docker service ls | grep ${STACK_NAME}-${ENV_NAME} || true
+    - docker system prune -a -f
+
+deploy-prod:
+  stage: deploy-prod
+  rules:
+    - if: $CI_COMMIT_BRANCH == "master"
+  tags:
+    - crm-prod
+  script:
+    - ansible-playbook -i deploy/inventory deploy/boostra.yml --vault-pass deploy/vault --private-key=/home/boostra-crm/.ssh/id_rsa
+
+prod-migrations-up:
+  stage: migrations
+  when: manual
+  rules:
+    - if: $CI_COMMIT_BRANCH == "master"
+  tags:
+    - crm-prod
+  script:
+    - cd /home/boostra-crm/crm
+    - ./vendor/bin/phinx migrate -c phinx.php
+
+
+prod-migrations-down:
+  stage: migrations
+  when: manual
+  rules:
+    - if: $CI_COMMIT_BRANCH == "master"
+  tags:
+    - crm-prod
+  script:
+    - cd /home/boostra-crm/crm
+    - ./vendor/bin/phinx rollback -c phinx.php
+
+
+deploy-dev:
+  stage: deploy-swarm-dev
+  when: manual
+  rules:
+    - if: $CI_COMMIT_REF_NAME =~ /COLLECTION/ && $CI_COMMIT_REF_NAME != "master" && $CI_COMMIT_REF_NAME != "develop"
+    - if: $CI_COMMIT_REF_NAME == "ENV/dev"
+  needs:
+    - build-crm-dev
+  allow_failure: true
+  tags:
+    - develop-deploy
+  environment:
+    name: dev
+    url: https://mngr-dev.boostra.ru
+  <<: *deploy_script
+
+deploy-dev1:
+  stage: deploy-swarm-dev
+  when: manual
+  except:
+    refs:
+      - master
+  needs:
+    - build-crm-dev
+  allow_failure: true
+  tags:
+    - develop-deploy
+  environment:
+    name: dev1
+    url: https://mngr-dev1.boostra.ru
+  <<: *deploy_script
+
+deploy-dev2:
+  stage: deploy-swarm-dev
+  when: manual
+  except:
+    refs:
+      - master
+  needs:
+    - build-crm-dev
+  allow_failure: true
+  tags:
+    - develop-deploy
+  environment:
+    name: dev2
+    url: https://mngr-dev2.boostra.ru
+  <<: *deploy_script
+
+deploy-dev3:
+  stage: deploy-swarm-dev
+  when: manual
+  except:
+    refs:
+      - master
+  needs:
+    - build-crm-dev
+  allow_failure: true
+  tags:
+    - develop-deploy
+  environment:
+    name: dev3
+    url: https://mngr-dev3.boostra.ru
+  <<: *deploy_script
+
+deploy-dev4:
+  stage: deploy-swarm-dev
+  when: manual
+  except:
+    refs:
+      - master
+  needs:
+    - build-crm-dev
+  allow_failure: true
+  tags:
+    - develop-deploy
+  environment:
+    name: dev4
+    url: https://mngr-dev4.boostra.ru
+  <<: *deploy_script
+
+deploy-dev5:
+  stage: deploy-swarm-dev
+  when: manual
+  except:
+    refs:
+      - master
+  needs:
+    - build-crm-dev
+  allow_failure: true
+  tags:
+    - develop-deploy
+  environment:
+    name: dev5
+    url: https://mngr-dev5.boostra.ru
+  <<: *deploy_script
+
+deploy-dev6:
+  stage: deploy-swarm-dev
+  when: manual
+  except:
+    refs:
+      - master
+  needs:
+    - build-crm-dev
+  allow_failure: true
+  tags:
+    - develop-deploy
+  environment:
+    name: dev6
+    url: https://mngr-dev6.boostra.ru
+  <<: *deploy_script
+
+deploy-dev7:
+  stage: deploy-swarm-dev
+  when: manual
+  except:
+    refs:
+      - master
+  needs:
+    - build-crm-dev
+  allow_failure: true
+  tags:
+    - develop-deploy
+  environment:
+    name: dev7
+    url: https://mngr-dev7.boostra.ru
+  <<: *deploy_script
+
+deploy-dev8:
+  stage: deploy-swarm-dev
+  when: manual
+  except:
+    refs:
+      - master
+  needs:
+    - build-crm-dev
+  allow_failure: true
+  tags:
+    - develop-deploy
+  environment:
+    name: dev8
+    url: https://mngr-dev8.boostra.ru
+  <<: *deploy_script
+
+deploy-dev9:
+  stage: deploy-swarm-dev
+  when: manual
+  except:
+    refs:
+      - master
+  needs:
+    - build-crm-dev
+  allow_failure: true
+  tags:
+    - develop-deploy
+  environment:
+    name: dev9
+    url: https://mngr-dev9.boostra.ru
+  <<: *deploy_script
+
+deploy-dev10:
+  stage: deploy-swarm-dev
+  when: manual
+  except:
+    refs:
+      - master
+  needs:
+    - build-crm-dev
+  allow_failure: true
+  tags:
+    - develop-deploy
+  environment:
+    name: dev10
+    url: https://mngr-dev10.boostra.ru
+  <<: *deploy_script
+
+deploy-dev11:
+  stage: deploy-swarm-dev
+  when: manual
+  except:
+    refs:
+      - master
+  needs:
+    - build-crm-dev
+  allow_failure: true
+  tags:
+    - develop-deploy
+  environment:
+    name: dev11
+    url: https://mngr-dev11.boostra.ru
+  <<: *deploy_script
+
+deploy-dev12:
+  stage: deploy-swarm-dev
+  when: manual
+  except:
+    refs:
+      - master
+  needs:
+    - build-crm-dev
+  allow_failure: true
+  tags:
+    - develop-deploy
+  environment:
+    name: dev12
+    url: https://mngr-dev12.boostra.ru
+  <<: *deploy_script
+
+deploy-dev13:
+  stage: deploy-swarm-dev
+  when: manual
+  except:
+    refs:
+      - master
+  needs:
+    - build-crm-dev
+  allow_failure: true
+  tags:
+    - develop-deploy
+  environment:
+    name: dev13
+    url: https://mngr-dev13.boostra.ru
+  <<: *deploy_script
+
+deploy-dev14:
+  stage: deploy-swarm-dev
+  when: manual
+  except:
+    refs:
+      - master
+  needs:
+    - build-crm-dev
+  allow_failure: true
+  tags:
+    - develop-deploy
+  environment:
+    name: dev14
+    url: https://mngr-dev14.boostra.ru
+  <<: *deploy_script
+
+deploy-dev15:
+  stage: deploy-swarm-dev
+  when: manual
+  except:
+    refs:
+      - master
+  needs:
+    - build-crm-dev
+  allow_failure: true
+  tags:
+    - develop-deploy
+  environment:
+    name: dev15
+    url: https://mngr-dev15.boostra.ru
+  <<: *deploy_script
+
+deploy-dev-aqa:
+  stage: deploy-swarm-dev
+  only:
+      - master
+  needs:
+    - build-crm-aqa
+  allow_failure: true
+  tags:
+    - develop-deploy
+  environment:
+    name: dev-aqa
+    url: https://mngr-dev-aqa.boostra.ru
+  <<: *deploy_script
+
+build-crm-stage:
+  stage: build-crm
+  image: docker:${DOCKER_VERSION}-dind-alpine3.16
+  services:
+    - docker:${DOCKER_VERSION}-dind-alpine3.16
+  rules:
+    - if: $CI_COMMIT_BRANCH == "master"
+      when: never
+    - if: $CI_MERGE_REQUEST_TARGET_BRANCH_NAME == "master" && $CI_PIPELINE_SOURCE == "merge_request_event"
+      when: manual
+    - when: never
+  variables:
+    GIT_CLEAN_FLAGS: none
+  tags:
+    - develop-crm
+  environment:
+    name: stage-mngr
+    url: https://manager.stage.boostra.ru
+  script:
+    - echo ${CI_KEY} | docker login --username json_key --password-stdin ${CI_REGISTRY}
+    - cp ${CONFIG} ./config/config.php
+    - cp ${ENV} ./config/.env
+    - docker pull ${CONTAINER_IMAGE_CRM_LATEST} || true
+    - docker build -t ${CONTAINER_IMAGE_CRM}  --cache-from ${CONTAINER_IMAGE_CRM_LATEST} -f .docker/images/Dockerfile .
+    - docker rmi ${CONTAINER_IMAGE_CRM_LATEST} || true
+    - docker push ${CONTAINER_IMAGE_CRM}
+    - docker image prune -af
+
+deploy-stage-mngr:
+  stage: deploy-swarm-dev
+  when: manual
+  variables:
+    DOMAIN: manager.stage.boostra.ru
+    SWARM_STACK_NAME: stage
+  rules:
+    - if: $CI_MERGE_REQUEST_TARGET_BRANCH_NAME == "master" && $CI_PIPELINE_SOURCE == "merge_request_event"
+  needs:
+    - build-crm-stage
+  allow_failure: true
+  tags:
+    - develop-deploy
+  environment:
+    name: stage-mngr
+    url: https://manager.stage.boostra.ru
+  <<: *deploy_script

@@ -1,0 +1,50 @@
+/* Стили для календаря */
+#calendar {
+    width: 50%;
+    height: 500px;
+}
+
+.fc-day.fc-other-month {
+    background-color: grey !important;
+    border: 1px solid !important;
+}
+
+.fc-day-number {
+    color: black !important;
+}
+
+#calendar-parent .fc-day {
+    background: white;
+}
+
+.fc-day-header {
+    background: #7460ee !important;
+    color: white !important;
+}
+
+#calendar-parent .selected-date {
+    background: #7460ee !important;
+    color: white !important;
+}
+
+.schedule-calendar-div {
+    display: none !important;
+    margin-top: 50px;
+    width: 80%;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    min-width: 300px;
+    flex-wrap: wrap;
+    margin-bottom: 10px;
+}
+
+.schedule-calendar-div > .left-side {
+    width: 50%;
+    min-width: 300px;
+}
+
+.showDiv {
+    display: flex !important;
+}
+

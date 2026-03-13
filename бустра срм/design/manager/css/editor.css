@@ -1,0 +1,123 @@
+.result {
+  margin-bottom: 32px;
+}
+.save-btn {
+  margin-top: 24px;
+}
+.custom-editor-container .ql-editor,
+.custom-editor-container .ql-divider,
+.custom-editor-container .ql-clean,
+.custom-editor-container .ql-strike {
+  color: #fff;
+}
+.custom-editor-container .ql-divider svg,
+.custom-editor-container .ql-clean svg,
+.custom-editor-container .ql-strike svg {
+  width: 100%;
+  height: 100%;
+}
+.custom-editor-container .ql-snow .ql-picker-label {
+  color: #fff;
+}
+.custom-editor-container .ql-snow .ql-picker-item {
+  color: #444;
+}
+.custom-editor-container .ql-snow .ql-picker-item .ql-stroke {
+  stroke: #444;
+}
+.custom-editor-container .ql-snow .ql-stroke {
+  stroke: #fff;
+}
+.custom-editor-container .ql-snow .ql-fill,
+.custom-editor-container .ql-snow .ql-stroke.ql-fill {
+  fill: #fff;
+}
+.custom-editor-container img {
+  max-width: 300px;
+  height: 300px;
+}
+.custom-editor-file-modal .close {
+  cursor: pointer;
+}
+.custom-editor-file-modal .nav-tabs .nav-link:focus {
+  outline: none;
+}
+.custom-editor-file-modal .nav-tabs .nav-link:first-child {
+  border-top-right-radius: 0;
+}
+.custom-editor-file-modal .nav-tabs .nav-link:last-child {
+  border-top-left-radius: 0;
+}
+.custom-editor-file-modal .form-control {
+  background: #272c33;
+  border-color: #6c757d;
+}
+.custom-editor-file-modal .custom-file-label {
+  background: #272c33;
+  border-color: #6c757d;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.custom-editor-file-modal .custom-file-label:after {
+  display: none;
+}
+.editor-result-content h1 {
+  font-size: 18px;
+}
+.editor-result-content h2 {
+  font-size: 16px;
+}
+.editor-result-content h3 {
+  font-size: 14px;
+}
+.editor-result-content h4 {
+  font-size: 12px;
+}
+.editor-result-content h5 {
+  font-size: 10px;
+}
+.editor-result-content h6 {
+  font-size: 8px;
+}
+.editor-result-content blockquote {
+  text-align: center;
+  position: relative;
+}
+.editor-result-content blockquote:after {
+  content: '"';
+}
+.editor-result-content blockquote:before {
+  content: '"';
+}
+.editor-result-content .ql-align-right {
+  text-align: right;
+}
+.editor-result-content .ql-align-center {
+  text-align: center;
+}
+.editor-result-content .ql-align-justify {
+  text-align: justify;
+}
+.editor-result-content img {
+  width: 100%;
+  max-width: 100%;
+  height: auto;
+}
+.custom-editor-spinner-wrap {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  width: 100%;
+  height: 100%;
+  transform: translate(-50%, -50%);
+  z-index: 1100;
+  background: #fffc;
+  color: #383f48;
+}
+.custom-editor-spinner-wrap.visible {
+  display: flex;
+}

@@ -1,0 +1,21 @@
+---
+# tasks file for rucred
+
+- name: Clone repo into path for prepare deploy
+  ansible.builtin.git:
+    repo: git@bitbucket.org:rukred/rucred-crm.git
+    dest: "{{ temp_repo_path }}"
+    version: master
+  register: code_upload
+  tags: deploy
+
+- name: Synchronize file from deploy folder to floder deployed
+  shell: rsync -zvarc --exclude 'logs' "{{ temp_repo_path }}"/* "{{ repo_path }}"/ && rsync -zvarc --exclude 'logs' "{{ temp_repo_path }}"/.git* "{{ repo_path }}"/ 
+  when: code_upload.changed
+  tags: deploy
+
+- name: Install permissions on file user rucred-crm and group www-data
+  shell: chown "{{ lookup('env', 'USER') }}":www-data "{{ repo_path }}"/* -R
+  when: code_upload.changed
+  ignore_errors: yes
+  tags: deploy

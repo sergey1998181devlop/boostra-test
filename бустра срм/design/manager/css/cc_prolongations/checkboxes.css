@@ -1,0 +1,98 @@
+/* Стили для чекбоксов и лейблов */
+label.labels-missing {
+    padding: 0;
+    line-height: unset;
+    padding: 0px 6px;
+    border-radius: 5px;
+    border: 1px solid #797979;
+    color: white;
+    margin: auto;
+    margin-right: 1rem;
+}
+
+label.labels-missing.color1:hover {
+    border: 1px solid #4dcb5d;
+    color: #55ce63;
+}
+
+.checkbox-mis.color1:checked ~ label.labels-missing.color1 {
+    border: 1px solid #4dcb5d;
+    color: #55ce63;
+}
+
+.checkbox-mis.color1:checked ~ .input_block input {
+    border: 1px solid #4dcb5d;
+}
+
+label.labels-missing.color2:hover {
+    border: 1px solid #009efb;
+    color: #009efb;
+}
+
+.checkbox-mis.color2:checked ~ label.labels-missing.color2 {
+    border: 1px solid #009efb;
+    color: #009efb;
+}
+
+.checkbox-mis.color2:checked ~ .input_block input {
+    border: 1px solid #009efb;
+}
+
+label.labels-missing.color3:hover {
+    border: 1px solid #ffbc34;
+    color: #ffbc34;
+}
+
+.checkbox-mis.color3:checked ~ label.labels-missing.color3 {
+    border: 1px solid #ffbc34;
+    color: #ffbc34;
+}
+
+.checkbox-mis.color3:checked ~ .input_block input {
+    border: 1px solid #ffbc34;
+}
+
+.checkbox-mis:checked ~ .input_block input {
+    opacity: 1;
+    padding-right: 1rem;
+}
+
+.checkbox-mis:checked ~ label.labels-missing {
+    cursor: pointer;
+    margin-right: 0rem;
+}
+
+label.labels-missing:hover {
+    cursor: pointer;
+}
+
+/* Выбор компании */
+.check_box_block {
+    display: flex;
+    align-items: baseline;
+    justify-content: flex-start;
+    position: relative;
+}
+
+.input_block input {
+    height: fit-content;
+    padding: 0;
+    padding-left: 6px;
+}
+
+.input_block {
+    max-width: 60px;
+    width: 0px;
+    transition: width ease-out 0.5s;
+}
+
+.check_box_block input:checked ~ .input_block {
+    width: 60px !important;
+    display: block;
+    margin-right: 1rem;
+}
+
+.input_block input {
+    opacity: 0;
+}
+

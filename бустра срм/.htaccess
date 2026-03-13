@@ -1,0 +1,304 @@
+AddDefaultCharset UTF-8
+ErrorDocument 404 /404
+ErrorDocument 403 /403
+RewriteEngine on
+
+RewriteRule ^app/ app.php [L,QSA]
+
+# Блокировка доступа к .git
+RewriteRule ^\.git - [F,L]
+
+## force https:// for all except some selected URLs
+#RewriteCond %{HTTPS} off
+#RewriteRule ^ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
+
+
+RewriteRule ^login/?$               index.php?module=LoginView  [L,QSA]
+RewriteRule ^logout/?$              index.php?module=LoginView&action=logout  [L,QSA]
+
+RewriteRule ^orders/?$              index.php?module=OrdersView  [L,QSA]
+RewriteRule ^report_week_nk_view/?$              index.php?module=ReportWeekNKView  [L,QSA]
+RewriteRule ^appeals/?$             index.php?module=AppealsView  [L,QSA]
+RewriteRule ^appeals/([^/]*)/?$     index.php?module=AppealsView&id=$1  [L,QSA]
+RewriteRule ^my_orders/?$           index.php?module=OrdersView&only=my  [L,QSA]
+RewriteRule ^order/([^/]*)/?$       index.php?module=OrderView&id=$1  [L,QSA]
+RewriteRule ^not_received/?$        index.php?module=OrdersView&status=notreceived  [L,QSA]
+
+RewriteRule ^company_order/?([^/]*)/?([^/]*)/?$       index.php?module=CompanyOrdersView&action=$1&id=$2  [L,QSA]
+
+RewriteRule ^promocodes/?$              index.php?module=PromocodesView  [L,QSA]
+RewriteRule ^promocode/?$               index.php?module=PromocodeView&id=$1  [L,QSA]
+RewriteRule ^promocode/([^/]*)/?$       index.php?module=PromocodeView&id=$1  [L,QSA]
+
+RewriteRule ^new_year_codes/?$              index.php?module=NewYearCodesView  [L,QSA]
+
+RewriteRule ^link_to_safe_flow/?$              index.php?module=LinkToSafeFlowView  [L,QSA]
+
+RewriteRule ^individual_orders/?$   index.php?module=IndividualOrdersView  [L,QSA]
+RewriteRule ^individual_order/([^/]*)/?$ index.php?module=IndividualOrderView&id=$1  [L,QSA]
+RewriteRule ^individual_settings/?$ index.php?module=IndividualSettingsView  [L,QSA]
+RewriteRule ^fd_settings/?$ index.php?module=FDSettingsView [L,QSA]
+RewriteRule ^fd_setting/?$ index.php?module=FDSettingView [L,QSA]
+
+RewriteRule ^fd_base_tariffs/?$ index.php?module=FDBaseTariffsView [L,QSA]
+RewriteRule ^fd_base_tariff/?$ index.php?module=FDBaseTariffView [L,QSA]
+
+RewriteRule ^vitamed_base_tariffs/?$ index.php?module=VitamedBaseTariffsView [L,QSA]
+RewriteRule ^vitamed_base_tariff/?$ index.php?module=VitamedBaseTariffView [L,QSA]
+
+RewriteRule ^tickets/?$                 index.php?module=TicketsView  [L,QSA]
+RewriteRule ^tickets/create?$           index.php?module=TicketsView&action=create   [L,QSA]
+RewriteRule ^tickets/create/technical-support?$           index.php?module=TicketsView&action=create_techincal_support   [L,QSA]
+RewriteRule ^tickets/save/?$            index.php?module=TicketsView&action=save   [L,QSA]
+RewriteRule ^tickets/update-status/?$ index.php?module=TicketsView&action=update_status  [L,QSA]
+RewriteRule ^tickets/get-managers/?$ index.php?module=TicketsView&action=get_managers  [L,QSA]
+RewriteRule ^tickets/get-subjects/?$ index.php?module=TicketsView&action=get_subjects  [L,QSA]
+RewriteRule ^tickets/change-subjects/?$ index.php?module=TicketsView&action=change_subjects  [L,QSA]
+RewriteRule ^tickets/settings/?$ index.php?module=TicketSettingsView&action=$1  [L,QSA]
+RewriteRule ^tickets/technical-support/?$ index.php?module=TicketsView&action=technical_support  [L,QSA]
+
+RewriteRule ^tickets/([0-9]+)/?$        index.php?module=TicketsView&action=show&id=$1   [L,QSA]
+
+RewriteRule ^tickets/subjects/?$     index.php?module=TicketSubjectsView&action=list   [L,QSA]
+RewriteRule ^tickets/statistic([^/]*)/?$         index.php?module=TicketStatsView&action=$1   [L,QSA]
+RewriteRule ^tickets/manager-statistics([^/]*)/?$         index.php?module=TicketManagerStatsView&action=$1   [L,QSA]
+
+RewriteRule ^technical-support/tickets/?$ index.php?module=TechnicalSupportView  [L,QSA]
+RewriteRule ^technical-support/analytics/tickets/?$ index.php?module=TechnicalSupportView&action=analytics_tickets  [L,QSA]
+RewriteRule ^technical-support/analytics/operators/?$ index.php?module=TechnicalSupportView&action=analytics_operators  [L,QSA]
+RewriteRule ^technical-support/sla/list/?$ index.php?module=TechnicalSupportView&action=sla_list  [L,QSA]
+RewriteRule ^technical-support/sla/create/?$ index.php?module=TechnicalSupportView&action=sla_create  [L,QSA]
+RewriteRule ^technical-support/sla/save/?$ index.php?module=TechnicalSupportView&action=sla_save  [L,QSA]
+
+RewriteRule ^service-recovery/rules?$     index.php?module=ServiceRecoveryRuleView&action=$1   [L,QSA]
+RewriteRule ^service-recovery/reports?$     index.php?module=ServiceRecoveryReportView&action=$1   [L,QSA]
+RewriteRule ^service-recovery/exclusions?$     index.php?module=ServiceRecoveryExclusionView&action=$1   [L,QSA]
+
+RewriteRule ^cession_requests/?$     index.php?module=CessionRequestsView   [L,QSA]
+RewriteRule ^cession_settings/?$     index.php?module=CessionSettingsView   [L,QSA]
+
+RewriteRule ^cb-requests/?$                  index.php?module=CbRequestsView  [L,QSA]
+RewriteRule ^cb-requests/update-status/?$    index.php?module=CbRequestsView&action=update_status  [L,QSA]
+RewriteRule ^cb-requests/subjects/?$         index.php?module=CbRequestsView&action=subjects  [L,QSA]
+RewriteRule ^cb-requests/([0-9]+)/?$         index.php?module=CbRequestsView&action=show&id=$1  [L,QSA]
+
+RewriteRule ^organizations/?$                  index.php?module=OrganizationsView   [L,QSA]
+RewriteRule ^organizations/([0-9]+)/?$         index.php?module=OrganizationsView&id=$1   [L,QSA]
+RewriteRule ^organizations/new/?$              index.php?module=OrganizationsView&action=new   [L,QSA]
+
+
+RewriteRule ^cctasks/?$             index.php?module=CCTasksView   [L,QSA]
+RewriteRule ^ccprolongations/?$     index.php?module=CCProlongationsView   [L,QSA]
+RewriteRule ^ccprolongations_plus?$     index.php?module=CCProlongationsPlusView   [L,QSA]
+RewriteRule ^ccprolongations_plus?$     index.php?module=CCProlongationsPlusView   [L,QSA]
+RewriteRule ^prolongation_minus_days/?$     index.php?module=ProlongationMinusDaysView   [L,QSA]
+RewriteRule ^close_tasks/?$         index.php?module=CloseTasksView   [L,QSA]
+RewriteRule ^auto_refund_additional_services/?$         index.php?module=AutoRefundAdditionalServicesView   [L,QSA]
+RewriteRule ^arbitration_agreements_generator/?$         index.php?module=ArbitrationAgreementsGeneratorView   [L,QSA]
+RewriteRule ^tasks_overdue/?$       index.php?module=TasksOverdueView  [L,QSA]
+RewriteRule ^verificator_cc/?$      index.php?module=VerificatorCcView  [L,QSA]
+
+RewriteRule ^cv_report/?$           index.php?module=CvReportView   [L,QSA]
+RewriteRule ^virifiers_report/?$    index.php?module=VerifiersReportView   [L,QSA]
+RewriteRule ^nk_to_pk_report/?$     index.php?module=NKtoPKReportView   [L,QSA]
+RewriteRule ^approved_orders/?$     index.php?module=ApprovedOrdersView   [L,QSA]
+RewriteRule ^total_report/?$        index.php?module=TotalReportView   [L,QSA]
+RewriteRule ^lead_report/?$         index.php?module=LeadReportView   [L,QSA]
+RewriteRule ^short_report/?$        index.php?module=ShortReportView   [L,QSA]
+RewriteRule ^calls_report/?$        index.php?module=CallsReportView   [L,QSA]
+RewriteRule ^order_time_report/?$   index.php?module=OrderTimeReportView   [L,QSA]
+RewriteRule ^leadgid_report/?$      index.php?module=LeadgidReportView   [L,QSA]
+RewriteRule ^ping3_orders_report/?$      index.php?module=Ping3OrdersReportView   [L,QSA]
+RewriteRule ^leadgid_report_site/?$ index.php?module=LeadgidReportSiteView   [L,QSA]
+RewriteRule ^orders_report/?$       index.php?module=OrdersReportView   [L,QSA]
+RewriteRule ^traffic_report/?$      index.php?module=TrafficReportView   [L,QSA]
+RewriteRule ^order_rating_report/?$ index.php?module=OrderRatingReportView   [L,QSA]
+RewriteRule ^report_missings/?$     index.php?module=ReportMissingsView   [L,QSA]
+RewriteRule ^report_missings_new/?$     index.php?module=ReportMissingsNewView   [L,QSA]
+RewriteRule ^report_missings_manager/?$     index.php?module=ReportMissingsManagerView   [L,QSA]
+RewriteRule ^report_portfolio/?$     index.php?module=ReportPortfolioView   [L,QSA]
+RewriteRule ^report_partner_href/?$     index.php?module=ReportPartnerHrefView   [L,QSA]
+RewriteRule ^report_conversion/?$     index.php?module=ReportConversionView   [L,QSA]
+RewriteRule ^funnel_loans_new_client/?$     index.php?module=FunnelLoansNewClientView   [L,QSA]
+RewriteRule ^funnel_loans_new_client_crm/?$     index.php?module=FunnelLoansNewClientCrmView   [L,QSA]
+RewriteRule ^funnel_loans_old_client_crm/?$     index.php?module=FunnelLoansOldClientCrmView   [L,QSA]
+RewriteRule ^funnel_loans_old_client_sms_crm/?$     index.php?module=FunnelLoansOldClientSmsCrmView  [L,QSA]
+RewriteRule ^funnel_loans_promocode/?$     index.php?module=FunnelLoansPromoCodeView  [L,QSA]
+RewriteRule ^order_reject_rating_report/?$     index.php?module=OrderRatingRejectReportView   [L,QSA]
+RewriteRule ^credit_rating_pays_report/?$     index.php?module=CreditRatingPaysReportView   [L,QSA]
+RewriteRule ^order_rating_nk_report/?$     index.php?module=OrderRatingNKReportView   [L,QSA]
+RewriteRule ^web_master_report/?$     index.php?module=WebMasterReportView   [L,QSA]
+RewriteRule ^missings_cc_report/?$     index.php?module=MissingsCCReportView   [L,QSA]
+RewriteRule ^cr_lk_reject_order_report/?$     index.php?module=CRLKRejectOrderReportView   [L,QSA]
+RewriteRule ^cd_report/?$     index.php?module=CDReportView   [L,QSA]
+RewriteRule ^cd_multipolis/?$     index.php?module=CDMultipolisView   [L,QSA]
+RewriteRule ^cd_tv_medical/?$     index.php?module=CDTvMedicalView   [L,QSA]
+RewriteRule ^moratorium_validate/?$     index.php?module=ValidateMoratoriumView   [L,QSA]
+RewriteRule ^cdoctor_users_amount_report/?$     index.php?module=CDUsersAmountReportView   [L,QSA]
+RewriteRule ^approved_orders_report/?$     index.php?module=ApprovedOrdersReportView   [L,QSA]
+RewriteRule ^multipolis_report/?$     index.php?module=MultipolisReportView   [L,QSA]
+RewriteRule ^multipolis_statistics_report/?$     index.php?module=MultipolisStatisticsReportView   [L,QSA]
+RewriteRule ^dop_conversion_report/?$     index.php?module=DopConversionReportView   [L,QSA]
+RewriteRule ^migrate_mb/?$     index.php?module=MigrateToMBView   [L,QSA]
+RewriteRule ^sms_sending_report/?$     index.php?module=SmsSendingReportView   [L,QSA]
+RewriteRule ^pdn_report/?$     index.php?module=PdnReportView   [L,QSA]
+RewriteRule ^analysis_calls_report/?$     index.php?module=AnalysisCallsReportView   [L,QSA]
+RewriteRule ^additional_analysis_calls_report/?$     index.php?module=AdditionalAnalysisCallsReportView   [L,QSA]
+RewriteRule ^vox_calls_report/?$     index.php?module=VoxCallsReportView   [L,QSA]
+RewriteRule ^vox_queues_settings/?$     index.php?module=VoxQueuesSettingsView   [L,QSA]
+RewriteRule ^vox_operators_settings/?$     index.php?module=VoxOperatorsSettingsView   [L,QSA]
+RewriteRule ^vox_site_dnc/?$             index.php?module=VoxSiteDncView   [L,QSA]
+RewriteRule ^usedesk_settings/?$     index.php?module=UsedeskSettingsView   [L,QSA]
+RewriteRule ^ai_bot_calls_report/?$     index.php?module=AIBotCallsReportView   [L,QSA]
+RewriteRule ^collection_summary_report/?$     index.php?module=CollectionSummaryReportView   [L,QSA]
+RewriteRule ^usedesk_ticket_analysis_report/?$     index.php?module=UsedeskTicketAnalysisReportView   [L,QSA]
+RewriteRule ^payments_rs_report/?$     index.php?module=PaymentsRsReportView   [L,QSA]
+RewriteRule ^bki_questions/?$     index.php?module=BkiQuestionsView   [L,QSA]
+RewriteRule ^user_feedbacks_report/?$     index.php?module=UserFeedbacksReportView   [L,QSA]
+RewriteRule ^tickets_br_report/?$     index.php?module=TicketsBRReportView   [L,QSA]
+RewriteRule ^my_tickets_opr_report/?$     index.php?module=MyTicketsOPRReportView   [L,QSA]
+RewriteRule ^cd_penalty_report/?$     index.php?module=CDPenaltyReportView   [L,QSA]
+RewriteRule ^finzen_funnel_report/?$     index.php?module=FinzenFunnelReportView   [L,QSA]
+RewriteRule ^additional_orders_report/?$     index.php?module=AdditionalOrdersReportView   [L,QSA]
+RewriteRule ^extra_services_refunds/?$     index.php?module=RefundExtraServicesReportView   [L,QSA]
+RewriteRule ^extra_services_closure_report/?$     index.php?module=ExtraServicesClosureReportView   [L,QSA]
+RewriteRule ^extra_services_informs_report/?$     index.php?module=ExtraServicesInformsReportView   [L,QSA]
+RewriteRule ^dormant_clients_report/?$     index.php?module=DormantClientsReportView   [L,QSA]
+RewriteRule ^approved_client_call_report/?$     index.php?module=ApprovedClientCallReportView   [L,QSA]
+RewriteRule ^payments_clients_report/?$     index.php?module=PaymentsClientsReportView   [L,QSA]
+RewriteRule ^client_activity_report/?$     index.php?module=ClientActivityReportView   [L,QSA]
+RewriteRule ^pause_sms_report/?$     index.php?module=SmsPauseReportView   [L,QSA]
+RewriteRule ^prolongation_report/?$     index.php?module=ProlongationReportView   [L,QSA]
+RewriteRule ^verifications_report/?$     index.php?module=VerificationsReportView   [L,QSA]
+RewriteRule ^verifications_group_report/?$     index.php?module=VerificationsGroupReportView   [L,QSA]
+RewriteRule ^rejected_report/?$     index.php?module=RejectedReportView  [L,QSA]
+RewriteRule ^storista_report/?$     index.php?module=StoristaReportView  [L,QSA]
+RewriteRule ^bank_report/?$     index.php?module=BankReportView   [L,QSA]
+RewriteRule ^bankruptcy_report/?$     index.php?module=BankruptcyReportView   [L,QSA]
+RewriteRule ^settings_sms_collection/?$     index.php?module=SettingsSmsCollection   [L,QSA]
+RewriteRule ^scorista_leadgid_settings/?$     index.php?module=ScoristaLeadgidSettingsView   [L,QSA]
+RewriteRule ^approve_amount_settings/?$     index.php?module=ApproveAmountSettingsView   [L,QSA]
+RewriteRule ^juicescore_criteria/?$     index.php?module=JuicescoreCriteriaView   [L,QSA]
+RewriteRule ^lead_price/?$     index.php?module=LeadPriceView   [L,QSA]
+RewriteRule ^vk_sending_settings/?$     index.php?module=VkSendingSettingsView   [L,QSA]
+RewriteRule ^prolongation_settings/?$     index.php?module=ProlongationSettingsView   [L,QSA]
+RewriteRule ^bonon_settings/?$     index.php?module=BononSettingsView   [L,QSA]
+RewriteRule ^spr_versions/?$     index.php?module=SprVersionsView   [L,QSA]
+RewriteRule ^automation_fails/?$       index.php?module=AutomationFailsView  [L,QSA]
+RewriteRule ^post_back_settings/?$      index.php?module=PostBackSettingsView   [L,QSA]
+RewriteRule ^pdn_edit/?$     index.php?module=PdnEditView   [L,QSA]
+
+RewriteRule ^tickets_guide/?$     index.php?module=TicketsGuideView   [L,QSA]
+
+RewriteRule ^docs/?$     index.php?module=DocsView  [L,QSA]
+RewriteRule ^docs/history?$     index.php?module=DocsHistoryView  [L,QSA]
+RewriteRule ^docs/update_positions$ index.php?module=DocsView&method=update_positions [L,QSA]
+RewriteRule ^docs/addDoc$ index.php?module=DocsView&method=addDoc [L,QSA]
+RewriteRule ^docs/updateVisibility$ index.php?module=DocsView&method=updateVisibility [L,QSA]
+
+RewriteRule ^docs-history/?$     index.php?module=DocsHistoryView  [L,QSA]
+
+RewriteRule ^reasons/([^/]*)/?$     index.php?module=ReasonsView&type=$1   [L,QSA]
+RewriteRule ^sms_templates/?$       index.php?module=SmsTemplatesView   [L,QSA]
+RewriteRule ^payment_exitpool_variants/?$       index.php?module=PaymentExitpoolVariantsView [L,QSA]
+
+RewriteRule ^messages/?$            index.php?module=MessagesView  [L,QSA]
+RewriteRule ^maratoriums/?$         index.php?module=MaratoriumsView  [L,QSA]
+
+RewriteRule ^sms_info/?$         index.php?module=SmsInfoView  [L,QSA]
+
+RewriteRule ^quest_form/?$         index.php?module=QuestFormView  [L,QSA]
+
+RewriteRule ^clients/?$             index.php?module=ClientsView  [L,QSA]
+RewriteRule ^client/([^/]*)/?$      index.php?module=ClientView&id=$1  [L,QSA]
+
+RewriteRule ^missings/?$            index.php?module=MissingsView  [L,QSA]
+RewriteRule ^not_received_loans/?$  index.php?module=NotReceivedLoansView  [L,QSA]
+
+RewriteRule ^exitpools/?$           index.php?module=ExitpoolsView  [L,QSA]
+RewriteRule ^payment_exitpools/?$   index.php?module=PaymentExitpoolsView  [L,QSA]
+
+RewriteRule ^verification/?$            index.php?module=VerificationView  [L,QSA]
+
+RewriteRule ^managers/?$            index.php?module=ManagersView  [L,QSA]
+RewriteRule ^manager/?$             index.php?module=ManagerView  [L,QSA]
+RewriteRule ^manager/([^/]*)/?$     index.php?module=ManagerView&id=$1  [L,QSA]
+RewriteRule ^vsev_debt/?$             index.php?module=VsevDebtView  [L,QSA]
+
+RewriteRule ^verificators/?$            index.php?module=VerificatorsView  [L,QSA]
+RewriteRule ^cc_managers/?$            index.php?module=CCManagersView  [L,QSA]
+
+RewriteRule ^changelogs/?$          index.php?module=ChangelogsView  [L,QSA]
+RewriteRule ^blacklist/?$           index.php?module=BlackListView  [L,QSA]
+
+RewriteRule ^incoming_calls_blacklist/?$     index.php?module=IncomingCallsBlacklistView   [L,QSA]
+RewriteRule ^tickets/sms_logs/?$     index.php?module=SmsMessagesView   [L,QSA]
+RewriteRule ^cbr_link_clicks_report/?$     index.php?module=CbrLinkClicksReportView   [L,QSA]
+
+RewriteRule ^apikeys/?$             index.php?module=ApikeysView  [L,QSA]
+RewriteRule ^rest_api/actual-info-transaction/?$         ajax/api_actualize_status_transaction.php [L,QSA]
+RewriteRule ^site_settings/?$       index.php?module=SiteSettingsView  [L,QSA]
+RewriteRule ^settings/?$            index.php?module=SettingsView  [L,QSA]
+RewriteRule ^registration_region/?$            index.php?module=RegistrationRegionView  [L,QSA]
+RewriteRule ^verificator_plan/?$    index.php?module=VerificatorPlanView  [L,QSA]
+RewriteRule ^personal_options/?$    index.php?module=PersonalOptionsView  [L,QSA]
+RewriteRule ^auto_confirm_settings/?$      index.php?module=AutoConfirmSettingsView   [L,QSA]
+RewriteRule ^declined_traffic_settings/?$       index.php?module=DeclinedTrafficSettingsView  [L,QSA]
+
+RewriteRule ^mango_callback/(.*)?$  callback/mango.php?m=$1  [L,QSA]
+RewriteRule ^cdoctor_callback/(.*)?$  callback/cdoctor.php?m=$1  [L,QSA]
+RewriteRule ^cdoctor_callback/?$    callback/cdoctor.php  [L,QSA]
+
+RewriteRule ^finroznica_callback/?$ callback/finroznica.php [L,QSA]
+
+RewriteRule ^partner_href/?$          index.php?module=PartnerHrefView  [L,QSA]
+RewriteRule ^discount_insure/?$          index.php?module=DiscountInsureView  [L,QSA]
+RewriteRule ^reject_report/?$          index.php?module=RejectReportView  [L,QSA]
+RewriteRule ^reject_reason_report/?$          index.php?module=RejectReasonReportView  [L,QSA]
+RewriteRule ^refusenik_report/?$          index.php?module=RefusenikReportView  [L,QSA]
+RewriteRule ^settings_sms_notice_approve/?$          index.php?module=SettingsSmsNoticeApproveView  [L,QSA]
+RewriteRule ^funnel_returns_nk_report/?$          index.php?module=FunnelReturnsNKReportView  [L,QSA]
+RewriteRule ^stop_list_web_id/?$          index.php?module=StopListWebIdView [L,QSA]
+RewriteRule ^multipolis_pays_report/?$          index.php?module=MultipolisPaysReportView  [L,QSA]
+
+RewriteRule ^client_checker/?$          index.php?module=ClientChecker  [L,QSA]
+
+RewriteRule ^nbki_reports/?$          index.php?module=NbkiReportsView  [L,QSA]
+
+RewriteRule ^blog_seo/?$                    index.php?module=BlogSeoView  [L,QSA]
+RewriteRule ^article/?$                     index.php?module=ArticleView  [L,QSA]
+RewriteRule ^article/([^/]*)/?$             index.php?module=ArticleView&id=$1  [L,QSA]
+RewriteRule ^article-delete/([^/]*)/?$      index.php?module=BlogSeoView&id=$1  [L,QSA]
+
+RewriteRule ^terrorist_list/?$                     index.php?module=TerroristListView  [L,QSA]
+
+RewriteRule ^faq/?$      index.php?module=FaqView [L,QSA]
+RewriteRule ^export-photos/?$            index.php?module=ExportPhotosView  [L,QSA]
+
+# Monitoring
+RewriteRule ^monitoring/pdn/?$           ajax/monitoring/PdnMonitoring.php  [L,QSA]
+RewriteRule ^monitoring/Issuance_NK/?$  ajax/monitoring/IssuanceNK.php  [L,QSA]
+RewriteRule ^monitoring/Issuance_PK/?$  ajax/monitoring/IssuancePK.php  [L,QSA]
+RewriteRule ^monitoring/Partial/?$      ajax/monitoring/Partial.php  [L,QSA]
+RewriteRule ^monitoring/Renewals/?$     ajax/monitoring/Renewals.php  [L,QSA]
+RewriteRule ^monitoring/Boostra_Take_Card/?$  ajax/monitoring/BoostraTakeCard.php  [L,QSA]
+RewriteRule ^monitoring/Tiket_PK_kpi/?$ ajax/monitoring/TiketPKkpi.php  [L,QSA]
+RewriteRule ^monitoring/Upload_Image/?$  ajax/monitoring/UploadImage.php  [L,QSA]
+RewriteRule ^monitoring/Additional_for_partial_payment/?$  ajax/monitoring/AdditionalForPartialPayment.php  [L,QSA]
+RewriteRule ^monitoring/Additional_for_prolongation/?$     ajax/monitoring/AdditionalForProlongation.php  [L,QSA]
+RewriteRule ^monitoring/Auto_approvals/?$                  ajax/monitoring/AutoApprovals.php  [L,QSA]
+RewriteRule ^monitoring/Extra_on_issue/?$                  ajax/monitoring/ExtraOnIssue.php  [L,QSA]
+
+# Статические страницы
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule ^([^/]*)/?$         index.php?module=PageView&page_url=$1 [L,QSA]
+
+#RewriteRule ^/?$               index.php?module=MainView&page_url= [L,QSA]
+
+# Ресайз картинок на лету
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteRule ^files/products/(.+) resize/resize.php?file=$1&token=%{QUERY_STRING}
+#RewriteCond %{THE_REQUEST} ^GET\ (.*)files/products/(.*)\?([A-z0-9]*)
+#RewriteRule ^files/products/(.+) resize/resize.php?file=%2&token=%3 [L,NE]

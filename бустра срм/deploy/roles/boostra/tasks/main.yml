@@ -1,0 +1,30 @@
+---
+# tasks file for boostra
+
+- name: Clone repo into path for prepare deploy
+  ansible.builtin.git:
+    repo: git@gcib0d3c8bstra.boostra.ru:boostra/crm.git
+    dest: "{{ temp_repo_path }}"
+    version: "{{ branch }}"
+  register: code_upload
+  tags: deploy
+
+- name: Synchronize file from deploy folder to floder deployed
+  shell: rsync -zvarc --exclude 'logs' --exclude 'files' "{{ temp_repo_path }}"/* "{{ repo_path }}"/ && rsync -zvarc --exclude 'logs' "{{ temp_repo_path }}"/.git* "{{ repo_path }}"/ && rsync -zvarc --exclude 'logs' "{{ temp_repo_path }}"/.htaccess "{{ repo_path }}"/
+  when: code_upload.changed
+  tags: deploy
+
+- name: Install permissions on file user boostra-crm and group www-data
+  shell: cd "{{ repo_path }}"; chown "{{ lookup('env', 'USER') }}":www-data $(ls | grep -v files | grep -v logs)
+  when: code_upload.changed
+  ignore_errors: yes
+  tags: deploy
+
+- name: Make composer dump-autoload
+  shell: cd "{{ repo_path }}"; composer dump-autoload
+  when: code_upload.changed
+  tags: deploy
+
+- name: Deploy redis with docker-compose and force restart
+  shell: docker-compose -f "{{ repo_path }}/.docker/swarm/docker-compose.redis.yml" up -d --force-recreate
+  tags: deploy

@@ -1,0 +1,9 @@
+/* Стили для таблицы */
+.jsgrid-table {
+    margin-bottom: 0;
+}
+
+.jsgrid-grid-body {
+    min-height: 180px;
+}
+

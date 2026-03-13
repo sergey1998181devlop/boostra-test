@@ -1,0 +1,27 @@
+/* Стили для Vox */
+.vox-div {
+    width: 60%;
+    display: flex;
+    justify-content: flex-start;
+    gap: 15px;
+    flex-direction: column;
+}
+
+.vox-div input {
+    background: #272c33;
+    border: none;
+    border-radius: 5px;
+    padding: 12px;
+}
+
+.vox-inputs {
+    width: 100%;
+    display: flex;
+    gap: 15px;
+}
+
+.pds,
+.dnc {
+    color: white;
+}
+

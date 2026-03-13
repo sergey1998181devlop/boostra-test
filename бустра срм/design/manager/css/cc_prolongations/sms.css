@@ -1,0 +1,11 @@
+/* Стили для SMS отчета */
+.sms-report {
+    display: flex;
+    padding: 0;
+}
+
+.sms-date {
+    height: 100%;
+    width: 100px !important;
+}
+

@@ -1,0 +1,27 @@
+# Запрет доступа к папке database через веб
+Order Deny,Allow
+Deny from all
+
+# Дополнительная защита - запрет выполнения PHP файлов
+<Files "*.php">
+    Order Deny,Allow
+    Deny from all
+</Files>
+
+# Запрет доступа к файлам миграций и сидов
+<Files "*.sql">
+    Order Deny,Allow
+    Deny from all
+</Files>
+
+# Запрет доступа к файлам конфигурации
+<Files "*.md">
+    Order Deny,Allow
+    Deny from all
+</Files>
+
+# Запрет просмотра содержимого директории
+Options -Indexes
+
+# Редирект на главную страницу
+ErrorDocument 403 /

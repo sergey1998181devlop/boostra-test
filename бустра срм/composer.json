@@ -1,0 +1,63 @@
+{
+  "require": {
+    "php-webdriver/webdriver": "^1.11",
+    "lptracker/php-sdk": "^1.2",
+    "phpmailer/phpmailer": "^6.5",
+    "benhall14/php-imap-reader": "^1.3",
+    "sergey144010/php-imap-client": "dev-master",
+    "php-imap/php-imap": "^4.5",
+    "swiftmailer/swiftmailer": "^6.0",
+    "tomaj/bank-mails-parser": "^2.6",
+    "axp-dev/ya-metrika": "^1.0",
+    "mk-j/php_xlsxwriter": "^0.39.0",
+    "ext-imap": "*",
+    "ext-json": "*",
+    "ext-mbstring": "*",
+    "catfan/medoo": "^2.1",
+    "vlucas/phpdotenv": "^5.6",
+    "myclabs/php-enum": "^1.8",
+    "aws/aws-sdk-php": "3.337.3",
+    "james-heinrich/getid3": "1.9.20",
+    "guzzlehttp/guzzle": "^7.0",
+    "symfony/redis-messenger": "^5.4",
+    "symfony/messenger": "^5.4",
+    "robmorgan/phinx": "^0.13.4",
+    "monolog/monolog": "^2.10",
+    "psr/log": "1.1.4",
+    "cmixin/business-time": "^1.14",
+    "ext-libxml": "*",
+    "nesbot/carbon": "2.73.0",
+    "firebase/php-jwt": "6.10.0",
+    "predis/predis": "^3.2",
+    "mindbox/sdk": "^1.1",
+    "virtual-card/virtual-card-client": "dev-main"
+  },
+  "config": {
+    "allow-plugins": {
+      "kylekatarnls/update-helper": true
+    },
+    "platform-check": false
+  },
+  "require-dev": {
+    "phpunit/phpunit": "^9.6"
+  },
+  "autoload": {
+    "files": [
+      "app/Core/Helpers/BaseHelper.php",
+      "app/Core/Helpers/ResponseHelper.php",
+      "app/Core/Helpers/LoggingHelper.php",
+      "app/Helpers/PhoneNumberHelper.php",
+      "app/Helpers/ReferenceNumberHelper.php",
+      "app/Helpers/CyrillicValidatorHelper.php"
+    ],
+    "psr-4": {
+      "App\\": "app/"
+    }
+  },
+  "repositories": [
+    {
+      "type": "vcs",
+      "url": "https://gitlab.boostra.tech/external/virtual-card/virtual-card-client"
+    }
+  ]
+}
